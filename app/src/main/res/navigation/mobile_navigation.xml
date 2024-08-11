@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.android.gids.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" >
+
+        <action
+            android:id="@+id/action_nav_home_to_nav_formlistdetail"
+            app:destination="@id/nav_formlistdetail" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_formstructure"
+            app:destination="@id/nav_formstructure" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_surveylog"
+            app:destination="@id/nav_surveylog" />
+
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/nav_formlistdetail"
+        android:name="com.android.gids.ui.home.FormListDetailFragment"
+        android:label="Form List Details"
+        tools:layout="@layout/fragment_form_list_detail" >
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_home"
+            app:destination="@id/nav_home" />
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_formstructure"
+            app:destination="@id/nav_formstructure" />
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_pendingforms"
+            app:destination="@id/nav_pendingforms" />
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_surveylog"
+            app:destination="@id/nav_surveylog" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/nav_formstructure"
+        android:name="com.android.gids.ui.home.FormStructureFragment"
+        android:label="Form Structure"
+        tools:layout="@layout/fragment_form_structure" >
+
+        <action
+            android:id="@+id/action_nav_formstructure_to_nav_formlistdetail"
+            app:destination="@id/nav_formlistdetail" />
+        <action
+            android:id="@+id/action_nav_formstructure_to_nav_home"
+            app:destination="@id/nav_home" />
+    </fragment>
+
+
+
+    <fragment
+        android:id="@+id/nav_pendingforms"
+        android:name="com.android.gids.PendingListFragment"
+        android:label="Pending Forms"
+        tools:layout="@layout/fragment_pending_list" >
+
+        <action
+            android:id="@+id/action_nav_formstructure_to_nav_formlistdetail"
+            app:destination="@id/nav_formlistdetail" />
+        <action
+            android:id="@+id/action_nav_formstructure_to_nav_home"
+            app:destination="@id/nav_home" />
+        <action
+            android:id="@+id/action_nav_pendingforms_to_nav_formstructure"
+            app:destination="@id/nav_formstructure" />
+        <action
+            android:id="@+id/action_nav_pendingforms_to_nav_formlistdetail"
+            app:destination="@id/nav_formlistdetail" />
+        <action
+            android:id="@+id/action_nav_pendingforms_to_nav_home"
+            app:destination="@id/nav_home" />
+    </fragment>
+
+
+
+    <fragment
+        android:id="@+id/nav_surveylog"
+        android:name="com.android.gids.SurveyLogFragment"
+        android:label="Survey Log"
+        tools:layout="@layout/fragment_survey_log" >
+
+
+
+    </fragment>
+
+
+
+
+</navigation>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:theme="@style/Theme.GIDS.PopupOverlay">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            >
+
+            <LinearLayout
+                android:id="@+id/header"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/_45sdp"
+                android:background="@color/white"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="@dimen/_30sdp"
+                    android:layout_height="@dimen/_30sdp"
+                    android:layout_gravity="center"
+                    android:src="@mipmap/gidslogo" />
+
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_marginLeft="@dimen/_2sdp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="@dimen/_100sdp"
+                        android:layout_height="wrap_content"
+                        android:text="GIDS"
+                        android:textStyle="bold"
+                        android:layout_gravity="center"
+                        android:textSize="@dimen/_7sdp"
+                        android:textColor="@color/mainColor"
+                        />
+
+                    <TextView
+                        android:layout_width="@dimen/_100sdp"
+                        android:layout_height="wrap_content"
+                        android:text="Giri Institute Of Development Stidies Lucknow (GIDS)"
+                        android:layout_gravity="center"
+                        android:textSize="@dimen/_5sdp"
+                        android:textStyle="bold|italic"
+                        android:textColor="@color/black"
+                        />
+
+                </LinearLayout>
+
+
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+
+                    <TextView
+                        android:id="@+id/tvName"
+                        android:layout_width="@dimen/_100sdp"
+                        android:layout_height="wrap_content"
+                        android:text="Hello, Demo User"
+                        android:layout_centerVertical="true"
+                        android:layout_gravity="center"
+                        android:textSize="@dimen/_11sdp"
+                        android:textColor="@color/black"
+                        />
+
+
+                    <ImageView
+                        android:id="@+id/ivLogout"
+                        android:layout_width="@dimen/_15sdp"
+                        android:layout_height="@dimen/_15sdp"
+                        android:layout_gravity="right"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginRight="@dimen/_13sdp"
+                        android:src="@mipmap/logout"/>
+
+
+                </RelativeLayout>
+
+
+
+
+
+
+
+
+
+            </LinearLayout>
+
+
+
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <include layout="@layout/content_main" />
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

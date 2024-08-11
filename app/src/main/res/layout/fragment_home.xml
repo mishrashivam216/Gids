@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ui.home.HomeFragment">
+
+    <com.example.loadinganimation.LoadingAnimation
+        android:id="@+id/loadingAnim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="10dp"
+        app:barType="@drawable/triad_ring"
+        app:boldText="false"
+        android:visibility="gone"
+        app:enlarge="1"
+        app:textColor="@color/mainColor"
+        app:textSize="15sp" />
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_20sdp">
+
+        <TextView
+            android:id="@+id/tvOffline"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/_20sdp"
+            android:text="Offline Application"
+            android:textColor="@color/green"
+            android:textStyle="bold"
+            android:layout_marginLeft="@dimen/_10sdp"
+            android:textSize="@dimen/_15sdp"
+            />
+
+
+        <TextView
+            android:id="@+id/tvSync"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_20sdp"
+            android:text="Sync Log"
+            android:layout_marginRight="@dimen/_10sdp"
+            android:gravity="right"
+            android:textColor="@color/green"
+            android:textStyle="bold"
+            android:layout_marginLeft="@dimen/_10sdp"
+            android:textSize="@dimen/_15sdp"
+            />
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvForm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_20sdp"
+        />
+
+
+</RelativeLayout>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/liItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/_80sdp"
+        android:background="@color/grey"
+        android:padding="@dimen/_10sdp"
+        android:layout_margin="@dimen/_10sdp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DEMO FORM"
+            android:textColor="@color/black"
+            android:textSize="@dimen/_17sdp"
+            android:textStyle="bold"
+            />
+
+        <TextView
+            android:id="@+id/project_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Demo project"
+            android:textColor="@color/darkgrey"
+            android:textSize="@dimen/_13sdp"
+            />
+
+
+
+
+    </LinearLayout>
+
+</LinearLayout>

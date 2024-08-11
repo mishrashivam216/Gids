@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".LoginActivity">
+
+    <LinearLayout
+        android:id="@+id/llHeader"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_100sdp"
+        android:weightSum="100">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="35"
+            android:padding="@dimen/_10sdp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@mipmap/gidslogo" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="65"
+            android:orientation="vertical"
+            android:padding="@dimen/_5sdp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="GIDS"
+                android:textColor="@color/mainColor"
+                android:textSize="@dimen/_25sdp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Giri Institute Of Development Studies Lucknow (GIDS)"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_15sdp"
+                android:textStyle="bold|italic" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/llHeader"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:paddingTop="@dimen/_26sdp"
+        android:text="@string/offline"
+        android:textColor="@color/mainColor"
+        android:textSize="@dimen/_22sdp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:orientation="vertical"
+        android:padding="@dimen/_10sdp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hey,"
+            android:textColor="@color/black"
+            android:textSize="@dimen/_22sdp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Surveyor Login Now"
+            android:textColor="@color/black"
+            android:textSize="@dimen/_22sdp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:text="Email"
+            android:textColor="@color/darkgrey" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_45sdp"
+            android:background="@drawable/border"
+            android:inputType="textEmailAddress"
+            android:paddingLeft="@dimen/_7sdp"
+            android:textColor="@color/black"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/_12sdp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:text="Password"
+            android:textColor="@color/darkgrey" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/mainColor">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:background="@drawable/border"
+                android:paddingLeft="@dimen/_7sdp"
+                android:textColor="@color/black"
+                android:textCursorDrawable="@null"
+                android:textSize="@dimen/_12sdp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_40sdp"
+            android:layout_marginTop="@dimen/_10sdp"
+            android:background="@drawable/border">
+
+            <Button
+                android:id="@+id/btnSignIn"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/mainColor"
+                android:text="SIGN IN"
+                android:textSize="@dimen/_12sdp"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/mainColor" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/liError"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_30sdp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/border"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/red"
+            android:gravity="center"
+            android:text="Please Enter Email Address"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <com.example.loadinganimation.LoadingAnimation
+        android:id="@+id/loadingAnim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="10dp"
+        android:visibility="gone"
+        app:barType="@drawable/triad_ring"
+        app:boldText="false"
+        app:enlarge="1"
+        app:textColor="@color/mainColor"
+        app:textSize="15sp" />
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_height="@dimen/_20sdp">
+
+        <TextView
+            android:id="@+id/tvOffline"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/_20sdp"
+            android:text="Offline Application"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:layout_marginLeft="@dimen/_10sdp"
+            android:textSize="@dimen/_12sdp"
+            />
+
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>

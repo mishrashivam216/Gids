@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    tools:context=".ui.home.FormStructureFragment">
+
+    <com.example.loadinganimation.LoadingAnimation
+        android:id="@+id/loadingAnim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="10dp"
+        app:barType="@drawable/triad_ring"
+        app:boldText="false"
+        app:enlarge="1"
+        android:visibility="gone"
+        app:textColor="@color/mainColor"
+        app:textSize="15sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/liProjectName"
+                android:layout_width="match_parent"
+                android:layout_marginLeft="@dimen/_10sdp"
+                android:layout_marginRight="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:layout_height="@dimen/_60sdp"
+                android:background="@color/mainColor">
+
+                <TextView
+                    android:id="@+id/tvProjectName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:padding="@dimen/_5sdp"
+                    android:textAllCaps="true"
+                    android:textSize="@dimen/_13sdp"
+                    android:textColor="@color/white"
+                    android:maxLines="2"
+                    android:text=""
+                    />
+
+            </LinearLayout>
+
+
+
+
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:layout_marginRight="@dimen/_10sdp">
+
+                <!-- ProgressBar -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="@style/CustomProgressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100" />
+
+                <!-- TextView to show progress -->
+                <TextView
+                    android:id="@+id/progressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/progressBar"
+                    android:layout_alignStart="@id/progressBar"
+                    android:layout_alignEnd="@id/progressBar"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerInParent="true"
+                    android:layout_marginTop="@dimen/_15sdp"
+                    android:textColor="@color/darkgrey"
+                    android:textSize="@dimen/_12sdp" />
+            </RelativeLayout>
+
+
+
+            <LinearLayout
+                android:id="@+id/layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/_10sdp"
+                android:orientation="vertical">
+
+
+
+
+
+            </LinearLayout>
+
+
+
+            <Button
+                android:id="@+id/prevButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PREVIOUS"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/darkgrey"
+                android:layout_margin="@dimen/_5sdp"
+
+                />
+
+
+            <Button
+                android:id="@+id/nextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/blue"
+                android:layout_margin="@dimen/_5sdp"
+                android:textColor="@color/white"
+                android:text="SAVE AND NEXT"/>
+
+            <Button
+                android:id="@+id/finalSubmitButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/green"
+                android:layout_margin="@dimen/_5sdp"
+                android:visibility="gone"
+                android:textColor="@color/white"
+                android:text="FINAL SUBMIT"/>
+
+
+
+
+        </LinearLayout>
+
+
+
+
+
+    </ScrollView>
+
+</RelativeLayout>
