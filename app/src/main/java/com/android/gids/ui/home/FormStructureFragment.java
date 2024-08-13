@@ -171,40 +171,43 @@ public class FormStructureFragment extends Fragment {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    Log.v("LISTSIZE", "" + list.size());
-                    if (validateEmpty()) {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (validateEmpty()) {
 
-                        try {
-                            createLayoutFromJson();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                                try {
+                                    createLayoutFromJson();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
 
-                        }
+                                if (binding.nextButton.getText().toString().equalsIgnoreCase("SAVE AND SUBMIT")) {
+                                    startActivity(new Intent(getContext(), MainActivity.class));
+                                    getActivity().finish();
+                                }
 
-                        if (binding.nextButton.getText().toString().equalsIgnoreCase("SAVE AND SUBMIT")) {
-                            startActivity(new Intent(getContext(), MainActivity.class));
-                            getActivity().finish();
-                        }
+                                if (currentPageIndex < list.size() - 1) {
+                                    currentPageIndex++;
+                                    parseData(currentPageIndex);
 
-                        if (currentPageIndex < list.size() - 1) {
-                            currentPageIndex++;
-                            parseData(currentPageIndex);
-
-                        }
-                        if (currentPageIndex == list.size() - 1) {
-                            binding.finalSubmitButton.setVisibility(View.VISIBLE);
-                            binding.nextButton.setText("SAVE AND SUBMIT");
-                        }
+                                }
+                                if (currentPageIndex == list.size() - 1) {
+                                    binding.finalSubmitButton.setVisibility(View.VISIBLE);
+                                    binding.nextButton.setText("SAVE AND SUBMIT");
+                                }
 
 
-                    } else {
-                        try {
-                            binding.loadingAnim.setVisibility(View.GONE);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                            } else {
+                                try {
+                                    binding.loadingAnim.setVisibility(View.GONE);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
 
-                    }
+                            }
+
+                        }}, 100);
                 }
             });
 
@@ -579,6 +582,17 @@ public class FormStructureFragment extends Fragment {
 
         if (formStructureModal.getEffect_branching_logic().size() > 0) {
             buttonLayout.setVisibility(View.GONE);
+            try {
+                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
+                if (Arrays.asList(cause_ids).contains(id)) {
+                    buttonLayout.setVisibility(View.VISIBLE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            buttonLayout.setVisibility(View.VISIBLE);
         }
 
 
@@ -849,22 +863,18 @@ public class FormStructureFragment extends Fragment {
 
                         Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
                         for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                            String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-
-                            Log.v("Branching:cause_id", cause_id);
-                            Log.v("Branching:main", String.valueOf(position));
-
-                            if (position != 0) {
-                                if (cause_id.equalsIgnoreCase(formStructureModal.getElement_choices().get(position - 1).getId())) {
-                                    Log.v("Branching:Cond", "Show Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                } else {
-                                    Log.v("Branching:Cond", "Hide Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                }
+                            //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
+                            String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+                            // Log.v("Branching:cause_id", cause_id);
+                            //Log.v("Branching:main", String.valueOf(position));
+                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
+                                Log.v("Branching:Cond", "Show Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
                             } else {
+                                Log.v("Branching:Cond", "Hide Item");
                                 showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
                             }
+
                         }
 
                     }
@@ -969,22 +979,22 @@ public class FormStructureFragment extends Fragment {
                         Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
 
                         for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                            String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
 
-                            Log.v("Branching:cause_id", cause_id);
-                            Log.v("Branching:main", String.valueOf(position));
+//                            String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
 
-                            if (position != 0) {
-                                if (cause_id.equalsIgnoreCase(formStructureModal.getElement_choices().get(position - 1).getId())) {
-                                    Log.v("Branching:Cond", "Show Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                } else {
-                                    Log.v("Branching:Cond", "Hide Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                }
+                            String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+
+//                            Log.v("Branching:cause_id", cause_id);
+//                            Log.v("Branching:main", String.valueOf(position));
+
+                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
+                                Log.v("Branching:Cond", "Show Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
                             } else {
+                                Log.v("Branching:Cond", "Hide Item");
                                 showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
                             }
+
                         }
 
                     }
@@ -1185,7 +1195,10 @@ public class FormStructureFragment extends Fragment {
                 Log.v("NewCaseId", "id  " + id);
                 Log.v("NewCaseId", "causeQID " + formStructureModal.getCause_branching_logic().get(0).getCause_question_id());
 
-                if (cause_id.equalsIgnoreCase(id)) {
+
+                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
+
+                if (Arrays.asList(cause_ids).contains(id)) {
                     radioGroup.setVisibility(View.VISIBLE);
                 }
             } catch (Exception e) {
@@ -1215,7 +1228,10 @@ public class FormStructureFragment extends Fragment {
                             Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
                             for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
                                 String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-                                if (cause_id.equalsIgnoreCase(String.valueOf(selectedId))) {
+
+                                String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+
+                                if (Arrays.asList(cause_ids).contains(String.valueOf(selectedId))) {
                                     Log.v("Branching:Cond", "Show Item");
                                     showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 } else {
@@ -1368,8 +1384,12 @@ public class FormStructureFragment extends Fragment {
                             if (formStructureModal.getCause_branching_logic().size() > 0) {
                                 Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
                                 for (int j = 0; j < formStructureModal.getCause_branching_logic().size(); j++) {
-                                    String cause_id = formStructureModal.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
-                                    if (cause_id.equalsIgnoreCase(String.valueOf(checkBox.getId())) && isCheckeds) {
+//                                    String cause_id = formStructureModal.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
+
+                                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(j).getBranching());
+
+                                    if (Arrays.asList(cause_ids).contains(String.valueOf(checkBox.getId())) && isCheckeds) {
+
                                         Log.v("Branching:Cond", "Show Item");
                                         showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(j).getEffect_question_id(), true);
                                     } else {
@@ -1504,6 +1524,15 @@ public class FormStructureFragment extends Fragment {
         labelTextView.setTag(formStructureModal.getId());
         if (formStructureModal.getEffect_branching_logic().size() > 0) {
             labelTextView.setVisibility(View.GONE);
+            try {
+                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
+                if (Arrays.asList(cause_ids).contains(id)) {
+                    labelTextView.setVisibility(View.VISIBLE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             labelTextView.setVisibility(View.VISIBLE);
         }
@@ -1782,6 +1811,15 @@ public class FormStructureFragment extends Fragment {
 
         if (formStructureModal.getEffect_branching_logic().size() > 0) {
             editText.setVisibility(View.GONE);
+            try {
+                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
+                if (Arrays.asList(cause_ids).contains(id)) {
+                    editText.setVisibility(View.VISIBLE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             editText.setVisibility(View.VISIBLE);
         }
@@ -2362,6 +2400,16 @@ public class FormStructureFragment extends Fragment {
             surveyData.setField_value(fieldValue);
             return surveyData;
         }
+    }
+
+
+    private String[] extractCauseIds(String branching) {
+        // Split first by '=', then by '|'
+        String[] parts = branching.split("=");
+        if (parts.length > 1) {
+            return parts[1].trim().split("\\|");
+        }
+        return new String[0];
     }
 
 

@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     SurveyRoomDatabase myDatabase;
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +82,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(MainActivity.this, e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
         }
 
+
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            LocationService.requestLocation(this);
+        }
 
     }
 
