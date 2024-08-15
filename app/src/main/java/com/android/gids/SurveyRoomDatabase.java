@@ -6,7 +6,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {FormListEntity.class, SurveyData.class, InstanceStatus.class, GlobalDataSet.class, GlobalDataSetValue.class, MapDependencyFieldValue.class, MapDependencyField.class, SurveyLog.class}, version = 1, exportSchema = false)
+@Database(entities = {FormListEntity.class, SurveyData.class, InstanceStatus.class, GlobalDataSet.class, GlobalDataSetValue.class, MapDependencyFieldValue.class, MapDependencyField.class, SurveyLog.class, SurveyRecord.class}, version = 1, exportSchema = false)
 public abstract class SurveyRoomDatabase extends RoomDatabase {
 
     public abstract FormListDao formListDao();
@@ -24,6 +24,7 @@ public abstract class SurveyRoomDatabase extends RoomDatabase {
     public abstract MapDependencyFieldDao mapDependencyFieldDao();
 
     public abstract SurveyLogDao surveyLogDao();
+    public abstract SurveyRecordDao surveyRecordDao();
 
     private final static String DB_NAME = "SurveyRoomDatabase";
 

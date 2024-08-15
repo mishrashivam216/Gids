@@ -32,7 +32,9 @@ public interface ApiInterface {
     @POST("form_submit")
     Call<JsonObject> sendFormData(@Body FormRequest formRequest);
 
-
+    @Headers("Content-Type: application/json")
+    @POST("form_list_status")
+    Call<JsonObject> formListStatus(@Body FormListStatusRequest formListStatusRequest);
 
 
 

@@ -41,6 +41,9 @@
         <action
             android:id="@+id/action_nav_formlistdetail_to_nav_surveylog"
             app:destination="@id/nav_surveylog" />
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_underreview"
+            app:destination="@id/nav_underreview" />
     </fragment>
 
 
@@ -93,6 +96,27 @@
 
 
 
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_underreview"
+        android:name="com.android.gids.ui.home.UnderReviewFragment"
+        android:label="Survey Log"
+        tools:layout="@layout/fragment_under_review" >
+
+
+        <action
+            android:id="@+id/action_nav_underreview_to_nav_formlistdetail"
+            app:destination="@id/nav_formlistdetail" />
+        <action
+            android:id="@+id/action_nav_underreview_to_nav_home"
+            app:destination="@id/nav_home" />
+        <action
+            android:id="@+id/action_nav_underreview_to_nav_formstructure"
+            app:destination="@id/nav_formstructure" />
+        <action
+            android:id="@+id/action_nav_underreview_to_nav_surveylog"
+            app:destination="@id/nav_surveylog" />
     </fragment>
 
 
