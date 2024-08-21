@@ -1,6 +1,8 @@
 package com.android.gids.ui.home;
 
 import static android.content.Context.MODE_PRIVATE;
+import static android.view.Gravity.TOP;
+import static android.view.View.VISIBLE;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -17,9 +19,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -57,6 +61,7 @@ import com.android.gids.MapDependencyField;
 import com.android.gids.MapDependencyFieldDao;
 import com.android.gids.MapDependencyFieldValue;
 import com.android.gids.MapDependencyFieldValueDao;
+import com.android.gids.OptionSplitter;
 import com.android.gids.R;
 import com.android.gids.SurveyDao;
 import com.android.gids.SurveyData;
@@ -167,7 +172,7 @@ public class FormStructureFragment extends Fragment {
 
 
                     try {
-                        binding.loadingAnim.setVisibility(View.VISIBLE);
+                        binding.loadingAnim.setVisibility(VISIBLE);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -193,7 +198,7 @@ public class FormStructureFragment extends Fragment {
 
                                 }
                                 if (currentPageIndex == list.size() - 1) {
-                                    binding.finalSubmitButton.setVisibility(View.VISIBLE);
+                                    binding.finalSubmitButton.setVisibility(VISIBLE);
                                     binding.nextButton.setText("SAVE AND SUBMIT");
                                 }
 
@@ -207,7 +212,8 @@ public class FormStructureFragment extends Fragment {
 
                             }
 
-                        }}, 100);
+                        }
+                    }, 100);
                 }
             });
 
@@ -225,7 +231,7 @@ public class FormStructureFragment extends Fragment {
                 @Override
                 public void onClick(View view) {
                     try {
-                        binding.loadingAnim.setVisibility(View.VISIBLE);
+                        binding.loadingAnim.setVisibility(VISIBLE);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -317,7 +323,7 @@ public class FormStructureFragment extends Fragment {
 
         if (list.size() == 0 && formStructureModalList1.size() > 0) {
             list.add(formStructureModalList1);
-            binding.finalSubmitButton.setVisibility(View.VISIBLE);
+            binding.finalSubmitButton.setVisibility(VISIBLE);
             binding.nextButton.setText("SAVE AND SUBMIT");
             //handle only one section
         }
@@ -419,7 +425,7 @@ public class FormStructureFragment extends Fragment {
         if (currentPageIndex == 0) {
             binding.prevButton.setVisibility(View.GONE);
         } else {
-            binding.prevButton.setVisibility(View.VISIBLE);
+            binding.prevButton.setVisibility(VISIBLE);
         }
         binding.layout.removeAllViews();
 
@@ -476,6 +482,10 @@ public class FormStructureFragment extends Fragment {
                         } else {
                             Spinner spinner = createSpinner(formStructureModal);
                             binding.layout.addView(spinner);
+
+                            if (spinner.getVisibility() == VISIBLE) {
+                                label.setVisibility(VISIBLE);
+                            }
                         }
                     } else if (formStructureModal.getElement_type().equalsIgnoreCase("radio")) {
                         TextView tv = createLabelRadio(formStructureModal);
@@ -533,7 +543,7 @@ public class FormStructureFragment extends Fragment {
         }, 1000);
 
         if (index == list.size() - 1) {
-            binding.finalSubmitButton.setVisibility(View.VISIBLE);
+            binding.finalSubmitButton.setVisibility(VISIBLE);
             binding.nextButton.setText("SAVE AND SUBMIT");
         }
     }
@@ -580,20 +590,7 @@ public class FormStructureFragment extends Fragment {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            buttonLayout.setVisibility(View.GONE);
-            try {
-                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-                if (Arrays.asList(cause_ids).contains(id)) {
-                    buttonLayout.setVisibility(View.VISIBLE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            buttonLayout.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, buttonLayout);
 
 
         Button removeButton = new Button(getContext());
@@ -613,7 +610,7 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                removeButton.setVisibility(View.VISIBLE);
+                removeButton.setVisibility(VISIBLE);
 
                 // Calculate the position to add the layout
                 int indexToAdd = binding.layout.indexOfChild(buttonLayout);
@@ -854,33 +851,12 @@ public class FormStructureFragment extends Fragment {
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long index) {
 
-                try {
+                handleCauseLogicForSpinner(formStructureModal, position);
 
-                    if (formStructureModal.getCause_branching_logic().size() > 0) {
-
-                        Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                        for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                            //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-                            String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-                            // Log.v("Branching:cause_id", cause_id);
-                            //Log.v("Branching:main", String.valueOf(position));
-                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
-                                Log.v("Branching:Cond", "Show Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                            } else {
-                                Log.v("Branching:Cond", "Hide Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                            }
-
-                        }
-
-                    }
-                } catch (Exception e) {
-                    Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
-                }
             }
 
             @Override
@@ -889,11 +865,8 @@ public class FormStructureFragment extends Fragment {
             }
         });
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            spinner.setVisibility(View.GONE);
-        } else {
-            spinner.setVisibility(View.VISIBLE);
-        }
+
+        handleEffectBranchingLogic(formStructureModal, spinner);
 
 
         try {
@@ -972,37 +945,14 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long index) {
 
+                handleCauseLogicForSpinner(formStructureModal, position);
+
+
                 try {
-
-                    if (formStructureModal.getCause_branching_logic().size() > 0) {
-
-                        Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-
-                        for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-
-//                            String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-
-                            String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-
-//                            Log.v("Branching:cause_id", cause_id);
-//                            Log.v("Branching:main", String.valueOf(position));
-
-                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
-                                Log.v("Branching:Cond", "Show Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                            } else {
-                                Log.v("Branching:Cond", "Hide Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                            }
-
-                        }
-
-                    }
+                    updatechildLayout(formStructureModal.getId());
                 } catch (Exception e) {
-                    Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+                    e.printStackTrace();
                 }
-
-                updatechildLayout(formStructureModal.getId());
             }
 
             @Override
@@ -1011,11 +961,7 @@ public class FormStructureFragment extends Fragment {
             }
         });
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            spinner.setVisibility(View.GONE);
-        } else {
-            spinner.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, spinner);
 
 
         spinner.post(() -> {
@@ -1156,6 +1102,7 @@ public class FormStructureFragment extends Fragment {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private RadioGroup createRadioButton(FormStructureModal formStructureModal) {
         List<Item> choiceList = new ArrayList<>();
 
@@ -1175,38 +1122,47 @@ public class FormStructureFragment extends Fragment {
         for (int i = 0; i < choiceList.size(); i++) {
             Item choice = choiceList.get(i);
             RadioButton radioButton = new RadioButton(getContext());
-            radioButton.setText(choice.getName());
+            String input = choice.getName();
+
+
+            if (input.contains("**") || input.contains("$$")) {
+                radioButton.setGravity(TOP);
+                List<OptionSplitter> options = splitOptions(input);
+                StringBuilder builder = new StringBuilder();
+                int k = 0;
+
+                for (OptionSplitter option : options) {
+                    if (k == 0) {
+                        builder.append(option.getMainOption()).append("\n");
+                    } else {
+                        builder.append(k).append(". ").append(option.getMainOption()).append("\n");
+                    }
+
+                    for (int j = 0; j < option.getSubOptions().size(); j++) {
+                        builder.append(k + 1).append(". ").append(option.getSubOptions().get(j)).append("\n");
+                        k++;
+                    }
+
+                    // Increment `k` only after processing main option and its sub-options
+                    k++;
+                }
+
+                radioButton.setText(builder.toString());
+            } else {
+                radioButton.setText(input);
+            }
+
+
+
             radioButton.setId(Integer.parseInt(choice.getId()));
             radioButton.setTag(formStructureModal.getId());
-
             radioButton.setTextColor(ContextCompat.getColor(getContext(), R.color.black)); // Set text color
             radioButton.setButtonTintList(ColorStateList.valueOf(Color.BLACK)); // Set button color
             radioGroup.addView(radioButton);
         }
 
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            radioGroup.setVisibility(View.GONE);
-
-            try {
-                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-                String cause_id = formStructureModal.getEffect_branching_logic().get(0).getBranching().split("=")[1].trim();
-                Log.v("NewCaseId", "cause_id " + cause_id);
-                Log.v("NewCaseId", "id  " + id);
-                Log.v("NewCaseId", "causeQID " + formStructureModal.getCause_branching_logic().get(0).getCause_question_id());
-
-
-                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-
-                if (Arrays.asList(cause_ids).contains(id)) {
-                    radioGroup.setVisibility(View.VISIBLE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            radioGroup.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, radioGroup);
 
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -1223,26 +1179,7 @@ public class FormStructureFragment extends Fragment {
                     int selectedId = selectedRadioButton.getId();
                     Log.v("SelectedRadioButtonID", "Selected ID: " + selectedId);
 
-                    try {
-                        if (formStructureModal.getCause_branching_logic().size() > 0) {
-                            Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                            for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                                String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-
-                                String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-
-                                if (Arrays.asList(cause_ids).contains(String.valueOf(selectedId))) {
-                                    Log.v("Branching:Cond", "Show Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                } else {
-                                    Log.v("Branching:Cond", "Hide Item");
-                                    showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
-                    }
+                    handleCauseBranchingLogicRadio(formStructureModal, selectedId, selectedText);
 
 
                 }
@@ -1296,7 +1233,7 @@ public class FormStructureFragment extends Fragment {
                         child.setVisibility(View.GONE);
                         return; // Exit early if the TextView needs to be hidden
                     }
-                    child.setVisibility(View.VISIBLE);
+                    child.setVisibility(VISIBLE);
                 } else {
                     child.setVisibility(View.GONE);
                     resetViews(child);
@@ -1340,7 +1277,7 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-    private void resetViews(View child){
+    private void resetViews(View child) {
         if (child instanceof RadioGroup) {
             ((RadioGroup) child).clearCheck();
         }
@@ -1370,11 +1307,8 @@ public class FormStructureFragment extends Fragment {
                 checkBox.setTag(formStructureModal.getId());
 
 
-                if (formStructureModal.getEffect_branching_logic().size() > 0) {
-                    checkBox.setVisibility(View.GONE);
-                } else {
-                    checkBox.setVisibility(View.VISIBLE);
-                }
+                handleEffectBranchingLogic(formStructureModal, checkBox);
+
 
                 checkBox.setOnCheckedChangeListener((buttonView, isCheckeds) -> {
 
@@ -1454,11 +1388,7 @@ public class FormStructureFragment extends Fragment {
         textView.setTypeface(null, Typeface.BOLD);
         textView.setLayoutParams(layoutParams);
         textView.setTextColor(getContext().getResources().getColor(R.color.black));
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            textView.setVisibility(View.GONE);
-        } else {
-            textView.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, textView);
 
 
         return textView;
@@ -1474,11 +1404,8 @@ public class FormStructureFragment extends Fragment {
         headingTextView.setTextColor(getContext().getResources().getColor(R.color.black));
 
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            headingTextView.setVisibility(View.GONE);
-        } else {
-            headingTextView.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, headingTextView);
+
 
         return headingTextView;
     }
@@ -1493,21 +1420,7 @@ public class FormStructureFragment extends Fragment {
         labelTextView.setTypeface(null, Typeface.BOLD);
         labelTextView.setLayoutParams(layoutParams);
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            labelTextView.setVisibility(View.GONE);
-
-            try {
-                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-                String cause_id = formStructureModal.getEffect_branching_logic().get(0).getBranching().split("=")[1].trim();
-                if (cause_id.equalsIgnoreCase(id)) {
-                    labelTextView.setVisibility(View.VISIBLE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            labelTextView.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, labelTextView);
 
 
         return labelTextView;
@@ -1522,20 +1435,9 @@ public class FormStructureFragment extends Fragment {
         labelTextView.setTypeface(null, Typeface.BOLD);
         labelTextView.setLayoutParams(layoutParams);
         labelTextView.setTag(formStructureModal.getId());
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            labelTextView.setVisibility(View.GONE);
-            try {
-                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-                if (Arrays.asList(cause_ids).contains(id)) {
-                    labelTextView.setVisibility(View.VISIBLE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            labelTextView.setVisibility(View.VISIBLE);
-        }
+
+        handleEffectBranchingLogic(formStructureModal, labelTextView);
+
 
         return labelTextView;
     }
@@ -1551,14 +1453,11 @@ public class FormStructureFragment extends Fragment {
         elementNote.setTextSize(13);
         elementNote.setText("Note* :" + formStructureModal.getElement_note());
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            elementNote.setVisibility(View.GONE);
-        } else {
-            elementNote.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, elementNote);
 
-        if (!formStructureModal.getElement_note().isEmpty() && editText.getVisibility() == View.VISIBLE) {
-            elementNote.setVisibility(View.VISIBLE);
+
+        if (!formStructureModal.getElement_note().isEmpty() && editText.getVisibility() == VISIBLE) {
+            elementNote.setVisibility(VISIBLE);
         } else {
             elementNote.setVisibility(View.GONE);
         }
@@ -1690,11 +1589,8 @@ public class FormStructureFragment extends Fragment {
         layout.addView(editText);
         layout.addView(button1);
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            layout.setVisibility(View.GONE);
-        } else {
-            layout.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, layout);
+
 
         return layout;
     }
@@ -1809,20 +1705,8 @@ public class FormStructureFragment extends Fragment {
         }
         editText.setPadding(7, 0, 0, 0);
 
-        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-            editText.setVisibility(View.GONE);
-            try {
-                String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-                if (Arrays.asList(cause_ids).contains(id)) {
-                    editText.setVisibility(View.VISIBLE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            editText.setVisibility(View.VISIBLE);
-        }
+        handleEffectBranchingLogic(formStructureModal, editText);
+
 
         //Interlink logic is implemented here
 
@@ -1858,6 +1742,27 @@ public class FormStructureFragment extends Fragment {
             editText.setEnabled(true);
         }
 
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // This method is called to notify you that the text is about to be changed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+                handleCauseLogicForEditText(formStructureModal, editText);
+
+            }
+        });
+
+
         return editText;
     }
 
@@ -1869,134 +1774,137 @@ public class FormStructureFragment extends Fragment {
 
         for (int i = 0; i < binding.layout.getChildCount(); i++) {
 
-            if (binding.layout.getChildAt(i) instanceof EditText) {
-                EditText editText = ((EditText) binding.layout.getChildAt(i));
+            if (binding.layout.getChildAt(i).getVisibility() == VISIBLE) {
 
-                String formattedNumber = String.format("%02d", binding.layout.getChildAt(i).getTag());
-                Log.v("validationmatch", formattedNumber + "");
+                if (binding.layout.getChildAt(i) instanceof EditText) {
+                    EditText editText = ((EditText) binding.layout.getChildAt(i));
 
-                String[] validationCondition = formattedNumber.split("");
+                    String formattedNumber = String.format("%02d", binding.layout.getChildAt(i).getTag());
+                    Log.v("validationmatch", formattedNumber + "");
 
-                Log.v("validationmatcharray", validationCondition[0] + " " + validationCondition[1]);
+                    String[] validationCondition = formattedNumber.split("");
 
-                int validation = Integer.valueOf(validationCondition[0]);
+                    Log.v("validationmatcharray", validationCondition[0] + " " + validationCondition[1]);
 
-                int required = Integer.valueOf(validationCondition[1]);
+                    int validation = Integer.valueOf(validationCondition[0]);
 
-                if (required == 1) {
+                    int required = Integer.valueOf(validationCondition[1]);
 
-                    Log.v("Flow_1", validationCondition[1]);
+                    if (required == 1) {
 
-                    if (editText.getText().toString().equalsIgnoreCase("")) {
-                        // required true edittext can not be empty
-                        if (editText.getVisibility() == View.VISIBLE) {
-                            Log.v("Flow_2", editText.getText().toString());
-                            Log.v("Flow_2", editText.getText().toString());
-                            editText.setError("Please Enter The Value..");
+                        Log.v("Flow_1", validationCondition[1]);
+
+                        if (editText.getText().toString().equalsIgnoreCase("")) {
+                            // required true edittext can not be empty
+                            if (editText.getVisibility() == VISIBLE) {
+                                Log.v("Flow_2", editText.getText().toString());
+                                Log.v("Flow_2", editText.getText().toString());
+                                editText.setError("Please Enter The Value..");
+                                res = false;
+                            }
+                        } else {
+                            Log.v("Flow_3", editText.getText().toString());
+
+                            if (validation == 0) {
+                                Log.v("Flow_4", validation + "");
+                            } else {
+                                Log.v("Flow_5", validation + "");
+                                switch (validation) {
+                                    case 3: {
+                                        if (!isValidEmail(editText.getText().toString()) && editText.getVisibility() == VISIBLE) {
+                                            res = false;
+                                        }
+                                    }
+                                    case 6: {
+                                        if (editText.getText().toString().length() != 10 && editText.getVisibility() == VISIBLE) {
+                                            Log.v("Flow_6", editText.getText().toString().length() + "");
+                                            editText.setError("Please Enter The 10 digit Value...");
+                                            res = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        if (editText.getText().toString().equalsIgnoreCase("")) {
+                            Log.v("Flow_7", editText.getText().toString() + "");
+                        } else {
+                            Log.v("Flow_8", editText.getText().toString() + "");
+                            if (validation == 0) {
+                                Log.v("Flow_9", validation + "");
+                            } else {
+                                Log.v("Flow_10", validation + "");
+                                switch (validation) {
+                                    case 3: {
+                                        if (!isValidEmail(editText.getText().toString()) && editText.getVisibility() == VISIBLE) {
+                                            res = false;
+                                        }
+                                    }
+                                    case 6: {
+                                        if (editText.getText().toString().length() != 10 && editText.getVisibility() == VISIBLE) {
+                                            editText.setError("Please Enter The 10 digit Value..");
+                                            res = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    //check for range
+                    try {
+                        int id = binding.layout.getChildAt(i).getId();
+                        List<FormStructureModal> formStructure = formStructureModalList.stream()
+                                .filter(e -> e.getId().equalsIgnoreCase(String.valueOf(id)))
+                                .collect(Collectors.toList());
+                        if (!formStructure.isEmpty() &&
+                                !editText.getText().toString().equalsIgnoreCase("")) {
+
+                            FormStructureModal structureModal = formStructure.get(0);
+                            int min = Integer.parseInt(structureModal.getMinimum());
+                            int max = Integer.parseInt(structureModal.getMaximum());
+                            int filledData = Integer.parseInt(editText.getText().toString());
+
+
+                            if (structureModal.getElement_validation().equalsIgnoreCase("4")) {
+                                if (max != 0 && (filledData < min || filledData > max)) {
+                                    editText.setError("Please enter value between " + min + " and " + max);
+                                    res = false;
+                                }
+                            }
+
+                            if (structureModal.getElement_validation().equalsIgnoreCase("8")) {
+                                String filledDataString = editText.getText().toString();
+
+                                if (max != 0 && (filledDataString.length() < min || filledDataString.length() > max)) {
+                                    editText.setError("Please enter a value with digits between " + min + " and " + max);
+                                    res = false;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                if (binding.layout.getChildAt(i) instanceof Spinner) {
+
+                    Item selectedItem = (Item) ((Spinner) binding.layout.getChildAt(i)).getSelectedItem();
+
+                    String id = String.valueOf(binding.layout.getChildAt(i).getId());
+
+                    if (selectedItem != null) {
+
+                        List<FormStructureModal> form = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
+
+                        if (form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
+                            Toast.makeText(getContext(), "Please Fill " + form.get(0).getElement_label(), Toast.LENGTH_SHORT).show();
                             res = false;
                         }
-                    } else {
-                        Log.v("Flow_3", editText.getText().toString());
+                    }
 
-                        if (validation == 0) {
-                            Log.v("Flow_4", validation + "");
-                        } else {
-                            Log.v("Flow_5", validation + "");
-                            switch (validation) {
-                                case 3: {
-                                    if (!isValidEmail(editText.getText().toString()) && editText.getVisibility() == View.VISIBLE) {
-                                        res = false;
-                                    }
-                                }
-                                case 6: {
-                                    if (editText.getText().toString().length() != 10 && editText.getVisibility() == View.VISIBLE) {
-                                        Log.v("Flow_6", editText.getText().toString().length() + "");
-                                        editText.setError("Please Enter The 10 digit Value...");
-                                        res = false;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if (editText.getText().toString().equalsIgnoreCase("")) {
-                        Log.v("Flow_7", editText.getText().toString() + "");
-                    } else {
-                        Log.v("Flow_8", editText.getText().toString() + "");
-                        if (validation == 0) {
-                            Log.v("Flow_9", validation + "");
-                        } else {
-                            Log.v("Flow_10", validation + "");
-                            switch (validation) {
-                                case 3: {
-                                    if (!isValidEmail(editText.getText().toString()) && editText.getVisibility() == View.VISIBLE) {
-                                        res = false;
-                                    }
-                                }
-                                case 6: {
-                                    if (editText.getText().toString().length() != 10 && editText.getVisibility() == View.VISIBLE) {
-                                        editText.setError("Please Enter The 10 digit Value..");
-                                        res = false;
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
-
-                //check for range
-                try {
-                    int id = binding.layout.getChildAt(i).getId();
-                    List<FormStructureModal> formStructure = formStructureModalList.stream()
-                            .filter(e -> e.getId().equalsIgnoreCase(String.valueOf(id)))
-                            .collect(Collectors.toList());
-                    if (!formStructure.isEmpty() &&
-                            !editText.getText().toString().equalsIgnoreCase("")) {
-
-                        FormStructureModal structureModal = formStructure.get(0);
-                        int min = Integer.parseInt(structureModal.getMinimum());
-                        int max = Integer.parseInt(structureModal.getMaximum());
-                        int filledData = Integer.parseInt(editText.getText().toString());
-
-
-                        if (structureModal.getElement_validation().equalsIgnoreCase("4")) {
-                            if (max != 0 && (filledData < min || filledData > max)) {
-                                editText.setError("Please enter value between " + min + " and " + max);
-                                res = false;
-                            }
-                        }
-
-                        if (structureModal.getElement_validation().equalsIgnoreCase("8")) {
-                            String filledDataString = editText.getText().toString();
-
-                            if (max != 0 && (filledDataString.length() < min || filledDataString.length() > max)) {
-                                editText.setError("Please enter a value with digits between " + min + " and " + max);
-                                res = false;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-
-            if (binding.layout.getChildAt(i) instanceof Spinner) {
-
-                Item selectedItem = (Item) ((Spinner) binding.layout.getChildAt(i)).getSelectedItem();
-
-                String id = String.valueOf(binding.layout.getChildAt(i).getId());
-
-                if (selectedItem != null) {
-
-                    List<FormStructureModal> form = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
-
-                    if (form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
-                        Toast.makeText(getContext(), "Please Fill " + form.get(0).getElement_label(), Toast.LENGTH_SHORT).show();
-                        res = false;
-                    }
-                }
-
             }
         }
         return res;
@@ -2403,14 +2311,379 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public List<OptionSplitter> splitOptions(String input) {
+        return Arrays.stream(input.split("\\$\\$"))
+                .filter(part -> !part.trim().isEmpty()) // Filter out empty or whitespace-only parts
+                .map(part -> {
+                    String[] subParts = part.split("\\*\\*");
+                    String mainOption = subParts[0].trim();
+                    List<String> subOptions = Arrays.stream(subParts)
+                            .skip(1)
+                            .filter(subPart -> !subPart.trim().isEmpty()) // Filter out empty sub-options
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    return new OptionSplitter(mainOption, subOptions);
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
     private String[] extractCauseIds(String branching) {
-        // Split first by '=', then by '|'
-        String[] parts = branching.split("=");
-        if (parts.length > 1) {
+        // Initialize an array to hold the parts
+        String[] parts = null;
+
+        // Check if the string contains '=', '>', or '<' and split accordingly
+        if (branching.contains("=")) {
+            parts = branching.split("=");
+        } else if (branching.contains(">")) {
+            parts = branching.split(">");
+        } else if (branching.contains("<")) {
+            parts = branching.split("<");
+        }
+
+        // If a split occurred, process the second part
+        if (parts != null && parts.length > 1) {
+
+
             return parts[1].trim().split("\\|");
         }
+
+        // Return an empty array if no valid split occurred
         return new String[0];
     }
 
+
+    public void handleEffectBranchingLogic(FormStructureModal formStructureModal, View v) {
+        try {
+            if (formStructureModal.getEffect_branching_logic().isEmpty()) {
+                v.setVisibility(View.VISIBLE);
+                return;
+            }
+
+            v.setVisibility(View.GONE);
+            String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
+            String[] causeIds = extractCauseIds(branch);
+
+            for (String causeId : causeIds) {
+                int numericCauseId = Integer.parseInt(causeId.replaceAll("\\D", ""));
+                String selectedId;
+
+                if (branch.contains(">")) {
+                    selectedId = getSpinnerNameFromQidFromValue(
+                            formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
+                    if (Integer.parseInt(selectedId) > numericCauseId) {
+                        v.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                } else if (branch.contains("<")) {
+                    selectedId = getSpinnerNameFromQidFromValue(
+                            formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
+                    if (Integer.parseInt(selectedId) < numericCauseId) {
+                        v.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                } else if (branch.contains("|")) {
+                    String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                    if (Arrays.asList(causeIds).contains(id)) {
+                        v.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                } else {
+                    selectedId = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                    if (Integer.parseInt(selectedId) == numericCauseId) {
+                        v.setVisibility(View.VISIBLE);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.v("FoundData", e.getMessage(), e);
+        }
+    }
+
+
+
+//    public void handleEffectBranchingLogic(FormStructureModal formStructureModal, View v) {
+//
+//        if (formStructureModal.getEffect_branching_logic().size() > 0) {
+//            v.setVisibility(View.GONE);
+//            Log.v("FoundData", formStructureModal.getElement_label());
+//            try {
+//                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
+//
+//                String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
+//
+//                Log.v("FoundData", cause_ids[0]);
+//
+//
+//                String selectedId = "";
+//
+//
+//
+//                for (String cause_id : cause_ids) {
+//
+//                    Log.v("FoundData", cause_id);
+//
+//
+//
+//                    int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
+//
+//                    Log.v("FoundData", numericCauseId + "");
+//
+//                    if (branch.contains(">")) {
+//
+//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
+//                        int numericSelectedId = Integer.parseInt(selectedId);
+//
+//                        Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
+//                        if (numericSelectedId > numericCauseId) {
+//                            v.setVisibility(VISIBLE);
+//                            break;
+//                        }
+//                    } else if (branch.contains("<")) {
+//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
+//                        int numericSelectedId = Integer.parseInt(selectedId);
+//
+//                        if (numericSelectedId < numericCauseId) {
+//                            v.setVisibility(VISIBLE);
+//                            break;
+//                        }
+//                    }else if (branch.contains("|")) {
+//                        try {
+//                            String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+//                            if (Arrays.asList(cause_ids).contains(id)) {
+//                                v.setVisibility(View.VISIBLE);
+//                            }
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
+//                    }else {
+//                        selectedId = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+//                        int numericSelectedId = Integer.parseInt(selectedId);
+//                        if (numericSelectedId == numericCauseId) {
+//                            v.setVisibility(VISIBLE);
+//                            break;
+//                        }
+//                    }
+//                }
+//
+//            } catch (Exception e) {
+//                Log.v("FoundData", e.getCause() + "  " + e.getMessage());
+//
+//            }
+//
+//        } else {
+//            v.setVisibility(VISIBLE);
+//        }
+//    }
+
+    public void handleCauseLogicForEditText(FormStructureModal formStructureModal, EditText editText) {
+        try {
+
+            if (formStructureModal.getCause_branching_logic().size() > 0) {
+
+                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
+                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
+                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
+
+
+                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
+
+
+                    for (String cause_id : cause_ids) {
+
+                        Log.v("FoundData", cause_id);
+
+
+                        int numericSelectedId = Integer.parseInt(editText.getText().toString());
+                        int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
+
+                        Log.v("FoundData", numericSelectedId + "");
+                        Log.v("FoundData", numericCauseId + "");
+
+                        if (branch.contains(">")) {
+                            Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
+                            if (numericSelectedId > numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else if (branch.contains("<")) {
+                            if (numericSelectedId < numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else {
+                            if (numericSelectedId == numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }
+                    }
+
+
+                }
+
+            }
+        } catch (Exception e) {
+            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+        }
+    }
+
+
+    public void handleCauseLogicForSpinner(FormStructureModal formStructureModal, int position) {
+        try {
+
+            if (formStructureModal.getCause_branching_logic().size() > 0) {
+
+                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
+                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
+                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
+
+
+                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
+
+
+                    for (String cause_id : cause_ids) {
+
+                        Log.v("FoundDataCauseID", cause_id);
+
+
+                        int numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getId());
+                        int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
+
+                        Log.v("FoundData", numericSelectedId + "");
+                        Log.v("FoundData", numericCauseId + "");
+
+                        if (branch.contains(">")) {
+                            Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
+                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getName());
+
+                            if (numericSelectedId > numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else if (branch.contains("<")) {
+                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getName());
+
+                            if (numericSelectedId < numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }else if(branch.contains("|")){
+                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
+                                Log.v("Branching:Cond", "Show Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                            } else {
+                                Log.v("Branching:Cond", "Hide Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                            }
+                        } else {
+                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getId());
+                            if (numericSelectedId == numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }
+                    }
+
+
+                }
+
+            }
+        } catch (Exception e) {
+            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+        }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void handleCauseBranchingLogicRadio(FormStructureModal formStructureModal, int selectedId, String selectedText) {
+        try {
+            if (formStructureModal.getCause_branching_logic().size() > 0) {
+                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
+                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
+                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
+                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
+                    for (String cause_id : cause_ids) {
+                        Log.v("FoundData", cause_id);
+                        int numericSelectedId = 0;
+                        int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
+
+                        Log.v("FoundData", numericSelectedId + "");
+                        Log.v("FoundData", numericCauseId + "");
+
+                        if (branch.contains(">")) {
+                            Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
+                            numericSelectedId = Integer.parseInt(selectedText);
+
+                            if (numericSelectedId > numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else if (branch.contains("<")) {
+                            numericSelectedId = Integer.parseInt(selectedText);
+
+                            if (numericSelectedId < numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }else if(branch.contains("|")){
+                            if (Arrays.asList(cause_ids).contains(String.valueOf(selectedId))) {
+                                Log.v("Branching:Cond", "Show Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                            } else {
+                                Log.v("Branching:Cond", "Hide Item");
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                            }
+                        }
+                        else {
+                            numericSelectedId = selectedId;
+                            if (numericSelectedId == numericCauseId) {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+
+            }
+        } catch (Exception e) {
+            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+        }
+
+
+    }
 
 }

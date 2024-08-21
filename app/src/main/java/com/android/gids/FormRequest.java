@@ -7,6 +7,11 @@ public class FormRequest {
     private String record_id;
     private String form_id;
     private String user_id;
+
+    private String latitude;
+    private String longtitute;
+    private String created_at;
+
     private List<FormData> form_data;
 
 
@@ -32,6 +37,30 @@ public class FormRequest {
 
     public void setUser_id(String user_id) {
         this.user_id = user_id;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongtitute() {
+        return longtitute;
+    }
+
+    public void setLongtitute(String longtitute) {
+        this.longtitute = longtitute;
+    }
+
+    public String getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
     }
 
     public List<FormData> getForm_data() {

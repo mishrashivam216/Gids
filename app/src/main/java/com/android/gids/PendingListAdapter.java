@@ -105,9 +105,9 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
             }
         });
 
-        holder.recId.setText("RecId: " + list.get(position).getRecord_id());
-        holder.created_at.setText("Created At " + list.get(position).getCreate_date_time());
-        holder.modified_at.setText("Modified At " + list.get(position).getCreate_date_time());
+        holder.recId.setText("RecId: \n" + list.get(position).getRecord_id());
+        holder.created_at.setText("Created At: " + list.get(position).getCreate_date_time());
+        holder.modified_at.setText("Modified At: " + list.get(position).getCreate_date_time());
 
 
     }
@@ -167,6 +167,10 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
         formRequest.setRecord_id(uuid);
         formRequest.setForm_id(list.get(0).getForm_id());
         formRequest.setUser_id(list.get(0).getUser_id());
+        formRequest.setLatitude(list.get(0).getLat());
+        formRequest.setLongtitute(list.get(0).getLogitude());
+        formRequest.setCreated_at(list.get(0).getCreate_date_time());
+
         formRequest.setForm_data(formDataList);
         Log.v("FormRequestJSON Size", formDataList.size() + "");
         Log.v("dsdsfdsf", uuid);
