@@ -36,6 +36,10 @@ public class SurveyData {
 
     @ColumnInfo(name = "section_id")
     public String section_id = "";
+
+    @ColumnInfo(name = "source")
+    public int source ;
+
     @ColumnInfo(name = "lat")
     public String lat = "";
 
@@ -151,5 +155,14 @@ public class SurveyData {
 
     public void setInstance_id(int instance_id) {
         this.instance_id = instance_id;
+    }
+
+
+    public int getSource() {
+        return source;
+    }
+
+    public void setSource(int source) {
+        this.source = source;
     }
 }

@@ -23,6 +23,8 @@ public interface SurveyRecordDao {
     @Query("SELECT * FROM survey_records WHERE record_id = :recordId")
     SurveyRecord getSurveyRecordById(String recordId);
 
+
+
     @Query("SELECT * FROM survey_records WHERE status = :status and form_id = :form_id and surveyor_id = :sid")
     List<SurveyRecord> getSurveyRecordByStatus(String status, String form_id, String sid);
 

@@ -18,8 +18,11 @@ public interface SurveyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdateList(List<SurveyData> surveyData);
 
-    @Query("SELECT * FROM survey_data WHERE id IN (SELECT MIN(id) FROM survey_data WHERE form_id = :formId GROUP BY instance_id) ORDER BY ID DESC")
+    @Query("SELECT * FROM survey_data WHERE id IN (SELECT MIN(id) FROM survey_data WHERE form_id = :formId AND source = 1 GROUP BY instance_id) ORDER BY ID DESC")
     List<SurveyData> getUniqueInstanceIdsByFormId(String formId);
+
+    @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :uuid")
+    SurveyData getInstanceID(String formId, String uuid);
 
 
     @Query("SELECT * FROM survey_data ORDER BY id ASC")
@@ -43,9 +46,15 @@ public interface SurveyDao {
     @Query("delete FROM survey_data WHERE form_id = :formId and instance_id = :instanceId")
     void deletebyFormIdInstanceId(String formId, int instanceId);
 
+    @Query("delete FROM survey_data WHERE form_id = :formId and record_id = :recId")
+    void deletebyFormUUID(String formId, String recId);
+
 
     @Query("SELECT * FROM survey_data WHERE form_id = :formId and instance_id = :instanceId and question_id = :qid")
     SurveyData getPredefinedAnswer(String formId, int instanceId, String qid);
+
+    @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :uuid and question_id = :qid")
+    SurveyData getPredefinedAnswerByUUID(String formId, String uuid, String qid);
 
     @Query("SELECT * FROM survey_data WHERE form_id = :formId AND instance_id = :instanceId  ORDER BY id DESC LIMIT 1")
     SurveyData getLastEntryByForm(String formId, int instanceId);

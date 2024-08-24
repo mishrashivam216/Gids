@@ -54,6 +54,27 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/liPaging"
+                android:layout_width="match_parent"
+                android:layout_marginLeft="@dimen/_10sdp"
+                android:layout_marginRight="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+               >
+
+                <Spinner
+                    android:id="@+id/spinnerPaging"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_30sdp"
+                    android:background="@drawable/border"
+                    />
+
+
+            </LinearLayout>
+
+
 
 
 

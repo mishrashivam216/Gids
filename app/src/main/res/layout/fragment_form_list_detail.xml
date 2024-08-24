@@ -144,6 +144,7 @@
         android:layout_height="1dp"/>
 
     <LinearLayout
+        android:id="@+id/liFeedback"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_50sdp"
         android:orientation="horizontal">

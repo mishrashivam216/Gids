@@ -22,4 +22,9 @@ public interface InstanceStatusDao {
     @Query("SELECT * FROM instance_status WHERE  form_id= :formId and instance_id = :instanceId and isSubmitted = 1")
     InstanceStatus getToSyncByFormInstanceId(String formId, int instanceId);
 
+    @Query("SELECT * FROM instance_status WHERE  form_id= :formId and uuid = :uuid and isSubmitted = 1")
+    InstanceStatus getToSyncByFormByUUID(String formId, String uuid);
+
+
+
 }

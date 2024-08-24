@@ -11,6 +11,8 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import com.android.gids.ReviewModal.ReviewListDao;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -22,6 +24,10 @@ import java.util.Random;
 import java.util.UUID;
 
 public class Utils {
+
+    public static final int PENDING_RECORD = 1;
+    public static final int REVIEW_RECORD = 2;
+    public static final int FEEDBACK_RECORD = 3;
 
 
     public static boolean isNetworkAvailable(Context context) {
@@ -50,8 +56,28 @@ public class Utils {
         if (data == null) {
             return "User not found";
         }
-
         File file = new File(data.getAllFormList().get(0).getFilePath());
+        StringBuilder text = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                text.append(line).append('\n');
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return text.toString();
+    }
+
+
+    public static String getRawJSONFromDBForReview(Context context, String recId) {
+        SurveyRoomDatabase myDatabase = SurveyRoomDatabase.getInstance(context);
+        ReviewListDao data = myDatabase.reviewListDao();
+        if (data == null) {
+            return "User not found";
+        }
+        File file = new File(data.getReviewsByRecId(recId).get(0).getFilePath());
         StringBuilder text = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
@@ -82,6 +108,8 @@ public class Utils {
         UUID uuid = UUID.randomUUID();
         return uuid;
     }
+
+
 
 
 }

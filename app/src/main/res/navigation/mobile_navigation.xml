@@ -20,6 +20,9 @@
         <action
             android:id="@+id/action_nav_home_to_nav_surveylog"
             app:destination="@id/nav_surveylog" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_formstructure_review"
+            app:destination="@id/nav_formstructure_review" />
 
     </fragment>
 
@@ -44,6 +47,9 @@
         <action
             android:id="@+id/action_nav_formlistdetail_to_nav_underreview"
             app:destination="@id/nav_underreview" />
+        <action
+            android:id="@+id/action_nav_formlistdetail_to_nav_formstructure_review"
+            app:destination="@id/nav_formstructure_review" />
     </fragment>
 
 
@@ -84,6 +90,9 @@
         <action
             android:id="@+id/action_nav_pendingforms_to_nav_home"
             app:destination="@id/nav_home" />
+        <action
+            android:id="@+id/action_nav_pendingforms_to_nav_formstructure_review"
+            app:destination="@id/nav_formstructure_review" />
     </fragment>
 
 
@@ -117,9 +126,16 @@
         <action
             android:id="@+id/action_nav_underreview_to_nav_surveylog"
             app:destination="@id/nav_surveylog" />
+        <action
+            android:id="@+id/action_nav_underreview_to_nav_formstructure_review"
+            app:destination="@id/nav_formstructure_review" />
     </fragment>
 
 
-
+    <fragment
+        android:id="@+id/nav_formstructure_review"
+        android:name="com.android.gids.ReviewModal.FormStructureFragmentReview"
+        android:label="Form"
+        tools:layout="@layout/fragment_form_structure" ></fragment>
 
 </navigation>

@@ -1,5 +1,6 @@
 package com.android.gids;
 
+import com.android.gids.ui.home.RecordRequestModal;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -36,6 +37,10 @@ public interface ApiInterface {
     @POST("form_list_status")
     Call<JsonObject> formListStatus(@Body FormListStatusRequest formListStatusRequest);
 
+
+    @Headers("Content-Type: application/json")
+    @POST("record")
+    Call<JsonObject> getRecord(@Body RecordRequestModal formReq);
 
 
 }

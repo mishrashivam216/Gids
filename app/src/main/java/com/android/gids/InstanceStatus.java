@@ -21,6 +21,9 @@ public class InstanceStatus {
     @ColumnInfo(name = "instance_id")
     public int instance_id;
 
+    @ColumnInfo(name = "uuid")
+    public String uuid;
+
 
     @ColumnInfo(name = "isSubmitted")
     public int isSubmitted;
@@ -56,5 +59,13 @@ public class InstanceStatus {
 
     public void setIsSubmitted(int isSubmitted) {
         this.isSubmitted = isSubmitted;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

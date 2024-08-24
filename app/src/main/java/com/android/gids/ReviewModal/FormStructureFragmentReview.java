@@ -1,4 +1,5 @@
-package com.android.gids.ui.home;
+package com.android.gids.ReviewModal;
+
 
 import static android.content.Context.MODE_PRIVATE;
 import static android.view.Gravity.TOP;
@@ -7,6 +8,7 @@ import static android.view.View.VISIBLE;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,7 +16,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,16 +47,14 @@ import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.android.gids.AddMoreList;
 import com.android.gids.ElementChoice;
-import com.android.gids.FormListModal;
-import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
 import com.android.gids.LocationService;
+import com.android.gids.LoginActivity;
 import com.android.gids.MainActivity;
 import com.android.gids.MapDependencyField;
 import com.android.gids.MapDependencyFieldDao;
@@ -63,11 +62,14 @@ import com.android.gids.MapDependencyFieldValue;
 import com.android.gids.MapDependencyFieldValueDao;
 import com.android.gids.OptionSplitter;
 import com.android.gids.R;
+import com.android.gids.SplashActivity;
 import com.android.gids.SurveyDao;
 import com.android.gids.SurveyData;
 import com.android.gids.SurveyRoomDatabase;
 import com.android.gids.Utils;
+import com.android.gids.databinding.FormStructureReviewBinding;
 import com.android.gids.databinding.FragmentFormStructureBinding;
+import com.android.gids.ui.home.BranchinglogicModal;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
@@ -82,32 +84,31 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class FormStructureFragment extends Fragment {
+public class FormStructureFragmentReview extends Fragment {
 
     boolean fromAdd = false;
-    FragmentFormStructureBinding binding;
-    int index;
+    int index = 0;
     String json_data;
 
     LinearLayout.LayoutParams layoutParams;
 
     private int currentPageIndex = 0;
 
-    List<List<FormStructureModal>> list;
+    List<List<FormStructureModalReview>> list;
 
-    List<FormStructureModal> formStructureModalList;
+    List<FormStructureModalReview> FormStructureModalReviewList;
 
     private String repeatValue = "";
 
-    List<FormStructureModal> formStructureModalList1;
+    List<FormStructureModalReview> FormStructureModalReviewList1;
 
     int counter = 0;
     int Backcounter = 0;
 
-    List<List<FormStructureModal>> addMoreList;
+    List<List<FormStructureModalReview>> addMoreList;
 
 
-    List<AddMoreList> addMoreListList;
+    List<AddMoreListReview> addMoreListList;
 
     Stack<String> stackIds;
 
@@ -125,10 +126,14 @@ public class FormStructureFragment extends Fragment {
 
     public String uuid = "0";
 
+    public String recid = "0";
+
     public int instanceId = 0;
 
 
     SharedPreferences sharedPreferences;
+
+    FormStructureReviewBinding binding;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -136,23 +141,38 @@ public class FormStructureFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        binding = FragmentFormStructureBinding.inflate(inflater, container, false);
+        binding = FormStructureReviewBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         try {
             sharedPreferences = getContext().getSharedPreferences("MySharedPref", MODE_PRIVATE);
             userId = sharedPreferences.getString("id", "");
             myDatabase = SurveyRoomDatabase.getInstance(getContext());
-            instanceId = getArguments().getInt("instanceId");
-            uuid = getArguments().getString("uuid");
-            index = getArguments().getInt("index");
+
+
+            recid = getArguments().getString("recid");
             formId = getArguments().getString("from_id");
-            json_data = Utils.getRawJSONFromDB(getContext());
+
+            json_data = Utils.getRawJSONFromDBForReview(getContext(), recid);
+
             Log.v("FormStructureFragment:", "JSON String Recieved: " + json_data);
             Log.v("FormId:", "JFormId: " + formId);
             Gson gson = new Gson();
-            FormListModal data = gson.fromJson(json_data.toString(), FormListModal.class);
-            formStructureModalList = data.getGIDS_SURVEY_APP().getDataList().get(index).getFormStructure();
-            Log.v("FormStructureFragment: ", formStructureModalList.size() + " Size");
+            FormListModalReview data = gson.fromJson(json_data.toString(), FormListModalReview.class);
+            FormStructureModalReviewList = data.getGIDS_SURVEY_APP().getDataList().get(index).getFormStructure();
+            uuid = data.getGIDS_SURVEY_APP().getDataList().get(index).getUuid();
+            Log.v("FormStructureFragment:", FormStructureModalReviewList.size() + " Size");
+
+            try {
+                SurveyDao s = myDatabase.surveyDao();
+                SurveyData surveyData = s.getInstanceID(formId, uuid);
+                if (surveyData != null && surveyData.getRecord_id() != null && !surveyData.getRecord_id().isEmpty()) {
+                    instanceId = surveyData.getInstance_id();
+                } else {
+                    instanceId = getArguments().getInt("instanceId");
+                }
+            } catch (Exception e) {
+                instanceId = getArguments().getInt("instanceId");
+            }
 
             prepareData();
 
@@ -166,6 +186,7 @@ public class FormStructureFragment extends Fragment {
             getCurrentIndex();
 
             binding.nextButton.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
                 public void onClick(View view) {
                     try {
@@ -175,14 +196,13 @@ public class FormStructureFragment extends Fragment {
                             e.printStackTrace();
                         }
                         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                            @RequiresApi(api = Build.VERSION_CODES.O)
                             @Override
                             public void run() {
                                 if (validateEmpty()) {
+
                                     try {
                                         createLayoutFromJson();
                                     } catch (Exception e) {
-                                        Toast.makeText(getContext(),e.getMessage()+" "+e.getCause(), Toast.LENGTH_SHORT).show();
                                         e.printStackTrace();
                                     }
 
@@ -201,23 +221,21 @@ public class FormStructureFragment extends Fragment {
                                         binding.nextButton.setText("SAVE AND SUBMIT");
                                     }
                                     binding.scrollView.scrollTo(0, 0);
-
-
                                 } else {
                                     try {
-                                        Toast.makeText(getContext(),"Validation Failed", Toast.LENGTH_SHORT).show();
                                         binding.loadingAnim.setVisibility(View.GONE);
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
+
                                 }
+
                             }
                         }, 100);
+
                     } catch (Exception e) {
-                        Toast.makeText(getContext(), e.getMessage() + " : " + e.getCause(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
                     }
-
-
                 }
             });
 
@@ -262,7 +280,7 @@ public class FormStructureFragment extends Fragment {
             });
 
         } catch (Exception e) {
-            Log.v("FormStructureFragment:", e.getMessage());
+            Log.v("FormStructureFragment", e.getMessage());
         }
         return root;
     }
@@ -299,41 +317,128 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void prepareData() {
-        //list => List<List<FormStructureModal>> => [ sec1[{},{}] , sec2[{},{}]]
+        //list => List<List<FormStructureModalReview>> => [ sec1[{},{}] , sec2[{},{}]]
         list = new ArrayList<>();
-        List<FormStructureModal> formStructureModalList1 = new ArrayList<>();
+        List<FormStructureModalReview> FormStructureModalReviewList1 = new ArrayList<>();
 
         //We store the data section wise in list
 
-        for (int i = 0; i < formStructureModalList.size(); i++) {
+        for (int i = 0; i < FormStructureModalReviewList.size(); i++) {
             try {
-                if (((formStructureModalList.get(i).getElement_type().equalsIgnoreCase("section") && i != 0)) || i == formStructureModalList.size() - 1) {
+                if (((FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("section") && i != 0)) || i == FormStructureModalReviewList.size() - 1) {
                     Log.v("Itr", i + "");
 
-                    if (i == formStructureModalList.size() - 1) {
-                        formStructureModalList1.add(formStructureModalList.get(i));
+                    if (i == FormStructureModalReviewList.size() - 1) {
+                        FormStructureModalReviewList1.add(FormStructureModalReviewList.get(i));
                     }
 
-                    list.add(formStructureModalList1);
-                    formStructureModalList1 = new ArrayList<>();
+                    list.add(FormStructureModalReviewList1);
+                    FormStructureModalReviewList1 = new ArrayList<>();
 
                 }
-                formStructureModalList1.add(formStructureModalList.get(i));
+                FormStructureModalReviewList1.add(FormStructureModalReviewList.get(i));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
 
-        if (list.size() == 0 && formStructureModalList1.size() > 0) {
-            list.add(formStructureModalList1);
+        if (list.size() == 0 && FormStructureModalReviewList1.size() > 0) {
+            list.add(FormStructureModalReviewList1);
             binding.finalSubmitButton.setVisibility(VISIBLE);
             binding.nextButton.setText("SAVE AND SUBMIT");
             //handle only one section
         }
-        Log.v("FormStructureFragment:", formStructureModalList.size() + "");
+        Log.v("FormStructureFragment", FormStructureModalReviewList.size() + "");
+
+
+        handlePaging();
     }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void handlePaging() {
+        List<String> sectionLabels = new ArrayList<>();
+        sectionLabels.add("Select Section"); // Manually add the first entry
+        List<Boolean> shouldHighlight = new ArrayList<>();
+        shouldHighlight.add(false); // No highlight for "Select Section"
+
+        for (List<FormStructureModalReview> section : list) {
+            if (!section.isEmpty()) {
+                List<FormStructureModalReview> list1 = section.stream()
+                        .filter(e -> !e.getFeedback().equalsIgnoreCase(""))
+                        .collect(Collectors.toList());
+
+                sectionLabels.add(section.get(0).element_label);
+
+                if (list1.size() > 0) {
+                    shouldHighlight.add(true); // Mark this section to be highlighted
+                } else {
+                    shouldHighlight.add(false); // No highlight needed
+                }
+            }
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), R.layout.custom_spinner_item, sectionLabels) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                if (position < shouldHighlight.size() && shouldHighlight.get(position)) {
+                    textView.setTextColor(Color.RED);
+                } else {
+                    textView.setTextColor(Color.BLACK); // Default color
+                }
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView textView = (TextView) view;
+                if (position < shouldHighlight.size() && shouldHighlight.get(position)) {
+                    textView.setTextColor(Color.RED);
+                } else {
+                    textView.setTextColor(Color.BLACK); // Default color
+                }
+                return view;
+            }
+        };
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.spinnerPaging.setAdapter(adapter);
+
+
+        binding.spinnerPaging.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+
+                if (position != 0) {
+                    try {
+                        currentPageIndex = position - 1;
+                        parseData(currentPageIndex);
+                        binding.finalSubmitButton.setVisibility(View.GONE);
+                        binding.nextButton.setText("SAVE AND NEXT");
+                        if (currentPageIndex == list.size() - 1) {
+                            binding.finalSubmitButton.setVisibility(VISIBLE);
+                            binding.nextButton.setText("SAVE AND SUBMIT");
+                        }
+                    } catch (Exception e) {
+                        Log.v("afsdfsd", e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // Do nothing if nothing is selected
+            }
+        });
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createLayoutFromJson() {
@@ -393,7 +498,7 @@ public class FormStructureFragment extends Fragment {
         surveyData.setUser_id(userId);
         surveyData.setInstance_id(instanceId);
         surveyData.setRecord_id(uuid);
-        surveyData.setSource(Utils.PENDING_RECORD);
+        surveyData.setSource(Utils.FEEDBACK_RECORD);
         surveyData.setLat(LocationService.getLat());
         surveyData.setLogitude(LocationService.getLong());
         surveyData.setSync_status("0");
@@ -408,6 +513,7 @@ public class FormStructureFragment extends Fragment {
     private void addInDb(List<SurveyData> surveyDataList) {
         try {
             SurveyDao surveyDao = myDatabase.surveyDao();
+
             for (SurveyData s : surveyDataList) {
                 Log.v("InsertedDataInDB", s.getField_value());
                 SurveyData insertedData = surveyDao.getPredefinedAnswer(formId, instanceId, s.getQuestion_id());
@@ -435,10 +541,10 @@ public class FormStructureFragment extends Fragment {
         }
         binding.layout.removeAllViews();
 
-        //List<FormStructureModal> => [{},{}]
-        formStructureModalList1 = new ArrayList<>();
+        //List<FormStructureModalReview> => [{},{}]
+        FormStructureModalReviewList1 = new ArrayList<>();
 
-        //List<List<FormStructureModal>> => [[{},{},{}], [{},{},{}]]
+        //List<List<FormStructureModalReview>> => [[{},{},{}], [{},{},{}]]
         addMoreList = new ArrayList<>();
 
         //List<AddMoreList> => [  [[{},{},{}], [{},{},{}]],  [[{},{},{}], [{},{},{}]],  [[{},{},{}], [{},{},{}]],  [[{},{},{}], [{},{},{}]]  ]
@@ -446,7 +552,7 @@ public class FormStructureFragment extends Fragment {
 
         repeatValue = "";
 
-        // => list : List<List<FormStructureModal>> : [[{},{}], [{},{}]]
+        // => list : List<List<FormStructureModalReview>> : [[{},{}], [{},{}]]
 
         //First time index is zero
 
@@ -455,80 +561,100 @@ public class FormStructureFragment extends Fragment {
 
         for (int j = 0; j < list.get(index).size(); j++) {
             try {
-                FormStructureModal formStructureModal = list.get(index).get(j);
+                FormStructureModalReview FormStructureModalReview = list.get(index).get(j);
 
-                if (formStructureModal.getRepeat().equalsIgnoreCase("")) {
+                if (FormStructureModalReview.getRepeat().equalsIgnoreCase("")) {
 
-                    if (formStructureModalList1.size() > 0) {
-                        addMoreList.add(new ArrayList<>(formStructureModalList1));
-                        formStructureModalList1 = new ArrayList<>();
+                    if (FormStructureModalReviewList1.size() > 0) {
+                        addMoreList.add(new ArrayList<>(FormStructureModalReviewList1));
+                        FormStructureModalReviewList1 = new ArrayList<>();
                     }
 
-                    if (formStructureModal.getElement_type().equalsIgnoreCase("section")) {
-                        sectionId = formStructureModal.getId();
-                        View v = createLabelTextView(formStructureModal);
+                    if (FormStructureModalReview.getElement_type().equalsIgnoreCase("section")) {
+                        sectionId = FormStructureModalReview.getId();
+                        View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("label")) {
-                        View v = createLabelTextView(formStructureModal);
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
+                        View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("text") || formStructureModal.getElement_type().equalsIgnoreCase("textarea")) {
-                        View etLabel = createLabelEditTextView(formStructureModal);
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("text") || FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
+                        View etLabel = createLabelEditTextView(FormStructureModalReview);
                         binding.layout.addView(etLabel);
-                        EditText view = createEditText(formStructureModal);
+                        EditText view = createEditText(FormStructureModalReview);
                         binding.layout.addView(view);
-                        View elElement = createLabelEditElement(formStructureModal, view);
-                        binding.layout.addView(elElement);
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("select")) {
+                        View elElement = createLabelEditElement(FormStructureModalReview, view);
+                        if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                            binding.layout.addView(elElement);
+                        }
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("select")) {
 
-                        View label = createLabelEditTextView(formStructureModal);
+                        View label = createLabelEditTextView(FormStructureModalReview);
                         binding.layout.addView(label);
-                        if (formStructureModal.getSelect_type().equalsIgnoreCase("global")) {
-                            Spinner spinner = createSpinnerForGlobal(formStructureModal);
-                            binding.layout.addView(spinner);
+
+                        if (FormStructureModalReview.getSelect_type().equalsIgnoreCase("global")) {
+                            try {
+                                Spinner spinner = createSpinnerForGlobal(FormStructureModalReview);
+                                binding.layout.addView(spinner);
+
+                                View elElement = createLabelEditElement(FormStructureModalReview, spinner);
+                                if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                                    binding.layout.addView(elElement);
+                                }
+                            } catch (Exception e) {
+                                Log.v("DebugPoint", e.getMessage());
+
+                            }
+
                         } else {
-                            Spinner spinner = createSpinner(formStructureModal);
+                            Spinner spinner = createSpinner(FormStructureModalReview);
                             binding.layout.addView(spinner);
 
                             if (spinner.getVisibility() == VISIBLE) {
                                 label.setVisibility(VISIBLE);
                             }
+                            View elElement = createLabelEditElement(FormStructureModalReview, spinner);
+                            if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                                binding.layout.addView(elElement);
+                            }
                         }
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("radio")) {
-                        TextView tv = createLabelRadio(formStructureModal);
-                        binding.layout.addView(tv);
-                        RadioGroup radioGroup = createRadioButton(formStructureModal);
-                        binding.layout.addView(radioGroup);
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("checkbox")) {
-                        TextView tv = createLabelCheckbox(formStructureModal);
-                        binding.layout.addView(tv);
-                        createMultiCheckbox(formStructureModal, -1);
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("calculated_field")) {
 
-                        View etLabel = createLabelEditTextView(formStructureModal);
+
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("radio")) {
+                        TextView tv = createLabelRadio(FormStructureModalReview);
+                        binding.layout.addView(tv);
+                        RadioGroup radioGroup = createRadioButton(FormStructureModalReview);
+                        binding.layout.addView(radioGroup);
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("checkbox")) {
+                        TextView tv = createLabelCheckbox(FormStructureModalReview);
+                        binding.layout.addView(tv);
+                        createMultiCheckbox(FormStructureModalReview, -1);
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("calculated_field")) {
+
+                        View etLabel = createLabelEditTextView(FormStructureModalReview);
                         binding.layout.addView(etLabel);
 
-                        LinearLayout layout = createCalculatedField(formStructureModal);
+                        LinearLayout layout = createCalculatedField(FormStructureModalReview);
                         binding.layout.addView(layout);
 
-                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("repeat")) {
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("repeat")) {
                         //It means before Enter in this  addMoreList  should be filled (it promiss that before Addmore element repeat element will be there)
-                        AddMoreList addMoreListdata = new AddMoreList();
+                        AddMoreListReview addMoreListdata = new AddMoreListReview();
                         addMoreListdata.setAddMoreList(addMoreList);
-                        addMoreListdata.setId(formStructureModal.getId());
+                        addMoreListdata.setId(FormStructureModalReview.getId());
                         addMoreListList.add(addMoreListdata);
-                        createButton(formStructureModal);
+                        createButton(FormStructureModalReview);
                     }
                 } else {
-                    if (!formStructureModal.getRepeat().equalsIgnoreCase(repeatValue)) {
-                        if (formStructureModalList1.size() > 0) {
-                            addMoreList.add(new ArrayList<>(formStructureModalList1));
+                    if (!FormStructureModalReview.getRepeat().equalsIgnoreCase(repeatValue)) {
+                        if (FormStructureModalReviewList1.size() > 0) {
+                            addMoreList.add(new ArrayList<>(FormStructureModalReviewList1));
                         }
-                        formStructureModalList1 = new ArrayList<>();
-                        formStructureModalList1.add(formStructureModal);
-                        repeatValue = formStructureModal.getRepeat();
+                        FormStructureModalReviewList1 = new ArrayList<>();
+                        FormStructureModalReviewList1.add(FormStructureModalReview);
+                        repeatValue = FormStructureModalReview.getRepeat();
                     } else {
-                        formStructureModalList1.add(formStructureModal);
-                        repeatValue = formStructureModal.getRepeat();
+                        FormStructureModalReviewList1.add(FormStructureModalReview);
+                        repeatValue = FormStructureModalReview.getRepeat();
                     }
                 }
             } catch (Exception e) {
@@ -554,9 +680,9 @@ public class FormStructureFragment extends Fragment {
         }
     }
 
-    public ArrayList<AddMoreList> getObjectsWithId(String targetId) {
-        ArrayList<AddMoreList> objectsWithId = new ArrayList<>();
-        for (AddMoreList obj : addMoreListList) {
+    public ArrayList<AddMoreListReview> getObjectsWithId(String targetId) {
+        ArrayList<AddMoreListReview> objectsWithId = new ArrayList<>();
+        for (AddMoreListReview obj : addMoreListList) {
             if (obj.getId().equalsIgnoreCase(targetId)) {
                 objectsWithId.add(obj);
             }
@@ -564,17 +690,17 @@ public class FormStructureFragment extends Fragment {
         return objectsWithId;
     }
 
-    private void createButton(FormStructureModal formStructureModal) {
+    private void createButton(FormStructureModalReview FormStructureModalReview) {
 
         stackIds = new Stack<>();
         stackRepeatVal = new Stack<>();
 
-        ArrayList<AddMoreList> addMoreLists = getObjectsWithId(formStructureModal.getId());
+        ArrayList<AddMoreListReview> addMoreLists = getObjectsWithId(FormStructureModalReview.getId());
         Backcounter = addMoreLists.get(0).getAddMoreList().size();
         counter = 0;
 
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(formStructureModal.getElement_label());
+        labelTextView.setText(FormStructureModalReview.getElement_label());
         labelTextView.setId(0);
         labelTextView.setTextColor(getContext().getResources().getColor(R.color.black));
         labelTextView.setTypeface(null, Typeface.BOLD);
@@ -585,25 +711,25 @@ public class FormStructureFragment extends Fragment {
         LinearLayout buttonLayout = new LinearLayout(getContext());
         buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
         buttonLayout.setLayoutParams(layoutParams);
-        buttonLayout.setId(Integer.valueOf(formStructureModal.getId()));
+        buttonLayout.setId(Integer.valueOf(FormStructureModalReview.getId()));
 
 
         Button addButton = new Button(getContext());
         addButton.setText("Add More");
-        addButton.setId(Integer.valueOf(formStructureModal.getId()));
+        addButton.setId(Integer.valueOf(FormStructureModalReview.getId()));
         addButton.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
 
-        handleEffectBranchingLogic(formStructureModal, buttonLayout);
+        handleEffectBranchingLogic(FormStructureModalReview, buttonLayout);
 
 
         Button removeButton = new Button(getContext());
         removeButton.setText("Remove");
         removeButton.setId(0);
         removeButton.setVisibility(View.INVISIBLE);
-        removeButton.setTag(formStructureModal.getId());
+        removeButton.setTag(FormStructureModalReview.getId());
         removeButton.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -640,59 +766,59 @@ public class FormStructureFragment extends Fragment {
                 line.setLayoutParams(params);
                 binding.layout.addView(line, indexToAdd++);
 
-                for (AddMoreList obj : addMoreLists) {
+                for (AddMoreListReview obj : addMoreLists) {
                     try {
-                        List<FormStructureModal> formStructureModals = obj.getAddMoreList().get(counter);
+                        List<FormStructureModalReview> FormStructureModalReviews = obj.getAddMoreList().get(counter);
                         counter++;
-                        for (int i = 0; i < formStructureModals.size(); i++) {
+                        for (int i = 0; i < FormStructureModalReviews.size(); i++) {
 
                             //Store All the ids which is to be remove
-                            stackIds.push(formStructureModals.get(i).getId());
-                            stackRepeatVal.push(formStructureModals.get(i).getRepeat());
-                            Log.v("IDS=>", formStructureModals.get(i).getId() + " " + formStructureModals.get(i).getElement_type());
+                            stackIds.push(FormStructureModalReviews.get(i).getId());
+                            stackRepeatVal.push(FormStructureModalReviews.get(i).getRepeat());
+                            Log.v("IDS=>", FormStructureModalReviews.get(i).getId() + " " + FormStructureModalReviews.get(i).getElement_type());
                             fromAdd = true;
 
-                            if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("section")) {
-                                View viewSection = createLabelTextView(formStructureModals.get(i));
+                            if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("section")) {
+                                View viewSection = createLabelTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(viewSection, indexToAdd++);
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("label")) {
-                                View viewLabel = createLabelTextView(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("label")) {
+                                View viewLabel = createLabelTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(viewLabel, indexToAdd++);
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("text") || formStructureModals.get(i).getElement_type().equalsIgnoreCase("textarea")) {
-                                View etLabel = createLabelEditTextView(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("text") || FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("textarea")) {
+                                View etLabel = createLabelEditTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(etLabel, indexToAdd++);
-                                EditText view = createEditText(formStructureModals.get(i));
+                                EditText view = createEditText(FormStructureModalReviews.get(i));
                                 binding.layout.addView(view, indexToAdd++);
-                                View elElement = createLabelEditElement(formStructureModals.get(i), view);
+                                View elElement = createLabelEditElement(FormStructureModalReviews.get(i), view);
                                 binding.layout.addView(elElement, indexToAdd++);
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("select")) {
-                                View label = createLabelEditTextView(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("select")) {
+                                View label = createLabelEditTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(label, indexToAdd++);
-                                if (formStructureModals.get(i).getSelect_type().equalsIgnoreCase("global")) {
-                                    Spinner spinner = createSpinnerForGlobal(formStructureModals.get(i));
+                                if (FormStructureModalReviews.get(i).getSelect_type().equalsIgnoreCase("global")) {
+                                    Spinner spinner = createSpinnerForGlobal(FormStructureModalReviews.get(i));
                                     binding.layout.addView(spinner, indexToAdd++);
                                 } else {
-                                    Spinner spinner = createSpinner(formStructureModals.get(i));
+                                    Spinner spinner = createSpinner(FormStructureModalReviews.get(i));
                                     binding.layout.addView(spinner, indexToAdd++);
                                 }
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("radio")) {
-                                TextView tv = createLabelRadio(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("radio")) {
+                                TextView tv = createLabelRadio(FormStructureModalReviews.get(i));
                                 binding.layout.addView(tv, indexToAdd++);
-                                RadioGroup radioGroup = createRadioButton(formStructureModals.get(i));
+                                RadioGroup radioGroup = createRadioButton(FormStructureModalReviews.get(i));
                                 binding.layout.addView(radioGroup, indexToAdd++);
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("checkbox")) {
-                                TextView tv = createLabelCheckbox(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("checkbox")) {
+                                TextView tv = createLabelCheckbox(FormStructureModalReviews.get(i));
                                 binding.layout.addView(tv, indexToAdd++);
 
-                                indexToAdd = createMultiCheckbox(formStructureModals.get(i), indexToAdd);
+                                indexToAdd = createMultiCheckbox(FormStructureModalReviews.get(i), indexToAdd);
 
-                                for (int k = 0; k < formStructureModals.get(i).getElement_choices().size() - 1; k++) {
-                                    stackIds.push(formStructureModals.get(i).getId());
+                                for (int k = 0; k < FormStructureModalReviews.get(i).getElement_choices().size() - 1; k++) {
+                                    stackIds.push(FormStructureModalReviews.get(i).getId());
                                 }
-                            } else if (formStructureModals.get(i).getElement_type().equalsIgnoreCase("calculated_field")) {
-                                View etLabel = createLabelEditTextView(formStructureModals.get(i));
+                            } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("calculated_field")) {
+                                View etLabel = createLabelEditTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(etLabel, indexToAdd++);
-                                LinearLayout layout = createCalculatedField(formStructureModals.get(i));
+                                LinearLayout layout = createCalculatedField(FormStructureModalReviews.get(i));
                                 binding.layout.addView(layout, indexToAdd++);
                             }
 
@@ -705,7 +831,7 @@ public class FormStructureFragment extends Fragment {
                         }
                         layoutAddedList.push(stackIds);
 
-                        System.out.println("Object with ID " + formStructureModal.getId() + ": " + obj.toString());
+                        System.out.println("Object with ID " + FormStructureModalReview.getId() + ": " + obj.toString());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -744,13 +870,13 @@ public class FormStructureFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private long clickAddmoreIfAnyAnsFilled(ArrayList<AddMoreList> addMoreLists) {
+    private long clickAddmoreIfAnyAnsFilled(ArrayList<AddMoreListReview> addMoreLists) {
 
         long iterationCount = addMoreLists.stream()
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
-                .filter(formStructureModals ->
-                        formStructureModals.stream()
-                                .map(FormStructureModal::getId)
+                .filter(FormStructureModalReviews ->
+                        FormStructureModalReviews.stream()
+                                .map(FormStructureModalReview::getId)
                                 .map(this::getPrefilledData)
                                 .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
                 )
@@ -830,16 +956,16 @@ public class FormStructureFragment extends Fragment {
         return false;
     }
 
-    private Spinner createSpinner(FormStructureModal formStructureModal) {
+    private Spinner createSpinner(FormStructureModalReview FormStructureModalReview) {
 
 
         List<Item> choiceList = new ArrayList<>();
         Item item = new Item("0", "Select");
         choiceList.add(item);
 
-        for (int i = 0; i < formStructureModal.getElement_choices().size(); i++) {
+        for (int i = 0; i < FormStructureModalReview.getElement_choices().size(); i++) {
             try {
-                Item items = new Item(formStructureModal.getElement_choices().get(i).getId(), formStructureModal.getElement_choices().get(i).getName());
+                Item items = new Item(FormStructureModalReview.getElement_choices().get(i).getId(), FormStructureModalReview.getElement_choices().get(i).getName());
                 choiceList.add(items);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -848,8 +974,8 @@ public class FormStructureFragment extends Fragment {
 
         Spinner spinner = new Spinner(getContext());
         spinner.setBackground(getResources().getDrawable(R.drawable.border));
-        spinner.setId(Integer.valueOf(formStructureModal.getId()));
-        spinner.setTag(formStructureModal.getVlookup_qustion_id());
+        spinner.setId(Integer.valueOf(FormStructureModalReview.getId()));
+        spinner.setTag(FormStructureModalReview.getVlookup_qustion_id());
 
         ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -861,7 +987,7 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long index) {
 
-                handleCauseLogicForSpinner(formStructureModal, position);
+                handleCauseLogicForSpinner(FormStructureModalReview, position);
 
             }
 
@@ -872,19 +998,27 @@ public class FormStructureFragment extends Fragment {
         });
 
 
-        handleEffectBranchingLogic(formStructureModal, spinner);
+        handleEffectBranchingLogic(FormStructureModalReview, spinner);
 
 
         try {
             if (choiceList.size() > 2) {
-                String pData = getPrefilledData(formStructureModal.getId());
-                int pos = getSpinnerPosition(pData, choiceList);
-                spinner.setSelection(pos);
+
+                String pData = getPrefilledData(FormStructureModalReview.getId());
+
+                if (!pData.isEmpty()) {
+                    int pos = getSpinnerPosition(pData, choiceList);
+                    spinner.setSelection(pos);
+                } else {
+                    int pos = getSpinnerPosition(FormStructureModalReview.getAnswers(), choiceList);
+                    spinner.setSelection(pos);
+                }
+
+
                 Log.v("dgfvhjjvgf", pData + " Data");
-                Log.v("dgfvhjjvgf", pos + " Position");
             }
         } catch (Exception e) {
-            String pData = getPrefilledData(formStructureModal.getId());
+            String pData = FormStructureModalReview.getAnswers();
             Log.v("pData", pData);
             Log.v("pDataInstanceId", pData);
             Log.v("pDataqid", pData);
@@ -896,33 +1030,29 @@ public class FormStructureFragment extends Fragment {
 
     }
 
-    private Spinner createSpinnerForGlobal(FormStructureModal formStructureModal) {
+    private Spinner createSpinnerForGlobal(FormStructureModalReview FormStructureModalReview) {
+
 
         List<Item> choiceList = new ArrayList<>();
         Item item = new Item("0", "Select");
         choiceList.add(item);
 
-        if (formStructureModal.getVlookup().equalsIgnoreCase("")) {
-            Log.v("Testing", "vlookupId: " + formStructureModal.getVlookup());
+        if (FormStructureModalReview.getVlookup().equalsIgnoreCase("")) {
+            Log.v("Testing", "vlookupId: " + FormStructureModalReview.getVlookup());
             GlobalDataSetValueDao globalDataSetValueDao = myDatabase.globalDataSetValueDao();
-            List<GlobalDataSetValue> globalDataSetValues = globalDataSetValueDao.getByGlobalDataSetId(Integer.parseInt(formStructureModal.getSelect_global_data_set_id()));
+            List<GlobalDataSetValue> globalDataSetValues = globalDataSetValueDao.getByGlobalDataSetId(Integer.parseInt(FormStructureModalReview.getSelect_global_data_set_id()));
             for (GlobalDataSetValue globalDataSetValue : globalDataSetValues) {
                 Item items = new Item(String.valueOf(globalDataSetValue.getId()), globalDataSetValue.getValue());
                 choiceList.add(items);
             }
 
         } else {
-            Log.v("Testing", "vlookupId: " + formStructureModal.getVlookup());
-            Log.v("Testing", "globaldatasetId:  " + formStructureModal.getSelect_global_data_set_id());
+
             MapDependencyFieldDao mapDependencyFieldDao = myDatabase.mapDependencyFieldDao();
-            MapDependencyField mapDependencyField = mapDependencyFieldDao.getDependencyByValue(Integer.parseInt(formStructureModal.getVlookup()), Integer.parseInt(formStructureModal.getSelect_global_data_set_id()));
-
-            Log.v("Testing", "First Query Result:  " + mapDependencyField.getId());
-            Log.v("Testing", "PreDefined Ans:  " + getParentSelectedId(formStructureModal.getVlookup_qustion_id()));
-
+            MapDependencyField mapDependencyField = mapDependencyFieldDao.getDependencyByValue(Integer.parseInt(FormStructureModalReview.getVlookup()), Integer.parseInt(FormStructureModalReview.getSelect_global_data_set_id()));
 
             MapDependencyFieldValueDao mapDependencyFieldValueDao = myDatabase.mapDependencyFieldValueDao();
-            List<MapDependencyFieldValue> mapDependencyFieldValue = mapDependencyFieldValueDao.getIdForMainTable(mapDependencyField.getId(), getParentSelectedId(formStructureModal.getVlookup_qustion_id()));
+            List<MapDependencyFieldValue> mapDependencyFieldValue = mapDependencyFieldValueDao.getIdForMainTable(mapDependencyField.getId(), getParentSelectedId(FormStructureModalReview.getVlookup_qustion_id()));
 
             GlobalDataSetValueDao globalDataSetValueDao = myDatabase.globalDataSetValueDao();
 
@@ -932,14 +1062,18 @@ public class FormStructureFragment extends Fragment {
 
                 Item items = new Item(String.valueOf(globalDataSetValues.getId()), globalDataSetValues.getValue());
                 choiceList.add(items);
+
+                Log.v("ssfsdsfd", items.getId() + " " + items.getName());
+
             }
         }
 
 
         Spinner spinner = new Spinner(getContext());
         spinner.setBackground(getResources().getDrawable(R.drawable.border));
-        spinner.setId(Integer.valueOf(formStructureModal.getId()));
-        spinner.setTag(formStructureModal.getVlookup_qustion_id());
+        spinner.setId(Integer.valueOf(FormStructureModalReview.getId()));
+        spinner.setTag(FormStructureModalReview.getVlookup_qustion_id());
+
 
         ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -951,11 +1085,10 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long index) {
 
-                handleCauseLogicForSpinner(formStructureModal, position);
-
+                handleCauseLogicForSpinner(FormStructureModalReview, position);
 
                 try {
-                    updatechildLayout(formStructureModal.getId());
+                    updatechildLayout(FormStructureModalReview.getId());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -967,28 +1100,41 @@ public class FormStructureFragment extends Fragment {
             }
         });
 
-        handleEffectBranchingLogic(formStructureModal, spinner);
+        handleEffectBranchingLogic(FormStructureModalReview, spinner);
 
 
         spinner.post(() -> {
             try {
-                if (choiceList.size() > 2) {
-                    String pData = getPrefilledData(formStructureModal.getId());
+                String pData = getPrefilledData(FormStructureModalReview.getId());
+                if (!pData.isEmpty()) {
                     int pos = getSpinnerPosition(pData, choiceList);
-
                     // Check if position is valid
                     if (pos >= 0 && pos < choiceList.size()) {
+                        spinner.setSelection(pos);
+                    } else {
+
+                        Log.v("setSelectionError", "Invalid position: " + pos);
+                    }
+                } else {
+
+                    int pos = getSpinnerPosition(FormStructureModalReview.getAnswers(), choiceList);
+
+                    if (pos >= 0 && pos < choiceList.size()) {
+                        Log.v("MyDebugPoint", "Set Pos: " + pos);
+
                         spinner.setSelection(pos);
                     } else {
                         Log.v("setSelectionError", "Invalid position: " + pos);
                     }
 
-                    Log.v("dfdsgdsfgsd", choiceList.size() + "  Size");
-                    Log.v("dfdsgdsfgsd", formStructureModal.getElement_label() + "   Selected Position:  " + pos);
-                    Log.v("dfdsgdsfgsd ", "Selected Data:  " + pData);
+
                 }
+                Log.v("dfdsgdsfgsd", choiceList.size() + "  Size");
+                Log.v("dfdsgdsfgsd ", "Selected Data:  " + pData);
+
             } catch (Exception e) {
-                String pData = getPrefilledData(formStructureModal.getId());
+
+                String pData = FormStructureModalReview.getAnswers();
                 Log.v("pData", pData);
                 Log.v("pDataInstanceId", pData);
                 Log.v("pDataqid", pData);
@@ -997,6 +1143,7 @@ public class FormStructureFragment extends Fragment {
         });
 
         return spinner;
+
 
     }
 
@@ -1031,15 +1178,15 @@ public class FormStructureFragment extends Fragment {
             View view = binding.layout.getChildAt(j);
             if (view instanceof Spinner) {
 
-                List<FormStructureModal> formStructureModalListt = formStructureModalList.stream().filter(e -> e.getVlookup_qustion_id().equalsIgnoreCase(pqid)).collect(Collectors.toList());
+                List<FormStructureModalReview> FormStructureModalReviewListt = FormStructureModalReviewList.stream().filter(e -> e.getVlookup_qustion_id().equalsIgnoreCase(pqid)).collect(Collectors.toList());
 
-                if (formStructureModalListt.size() > 0) {
+                if (FormStructureModalReviewListt.size() > 0) {
                     String lookupId = String.valueOf(binding.layout.getChildAt(j).getTag());
 
 
                     if (pqid.equalsIgnoreCase(lookupId)) {
 
-                        Log.v("MyDataList", formStructureModalListt.get(0).getElement_label() + " LookupId:  " + lookupId + " ParentQuestionID:  " + pqid);
+                        Log.v("MyDataList", FormStructureModalReviewListt.get(0).getElement_label() + " LookupId:  " + lookupId + " ParentQuestionID:  " + pqid);
 
 
                         List<Item> choiceList = new ArrayList<>();
@@ -1047,11 +1194,11 @@ public class FormStructureFragment extends Fragment {
                         choiceList.add(item);
 
                         MapDependencyFieldDao mapDependencyFieldDao = myDatabase.mapDependencyFieldDao();
-                        MapDependencyField mapDependencyField = mapDependencyFieldDao.getDependencyByValue(Integer.parseInt(formStructureModalListt.get(0).getVlookup()), Integer.parseInt(formStructureModalListt.get(0).getSelect_global_data_set_id()));
+                        MapDependencyField mapDependencyField = mapDependencyFieldDao.getDependencyByValue(Integer.parseInt(FormStructureModalReviewListt.get(0).getVlookup()), Integer.parseInt(FormStructureModalReviewListt.get(0).getSelect_global_data_set_id()));
 
                         MapDependencyFieldValueDao mapDependencyFieldValueDao = myDatabase.mapDependencyFieldValueDao();
 
-                        List<MapDependencyFieldValue> mapDependencyFieldValue = mapDependencyFieldValueDao.getIdForMainTable(mapDependencyField.getId(), getParentSelectedId(formStructureModalListt.get(0).getVlookup_qustion_id()));
+                        List<MapDependencyFieldValue> mapDependencyFieldValue = mapDependencyFieldValueDao.getIdForMainTable(mapDependencyField.getId(), getParentSelectedId(FormStructureModalReviewListt.get(0).getVlookup_qustion_id()));
 
                         GlobalDataSetValueDao globalDataSetValueDao = myDatabase.globalDataSetValueDao();
 
@@ -1074,22 +1221,36 @@ public class FormStructureFragment extends Fragment {
                         ((Spinner) view).post(() -> {
                             try {
                                 if (choiceList.size() > 2) {
-                                    String pData = getPrefilledData(formStructureModalListt.get(0).getId());
-                                    int pos = getSpinnerPosition(pData, choiceList);
 
-                                    // Check if position is valid
-                                    if (pos >= 0 && pos < choiceList.size()) {
-                                        ((Spinner) view).setSelection(pos);
+
+                                    String pData = getPrefilledData(FormStructureModalReviewListt.get(0).getId());
+
+                                    if (!pData.isEmpty()) {
+                                        int pos = getSpinnerPosition(pData, choiceList);
+                                        // Check if position is valid
+                                        if (pos >= 0 && pos < choiceList.size()) {
+                                            ((Spinner) view).setSelection(pos);
+                                        } else {
+
+                                            Log.v("setSelectionError", "Invalid position: " + pos);
+                                        }
                                     } else {
-                                        Log.v("setSelectionError", "Invalid position: " + pos);
-                                    }
 
+                                        int pos = getSpinnerPosition(FormStructureModalReviewListt.get(0).getAnswers(), choiceList);
+
+                                        if (pos >= 0 && pos < choiceList.size()) {
+                                            Log.v("MyDebugPoint", "Set Pos: " + pos);
+
+                                            ((Spinner) view).setSelection(pos);
+                                        } else {
+                                            Log.v("setSelectionError", "Invalid position: " + pos);
+                                        }
+                                    }
                                     Log.v("dfdsgdsfgsd", choiceList.size() + "  Size");
-                                    Log.v("dfdsgdsfgsd", formStructureModalListt.get(0).getElement_label() + "   Selected Position:  " + pos);
                                     Log.v("dfdsgdsfgsd ", "Selected Data:  " + pData);
                                 }
                             } catch (Exception e) {
-                                String pData = getPrefilledData(formStructureModalListt.get(0).getId());
+                                String pData = getPrefilledData(FormStructureModalReviewListt.get(0).getId());
                                 Log.v("pData", pData);
                                 Log.v("pDataInstanceId", pData);
                                 Log.v("pDataqid", pData);
@@ -1109,12 +1270,12 @@ public class FormStructureFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private RadioGroup createRadioButton(FormStructureModal formStructureModal) {
+    private RadioGroup createRadioButton(FormStructureModalReview FormStructureModalReview) {
         List<Item> choiceList = new ArrayList<>();
 
-        for (int i = 0; i < formStructureModal.getElement_choices().size(); i++) {
+        for (int i = 0; i < FormStructureModalReview.getElement_choices().size(); i++) {
             try {
-                Item items = new Item(formStructureModal.getElement_choices().get(i).getId(), formStructureModal.getElement_choices().get(i).getName());
+                Item items = new Item(FormStructureModalReview.getElement_choices().get(i).getId(), FormStructureModalReview.getElement_choices().get(i).getName());
                 choiceList.add(items);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1123,7 +1284,7 @@ public class FormStructureFragment extends Fragment {
 
         RadioGroup radioGroup = new RadioGroup(getContext());
         radioGroup.setOrientation(RadioGroup.VERTICAL);
-        radioGroup.setId(Integer.valueOf(formStructureModal.getId()));
+        radioGroup.setId(Integer.valueOf(FormStructureModalReview.getId()));
 
         for (int i = 0; i < choiceList.size(); i++) {
             Item choice = choiceList.get(i);
@@ -1160,14 +1321,14 @@ public class FormStructureFragment extends Fragment {
 
 
             radioButton.setId(Integer.parseInt(choice.getId()));
-            radioButton.setTag(formStructureModal.getId());
+            radioButton.setTag(FormStructureModalReview.getId());
             radioButton.setTextColor(ContextCompat.getColor(getContext(), R.color.black)); // Set text color
             radioButton.setButtonTintList(ColorStateList.valueOf(Color.BLACK)); // Set button color
             radioGroup.addView(radioButton);
         }
 
 
-        handleEffectBranchingLogic(formStructureModal, radioGroup);
+        handleEffectBranchingLogic(FormStructureModalReview, radioGroup);
 
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -1184,7 +1345,7 @@ public class FormStructureFragment extends Fragment {
                     int selectedId = selectedRadioButton.getId();
                     Log.v("SelectedRadioButtonID", "Selected ID: " + selectedId);
 
-                    handleCauseBranchingLogicRadio(formStructureModal, selectedId, selectedText);
+                    handleCauseBranchingLogicRadio(FormStructureModalReview, selectedId, selectedText);
 
 
                 }
@@ -1195,11 +1356,14 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void run() {
                 try {
-                    String pData = getPrefilledData(formStructureModal.getId());
+                    String pData = getPrefilledData(FormStructureModalReview.getId());
                     if (pData != null && !pData.isEmpty()) {
                         int selectedId = Integer.parseInt(pData); // Convert pData to int
                         radioGroup.check(selectedId);
                         // Pre-select the radio button with the ID from pData
+                    } else {
+                        int selectedId = Integer.parseInt(FormStructureModalReview.getAnswers()); // Convert pData to int
+                        radioGroup.check(selectedId);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1215,15 +1379,15 @@ public class FormStructureFragment extends Fragment {
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void showHideLaoyoutbyTag(String tag, boolean isShow) {
         int childCount = binding.layout.getChildCount(); // Cache child count
-        List<FormStructureModal> newList = formStructureModalList.stream()
+        List<FormStructureModalReview> newList = FormStructureModalReviewList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(tag))
                 .collect(Collectors.toList());
 
         if (newList.isEmpty()) {
-            return; // Exit early if no matching FormStructureModal is found
+            return; // Exit early if no matching FormStructureModalReview is found
         }
 
-        FormStructureModal formStructureModal = newList.get(0);
+        FormStructureModalReview FormStructureModalReview = newList.get(0);
 
         for (int i = 0; i < childCount; i++) {
             View child = binding.layout.getChildAt(i);
@@ -1253,7 +1417,7 @@ public class FormStructureFragment extends Fragment {
 
                     try {
                         // Handle branching logic
-                        List<BranchinglogicModal> branchingLogic = formStructureModal.getCause_branching_logic();
+                        List<BranchinglogicModal> branchingLogic = FormStructureModalReview.getCause_branching_logic();
                         if (!branchingLogic.isEmpty()) {
                             List<String> effectQuestionIdsToShow = new ArrayList<>();
                             List<String> effectQuestionIdsToHide = new ArrayList<>();
@@ -1300,19 +1464,19 @@ public class FormStructureFragment extends Fragment {
 
 
     @SuppressLint("ResourceType")
-    private int createMultiCheckbox(FormStructureModal formStructureModal, int index) {
+    private int createMultiCheckbox(FormStructureModalReview FormStructureModalReview, int index) {
         try {
 
-            for (int i = 0; i < formStructureModal.getElement_choices().size(); i++) {
-                String label = formStructureModal.getElement_choices().get(i).getName();
-                String id = formStructureModal.getElement_choices().get(i).getId();
+            for (int i = 0; i < FormStructureModalReview.getElement_choices().size(); i++) {
+                String label = FormStructureModalReview.getElement_choices().get(i).getName();
+                String id = FormStructureModalReview.getElement_choices().get(i).getId();
                 boolean isChecked = false;
                 CheckBox checkBox = createCheckBox(label, isChecked);
                 checkBox.setId(Integer.valueOf(id));
-                checkBox.setTag(formStructureModal.getId());
+                checkBox.setTag(FormStructureModalReview.getId());
 
 
-                handleEffectBranchingLogic(formStructureModal, checkBox);
+                handleEffectBranchingLogic(FormStructureModalReview, checkBox);
 
 
                 checkBox.setOnCheckedChangeListener((buttonView, isCheckeds) -> {
@@ -1320,20 +1484,20 @@ public class FormStructureFragment extends Fragment {
                     if (checkBox.getId() == 99) {
 
                         try {
-                            if (formStructureModal.getCause_branching_logic().size() > 0) {
-                                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                                for (int j = 0; j < formStructureModal.getCause_branching_logic().size(); j++) {
-//                                    String cause_id = formStructureModal.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
+                            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
+                                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
+                                for (int j = 0; j < FormStructureModalReview.getCause_branching_logic().size(); j++) {
+//                                    String cause_id = FormStructureModalReview.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
 
-                                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(j).getBranching());
+                                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(j).getBranching());
 
                                     if (Arrays.asList(cause_ids).contains(String.valueOf(checkBox.getId())) && isCheckeds) {
 
                                         Log.v("Branching:Cond", "Show Item");
-                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(j).getEffect_question_id(), true);
+                                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), true);
                                     } else {
                                         Log.v("Branching:Cond", "Hide Item");
-                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(j).getEffect_question_id(), false);
+                                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), false);
                                     }
                                 }
                             }
@@ -1347,7 +1511,7 @@ public class FormStructureFragment extends Fragment {
 
 
                 try {
-                    String pData = getPrefilledData(formStructureModal.getId());
+                    String pData = FormStructureModalReview.getAnswers();
                     if (pData != null && !pData.isEmpty()) {
                         // Convert pData to int
                         if (pData.contains(String.valueOf(checkBox.getId()))) {
@@ -1358,6 +1522,25 @@ public class FormStructureFragment extends Fragment {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+
+                try {
+                    String pData = getPrefilledData(FormStructureModalReview.getId());
+                    if (pData != null && !pData.isEmpty()) {
+                        // Convert pData to int
+                        if (pData.contains(String.valueOf(checkBox.getId()))) {
+                            checkBox.setChecked(true);
+                        }
+                        // Pre-select the radio button with the ID from pData
+                    } else {
+                        if (FormStructureModalReview.getAnswers().contains(String.valueOf(checkBox.getId()))) {
+                            checkBox.setChecked(true);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 
                 if (index != -1) {
                     binding.layout.addView(checkBox, index++);
@@ -1384,89 +1567,81 @@ public class FormStructureFragment extends Fragment {
         return checkBox;
     }
 
-    private View createLabelTextView(FormStructureModal formStructureModal) {
+    private View createLabelTextView(FormStructureModalReview FormStructureModalReview) {
         TextView textView = new TextView(getContext());
         textView.setTextSize(18);
         textView.setId(0);
-        textView.setTag(formStructureModal.getId());
-        textView.setText(formStructureModal.getElement_label());
+        textView.setTag(FormStructureModalReview.getId());
+        textView.setText(FormStructureModalReview.getElement_label());
         textView.setTypeface(null, Typeface.BOLD);
         textView.setLayoutParams(layoutParams);
         textView.setTextColor(getContext().getResources().getColor(R.color.black));
-        handleEffectBranchingLogic(formStructureModal, textView);
+        handleEffectBranchingLogic(FormStructureModalReview, textView);
 
 
         return textView;
     }
 
 
-    private TextView createLabelCheckbox(FormStructureModal formStructureModal) {
+    private TextView createLabelCheckbox(FormStructureModalReview FormStructureModalReview) {
 
         TextView headingTextView = new TextView(getContext());
-        headingTextView.setText(formStructureModal.getElement_label());
+        headingTextView.setText(FormStructureModalReview.getElement_label());
         headingTextView.setId(0);
-        headingTextView.setTag(formStructureModal.getId());
+        headingTextView.setTag(FormStructureModalReview.getId());
         headingTextView.setTextColor(getContext().getResources().getColor(R.color.black));
 
 
-        handleEffectBranchingLogic(formStructureModal, headingTextView);
+        handleEffectBranchingLogic(FormStructureModalReview, headingTextView);
 
 
         return headingTextView;
     }
 
 
-    private TextView createLabelRadio(FormStructureModal formStructureModal) {
+    private TextView createLabelRadio(FormStructureModalReview FormStructureModalReview) {
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(formStructureModal.getElement_label());
+        labelTextView.setText(FormStructureModalReview.getElement_label());
         labelTextView.setId(0);
-        labelTextView.setTag(formStructureModal.getId());
+        labelTextView.setTag(FormStructureModalReview.getId());
         labelTextView.setTextColor(getContext().getResources().getColor(R.color.black));
         labelTextView.setTypeface(null, Typeface.BOLD);
         labelTextView.setLayoutParams(layoutParams);
 
-        handleEffectBranchingLogic(formStructureModal, labelTextView);
+        handleEffectBranchingLogic(FormStructureModalReview, labelTextView);
 
 
         return labelTextView;
     }
 
 
-    private View createLabelEditTextView(FormStructureModal formStructureModal) {
+    private View createLabelEditTextView(FormStructureModalReview FormStructureModalReview) {
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(formStructureModal.getElement_label());
+        labelTextView.setText(FormStructureModalReview.getElement_label());
         labelTextView.setId(0);
         labelTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
         labelTextView.setTypeface(null, Typeface.BOLD);
         labelTextView.setLayoutParams(layoutParams);
-        labelTextView.setTag(formStructureModal.getId());
+        labelTextView.setTag(FormStructureModalReview.getId());
 
-        handleEffectBranchingLogic(formStructureModal, labelTextView);
+        handleEffectBranchingLogic(FormStructureModalReview, labelTextView);
 
 
         return labelTextView;
     }
 
-    private View createLabelEditElement(FormStructureModal formStructureModal, EditText editText) {
+    private View createLabelEditElement(FormStructureModalReview FormStructureModalReview, View editText) {
 
         TextView elementNote = new TextView(getContext());
         elementNote.setId(0);
         elementNote.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
         elementNote.setTypeface(null, Typeface.BOLD);
         elementNote.setLayoutParams(layoutParams);
-        elementNote.setTag(formStructureModal.getId());
+        elementNote.setTag(FormStructureModalReview.getId());
         elementNote.setTextSize(13);
-        elementNote.setText("Note* :" + formStructureModal.getElement_note());
-
-        handleEffectBranchingLogic(formStructureModal, elementNote);
-
-
-        if (!formStructureModal.getElement_note().isEmpty() && editText.getVisibility() == VISIBLE) {
-            elementNote.setVisibility(VISIBLE);
-        } else {
-            elementNote.setVisibility(View.GONE);
-        }
-
+        elementNote.setText("Feedback* :" + FormStructureModalReview.getFeedback());
+        elementNote.setTextColor(getContext().getResources().getColor(R.color.red));
+        handleEffectBranchingLogic(FormStructureModalReview, elementNote);
         return elementNote;
     }
 
@@ -1538,7 +1713,7 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-    private LinearLayout createCalculatedField(FormStructureModal formStructureModal) {
+    private LinearLayout createCalculatedField(FormStructureModalReview FormStructureModalReview) {
         // Create a LinearLayout to hold EditText and buttons
 
 
@@ -1546,8 +1721,8 @@ public class FormStructureFragment extends Fragment {
         layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER_VERTICAL);
-        layout.setId(Integer.valueOf(formStructureModal.getId()));
-        layout.setTag(formStructureModal.getId());
+        layout.setId(Integer.valueOf(FormStructureModalReview.getId()));
+        layout.setTag(FormStructureModalReview.getId());
 
         // Create EditText
         EditText editText = new EditText(getContext());
@@ -1556,12 +1731,12 @@ public class FormStructureFragment extends Fragment {
         editText.setBackground(getResources().getDrawable(R.drawable.border));
         editText.setTextSize(14);
         editText.setHeight(70);
-        editText.setTag(formStructureModal.getId());
-        editText.setId(Integer.valueOf(formStructureModal.getId()));
+        editText.setTag(FormStructureModalReview.getId());
+        editText.setId(Integer.valueOf(FormStructureModalReview.getId()));
         editText.setPadding(7, 0, 0, 0);
 
 
-        if (formStructureModal.getReadonly().equalsIgnoreCase("1")) {
+        if (FormStructureModalReview.getReadonly().equalsIgnoreCase("1")) {
             editText.setEnabled(false);
         } else {
             editText.setEnabled(true);
@@ -1573,14 +1748,14 @@ public class FormStructureFragment extends Fragment {
         button1.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         button1.setText("CALCULATE");
         button1.setId(0);
-        button1.setTag(formStructureModal.getId());
+        button1.setTag(FormStructureModalReview.getId());
 
 
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-                    float data = calculateLogic(formStructureModal.getCalculation_logic());
+                    float data = calculateLogic(FormStructureModalReview.getCalculation_logic());
                     editText.setText(data + "");
                 } catch (Exception e) {
 //                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -1594,21 +1769,21 @@ public class FormStructureFragment extends Fragment {
         layout.addView(editText);
         layout.addView(button1);
 
-        handleEffectBranchingLogic(formStructureModal, layout);
+        handleEffectBranchingLogic(FormStructureModalReview, layout);
 
 
         return layout;
     }
 
-    private EditText createEditText(FormStructureModal formStructureModal) {
+    private EditText createEditText(FormStructureModalReview FormStructureModalReview) {
         EditText editText = new EditText(getContext());
 
-        int validationType = Integer.valueOf(formStructureModal.getElement_validation());
-        int var = Integer.valueOf(formStructureModal.getElement_validation() + formStructureModal.getElement_required());
+        int validationType = Integer.valueOf(FormStructureModalReview.getElement_validation());
+        int var = Integer.valueOf(FormStructureModalReview.getElement_validation() + FormStructureModalReview.getElement_required());
         String formattedNumber = String.format("%02d", var);
-        Log.v("validation", formStructureModal.getElement_validation() + " " + formStructureModal.getElement_required() + " => " + formattedNumber);
+        Log.v("validation", FormStructureModalReview.getElement_validation() + " " + FormStructureModalReview.getElement_required() + " => " + formattedNumber);
 
-        editText.setId(Integer.valueOf(formStructureModal.getId()));
+        editText.setId(Integer.valueOf(FormStructureModalReview.getId()));
 
         editText.setTag(Integer.valueOf(formattedNumber));
 
@@ -1633,25 +1808,25 @@ public class FormStructureFragment extends Fragment {
                 editText.setHint("*Validation: Email Address");
                 break;
             case 4:
-                if (Integer.valueOf(formStructureModal.getMaximum()) == 0 && Integer.valueOf(formStructureModal.getMinimum()) == 0) {
+                if (Integer.valueOf(FormStructureModalReview.getMaximum()) == 0 && Integer.valueOf(FormStructureModalReview.getMinimum()) == 0) {
                     editText.setHint("*Validation: Integer");
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateInteger(editText);
                 } else {
-                    editText.setHint("*Validation: Integer b/w " + formStructureModal.getMinimum() + " To " + formStructureModal.getMaximum());
+                    editText.setHint("*Validation: Integer b/w " + FormStructureModalReview.getMinimum() + " To " + FormStructureModalReview.getMaximum());
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateInteger(editText);
 
                 }
                 break;
             case 5:
-                if (Integer.valueOf(formStructureModal.getMaximum()) == 0 && Integer.valueOf(formStructureModal.getMinimum()) == 0) {
+                if (Integer.valueOf(FormStructureModalReview.getMaximum()) == 0 && Integer.valueOf(FormStructureModalReview.getMinimum()) == 0) {
                     editText.setHint("*Validation: Integer||Decimal");
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateIntegerDecimal(editText);
                 } else {
-                    editText.setFilters(new InputFilter[]{new InputFilterMinMax(Integer.valueOf(formStructureModal.getMinimum()), Integer.valueOf(formStructureModal.getMaximum()))});
-                    editText.setHint("*Validation: Integer || Decimal b/w " + formStructureModal.getMinimum() + " To " + formStructureModal.getMaximum());
+                    editText.setFilters(new InputFilter[]{new FormStructureFragmentReview.InputFilterMinMax(Integer.valueOf(FormStructureModalReview.getMinimum()), Integer.valueOf(FormStructureModalReview.getMaximum()))});
+                    editText.setHint("*Validation: Integer || Decimal b/w " + FormStructureModalReview.getMinimum() + " To " + FormStructureModalReview.getMaximum());
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateIntegerDecimal(editText);
 
@@ -1670,17 +1845,17 @@ public class FormStructureFragment extends Fragment {
 
                 break;
             case 8:
-                if (Integer.valueOf(formStructureModal.getMaximum()) == 0) {
+                if (Integer.valueOf(FormStructureModalReview.getMaximum()) == 0) {
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     editText.setHint("*Validation: Integer");
                     validateInteger(editText);
                 } else {
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
-                    editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(Integer.parseInt(formStructureModal.getMaximum()))});
+                    editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(Integer.parseInt(FormStructureModalReview.getMaximum()))});
                     validateInteger(editText);
 
-                    if (!formStructureModal.getMaximum().equalsIgnoreCase("0")) {
-                        editText.setHint("*Validation: Integer digits b/w " + formStructureModal.getMinimum() + " To " + formStructureModal.getMaximum());
+                    if (!FormStructureModalReview.getMaximum().equalsIgnoreCase("0")) {
+                        editText.setHint("*Validation: Integer digits b/w " + FormStructureModalReview.getMinimum() + " To " + FormStructureModalReview.getMaximum());
                     }
 
 
@@ -1690,62 +1865,65 @@ public class FormStructureFragment extends Fragment {
                 break;
         }
 
-        String pData = getPrefilledData(formStructureModal.getId());
+        String pData = getPrefilledData(FormStructureModalReview.getId());
         Log.v("pDataSetValue", "fillData: " + pData);
-        Log.v("pDataSetValue", formStructureModal.getElement_label());
-        Log.v("pDataSetValue", formStructureModal.getId());
+        Log.v("pDataSetValue", FormStructureModalReview.getElement_label());
+        Log.v("pDataSetValue", FormStructureModalReview.getId());
         if (!pData.isEmpty()) {
-            Log.v("pDataSetValue", "Set value: " + formStructureModal.getId());
+            Log.v("pDataSetValue", "Set value: " + FormStructureModalReview.getId());
             editText.setText(pData);
+        } else {
+            editText.setText(FormStructureModalReview.getAnswers());
+
         }
 
 
         editText.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
         editText.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.border));
         editText.setTextSize(14);
-        if (formStructureModal.getElement_type().equalsIgnoreCase("textarea")) {
+        if (FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
             editText.setHeight(190);
         } else {
             editText.setHeight(70);
         }
         editText.setPadding(7, 0, 0, 0);
 
-        handleEffectBranchingLogic(formStructureModal, editText);
+        handleEffectBranchingLogic(FormStructureModalReview, editText);
 
 
         //Interlink logic is implemented here
 
-        if (!formStructureModal.getInterlink_question_id().equalsIgnoreCase("")) {
-            editText.setEnabled(false);
-            String data = getPrefilledData(formStructureModal.getInterlink_question_id());
-            String elementType = getViewInstanceByQuestionId(formStructureModal.getInterlink_question_id());
-            if (elementType.equalsIgnoreCase("text")) {
-                if (data.equalsIgnoreCase("")) {
-                    String value = getValueFromLayoutByQuestionId(formStructureModal.getInterlink_question_id());
-                    if (!value.equalsIgnoreCase("")) {
-                        editText.setText(value);
-                    }
-                } else {
-                    Log.v("MyDebuggingData", data + "  getValueFromDB");
-                    editText.setText(data);
-                }
-            } else if (elementType.equalsIgnoreCase("select")) {
-                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
-                    String value = getValueFromLayoutByQuestionIdSpinner(formStructureModal.getInterlink_question_id());
-                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
-                        editText.setText(value);
-                    } else {
-                        editText.setText("N/A");
-                    }
-                } else {
-                    Log.v("MyDebuggingData", data + "  getValueFromDB");
-                    String res = getSpinnerNameFromQidFromValue(formStructureModal.getInterlink_question_id(), data);
-                    editText.setText(res);
-                }
-            }
-        } else {
-            editText.setEnabled(true);
-        }
+//        if (!FormStructureModalReview.getInterlink_question_id().equalsIgnoreCase("")) {
+//            editText.setEnabled(false);
+//            String data = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
+//            String elementType = getViewInstanceByQuestionId(FormStructureModalReview.getInterlink_question_id());
+//            if (elementType.equalsIgnoreCase("text")) {
+//                if (data.equalsIgnoreCase("")) {
+//                    String value = getValueFromLayoutByQuestionId(FormStructureModalReview.getInterlink_question_id());
+//                    if (!value.equalsIgnoreCase("")) {
+//                        editText.setText(value);
+//                    }
+//                } else {
+//                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+//                    editText.setText(data);
+//                }
+//            } else if (elementType.equalsIgnoreCase("select")) {
+//                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
+//                    String value = getValueFromLayoutByQuestionIdSpinner(FormStructureModalReview.getInterlink_question_id());
+//                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
+//                        editText.setText(value);
+//                    } else {
+//                        editText.setText("N/A");
+//                    }
+//                } else {
+//                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+//                    String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
+//                    editText.setText(res);
+//                }
+//            }
+//        } else {
+//            editText.setEnabled(true);
+//        }
 
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -1762,11 +1940,10 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
 
-                handleCauseLogicForEditText(formStructureModal, editText);
+                handleCauseLogicForEditText(FormStructureModalReview, editText);
 
             }
         });
-
 
         return editText;
     }
@@ -1791,7 +1968,6 @@ public class FormStructureFragment extends Fragment {
 
                     Log.v("validationmatcharray", validationCondition[0] + " " + validationCondition[1]);
 
-
                     int validation;
                     int required;
 
@@ -1808,6 +1984,9 @@ public class FormStructureFragment extends Fragment {
                         // Handle the case where validationCondition[1] is empty
                         required = 0; // or some other default value
                     }
+
+
+
 
                     if (required == 1) {
 
@@ -1873,13 +2052,13 @@ public class FormStructureFragment extends Fragment {
                     //check for range
                     try {
                         int id = binding.layout.getChildAt(i).getId();
-                        List<FormStructureModal> formStructure = formStructureModalList.stream()
+                        List<FormStructureModalReview> formStructure = FormStructureModalReviewList.stream()
                                 .filter(e -> e.getId().equalsIgnoreCase(String.valueOf(id)))
                                 .collect(Collectors.toList());
                         if (!formStructure.isEmpty() &&
                                 !editText.getText().toString().equalsIgnoreCase("")) {
 
-                            FormStructureModal structureModal = formStructure.get(0);
+                            FormStructureModalReview structureModal = formStructure.get(0);
                             int min = Integer.parseInt(structureModal.getMinimum());
                             int max = Integer.parseInt(structureModal.getMaximum());
                             int filledData = Integer.parseInt(editText.getText().toString());
@@ -1915,7 +2094,7 @@ public class FormStructureFragment extends Fragment {
 
                     if (selectedItem != null) {
 
-                        List<FormStructureModal> form = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
+                        List<FormStructureModalReview> form = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
 
                         if (form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
                             Toast.makeText(getContext(), "Please Fill " + form.get(0).getElement_label(), Toast.LENGTH_SHORT).show();
@@ -1978,6 +2157,10 @@ public class FormStructureFragment extends Fragment {
             return row.getField_value();
         }
         return "";
+    }
+
+    public String getPrefilledDatas(FormStructureModalReview formStructureModalReview) {
+        return formStructureModalReview.getAnswers();
     }
 
     public int getSpinnerPosition(String val, List<Item> choiceList) {
@@ -2060,9 +2243,9 @@ public class FormStructureFragment extends Fragment {
         for (String elementVariable : parameterList) {
 
 
-            String str = formStructureModalList.stream()
+            String str = FormStructureModalReviewList.stream()
                     .filter(e -> e.getElement_variable().equalsIgnoreCase(elementVariable))
-                    .map(FormStructureModal::getId)
+                    .map(FormStructureModalReview::getId)
                     .findFirst()
                     .get();
 
@@ -2143,8 +2326,8 @@ public class FormStructureFragment extends Fragment {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private String getViewInstanceByQuestionId(String qid) {
-        List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-        return formStructureModals.get(0).getElement_type();
+        List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+        return FormStructureModalReviews.get(0).getElement_type();
     }
 
 
@@ -2179,8 +2362,8 @@ public class FormStructureFragment extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-            List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
+            List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+            List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
             List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
             return elementChoices.get(0).getName();
         } catch (Exception e) {
@@ -2276,15 +2459,15 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-    public void handleEffectBranchingLogic(FormStructureModal formStructureModal, View v) {
+    public void handleEffectBranchingLogic(FormStructureModalReview FormStructureModalReview, View v) {
         try {
-            if (formStructureModal.getEffect_branching_logic().isEmpty()) {
+            if (FormStructureModalReview.getEffect_branching_logic().isEmpty()) {
                 v.setVisibility(View.VISIBLE);
                 return;
             }
 
             v.setVisibility(View.GONE);
-            String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
+            String branch = FormStructureModalReview.getEffect_branching_logic().get(0).getBranching();
             String[] causeIds = extractCauseIds(branch);
 
             for (String causeId : causeIds) {
@@ -2293,26 +2476,26 @@ public class FormStructureFragment extends Fragment {
 
                 if (branch.contains(">")) {
                     selectedId = getSpinnerNameFromQidFromValue(
-                            formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
+                            FormStructureModalReview.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
                     if (Integer.parseInt(selectedId) > numericCauseId) {
                         v.setVisibility(View.VISIBLE);
                         break;
                     }
                 } else if (branch.contains("<")) {
                     selectedId = getSpinnerNameFromQidFromValue(
-                            formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
+                            FormStructureModalReview.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
                     if (Integer.parseInt(selectedId) < numericCauseId) {
                         v.setVisibility(View.VISIBLE);
                         break;
                     }
                 } else if (branch.contains("|")) {
-                    String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                    String id = getPrefilledData(FormStructureModalReview.getEffect_branching_logic().get(0).getCause_question_id());
                     if (Arrays.asList(causeIds).contains(id)) {
                         v.setVisibility(View.VISIBLE);
                         break;
                     }
                 } else {
-                    selectedId = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
+                    selectedId = getPrefilledData(FormStructureModalReview.getEffect_branching_logic().get(0).getCause_question_id());
                     if (Integer.parseInt(selectedId) == numericCauseId) {
                         v.setVisibility(View.VISIBLE);
                         break;
@@ -2325,92 +2508,18 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-//    public void handleEffectBranchingLogic(FormStructureModal formStructureModal, View v) {
-//
-//        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-//            v.setVisibility(View.GONE);
-//            Log.v("FoundData", formStructureModal.getElement_label());
-//            try {
-//                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-//
-//                String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
-//
-//                Log.v("FoundData", cause_ids[0]);
-//
-//
-//                String selectedId = "";
-//
-//
-//
-//                for (String cause_id : cause_ids) {
-//
-//                    Log.v("FoundData", cause_id);
-//
-//
-//
-//                    int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
-//
-//                    Log.v("FoundData", numericCauseId + "");
-//
-//                    if (branch.contains(">")) {
-//
-//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//
-//                        Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
-//                        if (numericSelectedId > numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    } else if (branch.contains("<")) {
-//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//
-//                        if (numericSelectedId < numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    }else if (branch.contains("|")) {
-//                        try {
-//                            String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-//                            if (Arrays.asList(cause_ids).contains(id)) {
-//                                v.setVisibility(View.VISIBLE);
-//                            }
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }else {
-//                        selectedId = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//                        if (numericSelectedId == numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    }
-//                }
-//
-//            } catch (Exception e) {
-//                Log.v("FoundData", e.getCause() + "  " + e.getMessage());
-//
-//            }
-//
-//        } else {
-//            v.setVisibility(VISIBLE);
-//        }
-//    }
-
-    public void handleCauseLogicForEditText(FormStructureModal formStructureModal, EditText editText) {
+    public void handleCauseLogicForEditText(FormStructureModalReview FormStructureModalReview, EditText editText) {
         try {
 
-            if (formStructureModal.getCause_branching_logic().size() > 0) {
+            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
 
-                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
+                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
+                for (int i = 0; i < FormStructureModalReview.getCause_branching_logic().size(); i++) {
+                    //String cause_id = FormStructureModalReview.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
 
 
-                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
+                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(i).getBranching());
+                    String branch = FormStructureModalReview.getCause_branching_logic().get(i).getBranching();
 
 
                     for (String cause_id : cause_ids) {
@@ -2427,108 +2536,26 @@ public class FormStructureFragment extends Fragment {
                         if (branch.contains(">")) {
                             Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
                             if (numericSelectedId > numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         } else if (branch.contains("<")) {
                             if (numericSelectedId < numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         } else {
                             if (numericSelectedId == numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                break;
-                            }
-                        }
-                    }
-
-
-                }
-
-            }
-        } catch (Exception e) {
-            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
-        }
-    }
-
-
-    public void handleCauseLogicForSpinner(FormStructureModal formStructureModal, int position) {
-        try {
-
-            if (formStructureModal.getCause_branching_logic().size() > 0) {
-
-                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-
-
-                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
-
-
-                    for (String cause_id : cause_ids) {
-
-                        Log.v("FoundDataCauseID", cause_id);
-
-
-                        if (position == 0) {
-                            showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                            continue;
-                        }
-
-
-                        int numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getId());
-                        int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
-
-                        Log.v("FoundData", numericSelectedId + "");
-                        Log.v("FoundData", numericCauseId + "");
-
-                        if (branch.contains(">")) {
-                            Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
-                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getName());
-
-                            if (numericSelectedId > numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                break;
-                            } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                break;
-                            }
-                        } else if (branch.contains("<")) {
-                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getName());
-
-                            if (numericSelectedId < numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                break;
-                            } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                                break;
-                            }
-                        } else if (branch.contains("|")) {
-                            if (position != 0 && Arrays.asList(cause_ids).contains(formStructureModal.getElement_choices().get(position - 1).getId())) {
-                                Log.v("Branching:Cond", "Show Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                            } else {
-                                Log.v("Branching:Cond", "Hide Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
-                            }
-                        } else {
-                            numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getId());
-                            if (numericSelectedId == numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
-                                break;
-                            } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         }
@@ -2545,13 +2572,95 @@ public class FormStructureFragment extends Fragment {
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void handleCauseBranchingLogicRadio(FormStructureModal formStructureModal, int selectedId, String selectedText) {
+    public void handleCauseLogicForSpinner(FormStructureModalReview FormStructureModalReview, int position) {
         try {
-            if (formStructureModal.getCause_branching_logic().size() > 0) {
-                Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
-                for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                    String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
-                    String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
+
+            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
+
+                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
+                for (int i = 0; i < FormStructureModalReview.getCause_branching_logic().size(); i++) {
+                    //String cause_id = FormStructureModalReview.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
+
+
+                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(i).getBranching());
+                    String branch = FormStructureModalReview.getCause_branching_logic().get(i).getBranching();
+
+
+                    for (String cause_id : cause_ids) {
+
+                        Log.v("FoundDataCauseID", cause_id);
+
+                        if (position == 0) {
+                            showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                            continue;
+                        }
+
+
+                        int numericSelectedId = Integer.parseInt(FormStructureModalReview.getElement_choices().get(position - 1).getId());
+                        int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
+
+                        Log.v("FoundData", numericSelectedId + "");
+                        Log.v("FoundData", numericCauseId + "");
+
+                        if (branch.contains(">")) {
+                            Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
+                            numericSelectedId = Integer.parseInt(FormStructureModalReview.getElement_choices().get(position - 1).getName());
+
+                            if (numericSelectedId > numericCauseId) {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else if (branch.contains("<")) {
+                            numericSelectedId = Integer.parseInt(FormStructureModalReview.getElement_choices().get(position - 1).getName());
+
+                            if (numericSelectedId < numericCauseId) {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        } else if (branch.contains("|")) {
+                            if (position != 0 && Arrays.asList(cause_ids).contains(FormStructureModalReview.getElement_choices().get(position - 1).getId())) {
+                                Log.v("Branching:Cond", "Show Item");
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                            } else {
+                                Log.v("Branching:Cond", "Hide Item");
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                            }
+                        } else {
+                            numericSelectedId = Integer.parseInt(FormStructureModalReview.getElement_choices().get(position - 1).getId());
+                            if (numericSelectedId == numericCauseId) {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                break;
+                            } else {
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                break;
+                            }
+                        }
+                    }
+
+
+                }
+
+            }
+        } catch (Exception e) {
+            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+        }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void handleCauseBranchingLogicRadio(FormStructureModalReview FormStructureModalReview, int selectedId, String selectedText) {
+        try {
+            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
+                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
+                for (int i = 0; i < FormStructureModalReview.getCause_branching_logic().size(); i++) {
+                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(i).getBranching());
+                    String branch = FormStructureModalReview.getCause_branching_logic().get(i).getBranching();
                     for (String cause_id : cause_ids) {
                         Log.v("FoundData", cause_id);
                         int numericSelectedId = 0;
@@ -2565,37 +2674,37 @@ public class FormStructureFragment extends Fragment {
                             numericSelectedId = Integer.parseInt(selectedText);
 
                             if (numericSelectedId > numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         } else if (branch.contains("<")) {
                             numericSelectedId = Integer.parseInt(selectedText);
 
                             if (numericSelectedId < numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         } else if (branch.contains("|")) {
                             if (Arrays.asList(cause_ids).contains(String.valueOf(selectedId))) {
                                 Log.v("Branching:Cond", "Show Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                             } else {
                                 Log.v("Branching:Cond", "Hide Item");
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                             }
                         } else {
                             numericSelectedId = selectedId;
                             if (numericSelectedId == numericCauseId) {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), true);
                                 break;
                             } else {
-                                showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(i).getEffect_question_id(), false);
                                 break;
                             }
                         }
