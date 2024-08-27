@@ -47,6 +47,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.android.gids.AddMoreList;
+import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormListModal;
 import com.android.gids.FormStructureModal;
@@ -205,7 +206,7 @@ public class FormStructureFragment extends Fragment {
 
                                 } else {
                                     try {
-                                        Toast.makeText(getContext(),"Validation Failed", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(),"Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
                                         binding.loadingAnim.setVisibility(View.GONE);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -851,9 +852,12 @@ public class FormStructureFragment extends Fragment {
         spinner.setId(Integer.valueOf(formStructureModal.getId()));
         spinner.setTag(formStructureModal.getVlookup_qustion_id());
 
-        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+//        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+
+        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+        spinner.setAdapter(spinnerAdapter);
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -930,7 +934,7 @@ public class FormStructureFragment extends Fragment {
                 int secondary = mapDependencyFieldValue1.getGlobalDataSetValueIdSecondry();
                 GlobalDataSetValue globalDataSetValues = globalDataSetValueDao.getById(secondary);
 
-                Item items = new Item(String.valueOf(globalDataSetValues.getId()), globalDataSetValues.getValue());
+                Item items = new Item(String.valueOf(globalDataSetValues.getId()), globalDataSetValues.getValue().replace("\n",""));
                 choiceList.add(items);
             }
         }
@@ -941,9 +945,14 @@ public class FormStructureFragment extends Fragment {
         spinner.setId(Integer.valueOf(formStructureModal.getId()));
         spinner.setTag(formStructureModal.getVlookup_qustion_id());
 
-        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+//        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+
+
+
+        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+        spinner.setAdapter(spinnerAdapter);
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1066,9 +1075,15 @@ public class FormStructureFragment extends Fragment {
 
                         Log.v("dssdsdfds", choiceList.size() + "");
 
-                        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                        ((Spinner) view).setAdapter(adapter);
+//                        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
+//                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//                        ((Spinner) view).setAdapter(adapter);
+
+
+                        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+                        ((Spinner) view).setAdapter(spinnerAdapter);
+
+
 
 
                         ((Spinner) view).post(() -> {
@@ -1907,23 +1922,33 @@ public class FormStructureFragment extends Fragment {
 
                 }
 
+
+
                 if (binding.layout.getChildAt(i) instanceof Spinner) {
-
-                    Item selectedItem = (Item) ((Spinner) binding.layout.getChildAt(i)).getSelectedItem();
-
+                    Spinner spinner = (Spinner) binding.layout.getChildAt(i);
+                    Item selectedItem = (Item) spinner.getSelectedItem();
                     String id = String.valueOf(binding.layout.getChildAt(i).getId());
 
                     if (selectedItem != null) {
+                        List<FormStructureModal> form = formStructureModalList.stream()
+                                .filter(e -> e.getId().equalsIgnoreCase(id))
+                                .collect(Collectors.toList());
 
-                        List<FormStructureModal> form = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
-
-                        if (form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
-                            Toast.makeText(getContext(), "Please Fill " + form.get(0).getElement_label(), Toast.LENGTH_SHORT).show();
+                        if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
+                            spinner.requestFocus();
+                            TextView errorText = (TextView) spinner.getSelectedView();
+                            if (errorText != null) {
+                                errorText.setError("Please select an option");
+                            }
                             res = false;
                         }
                     }
-
                 }
+
+
+
+
+
             }
         }
         return res;

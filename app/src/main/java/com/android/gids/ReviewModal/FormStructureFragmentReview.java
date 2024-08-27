@@ -48,6 +48,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.android.gids.ElementChoice;
+import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.InstanceStatus;
@@ -223,6 +224,7 @@ public class FormStructureFragmentReview extends Fragment {
                                     binding.scrollView.scrollTo(0, 0);
                                 } else {
                                     try {
+                                        Toast.makeText(getContext(),"Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
                                         binding.loadingAnim.setVisibility(View.GONE);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -2087,21 +2089,24 @@ public class FormStructureFragmentReview extends Fragment {
                 }
 
                 if (binding.layout.getChildAt(i) instanceof Spinner) {
-
-                    Item selectedItem = (Item) ((Spinner) binding.layout.getChildAt(i)).getSelectedItem();
-
+                    Spinner spinner = (Spinner) binding.layout.getChildAt(i);
+                    Item selectedItem = (Item) spinner.getSelectedItem();
                     String id = String.valueOf(binding.layout.getChildAt(i).getId());
 
                     if (selectedItem != null) {
+                        List<FormStructureModalReview> form = FormStructureModalReviewList.stream()
+                                .filter(e -> e.getId().equalsIgnoreCase(id))
+                                .collect(Collectors.toList());
 
-                        List<FormStructureModalReview> form = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(id)).collect(Collectors.toList());
-
-                        if (form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
-                            Toast.makeText(getContext(), "Please Fill " + form.get(0).getElement_label(), Toast.LENGTH_SHORT).show();
+                        if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedItem.getId().equalsIgnoreCase("0")) {
+                            spinner.requestFocus();
+                            TextView errorText = (TextView) spinner.getSelectedView();
+                            if (errorText != null) {
+                                errorText.setError("Please select an option");
+                            }
                             res = false;
                         }
                     }
-
                 }
             }
         }
