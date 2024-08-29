@@ -1721,7 +1721,7 @@ public class FormStructureFragment extends Fragment {
         if (formStructureModal.getElement_type().equalsIgnoreCase("textarea")) {
             editText.setHeight(190);
         } else {
-            editText.setHeight(70);
+            editText.setMinHeight(70);
         }
         editText.setPadding(7, 0, 0, 0);
 
@@ -1745,6 +1745,19 @@ public class FormStructureFragment extends Fragment {
                     editText.setText(data);
                 }
             } else if (elementType.equalsIgnoreCase("select")) {
+                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
+                    String value = getValueFromLayoutByQuestionIdSpinner(formStructureModal.getInterlink_question_id());
+                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
+                        editText.setText(value);
+                    } else {
+                        editText.setText("N/A");
+                    }
+                } else {
+                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+                    String res = getSpinnerNameFromQidFromValue(formStructureModal.getInterlink_question_id(), data);
+                    editText.setText(res);
+                }
+            }else if (elementType.equalsIgnoreCase("radio")) {
                 if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
                     String value = getValueFromLayoutByQuestionIdSpinner(formStructureModal.getInterlink_question_id());
                     if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
@@ -1942,6 +1955,23 @@ public class FormStructureFragment extends Fragment {
                             }
                             res = false;
                         }
+                    }
+                }
+
+
+                if (binding.layout.getChildAt(i) instanceof RadioGroup) {
+                    RadioGroup radioGroup = (RadioGroup) binding.layout.getChildAt(i);
+                    int selectedId = radioGroup.getCheckedRadioButtonId();
+                    String id = String.valueOf(radioGroup.getId());
+
+                    List<FormStructureModal> form = formStructureModalList.stream()
+                            .filter(e -> e.getId().equalsIgnoreCase(id))
+                            .collect(Collectors.toList());
+
+                    if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedId == -1) {
+                        radioGroup.requestFocus();
+                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show();
+                        res = false;
                     }
                 }
 
@@ -2189,6 +2219,24 @@ public class FormStructureFragment extends Fragment {
                             String name = selectedItem.getName();
                             return name;
                         }
+                    }
+
+                    if (view instanceof RadioGroup) {
+
+                        // Get the ID of the selected RadioButton
+                        int selectedId =  ((RadioGroup) view).getCheckedRadioButtonId();
+
+                        // Find the RadioButton by its ID
+                        RadioButton selectedRadioButton = ((RadioGroup) view).findViewById(selectedId);
+
+                        if (selectedRadioButton != null) {
+
+                            String selectedText = selectedRadioButton.getText().toString();
+
+                            return selectedText;
+
+                        }
+
                     }
                 }
             }

@@ -1886,7 +1886,7 @@ public class FormStructureFragmentReview extends Fragment {
         if (FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
             editText.setHeight(190);
         } else {
-            editText.setHeight(70);
+            editText.setMinHeight(70);
         }
         editText.setPadding(7, 0, 0, 0);
 
@@ -1895,37 +1895,50 @@ public class FormStructureFragmentReview extends Fragment {
 
         //Interlink logic is implemented here
 
-//        if (!FormStructureModalReview.getInterlink_question_id().equalsIgnoreCase("")) {
-//            editText.setEnabled(false);
-//            String data = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
-//            String elementType = getViewInstanceByQuestionId(FormStructureModalReview.getInterlink_question_id());
-//            if (elementType.equalsIgnoreCase("text")) {
-//                if (data.equalsIgnoreCase("")) {
-//                    String value = getValueFromLayoutByQuestionId(FormStructureModalReview.getInterlink_question_id());
-//                    if (!value.equalsIgnoreCase("")) {
-//                        editText.setText(value);
-//                    }
-//                } else {
-//                    Log.v("MyDebuggingData", data + "  getValueFromDB");
-//                    editText.setText(data);
-//                }
-//            } else if (elementType.equalsIgnoreCase("select")) {
-//                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
-//                    String value = getValueFromLayoutByQuestionIdSpinner(FormStructureModalReview.getInterlink_question_id());
-//                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
-//                        editText.setText(value);
-//                    } else {
-//                        editText.setText("N/A");
-//                    }
-//                } else {
-//                    Log.v("MyDebuggingData", data + "  getValueFromDB");
-//                    String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
-//                    editText.setText(res);
-//                }
-//            }
-//        } else {
-//            editText.setEnabled(true);
-//        }
+        if (!FormStructureModalReview.getInterlink_question_id().equalsIgnoreCase("")) {
+            editText.setEnabled(false);
+            String data = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
+            String elementType = getViewInstanceByQuestionId(FormStructureModalReview.getInterlink_question_id());
+            if (elementType.equalsIgnoreCase("text")) {
+                if (data.equalsIgnoreCase("")) {
+                    String value = getValueFromLayoutByQuestionId(FormStructureModalReview.getInterlink_question_id());
+                    if (!value.equalsIgnoreCase("")) {
+                        editText.setText(value);
+                    }
+                } else {
+                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+                    editText.setText(data);
+                }
+            } else if (elementType.equalsIgnoreCase("select")) {
+                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
+                    String value = getValueFromLayoutByQuestionIdSpinner(FormStructureModalReview.getInterlink_question_id());
+                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
+                        editText.setText(value);
+                    } else {
+                        editText.setText("N/A");
+                    }
+                } else {
+                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+                    String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
+                    editText.setText(res);
+                }
+            }else if (elementType.equalsIgnoreCase("radio")) {
+                if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
+                    String value = getValueFromLayoutByQuestionIdSpinner(FormStructureModalReview.getInterlink_question_id());
+                    if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
+                        editText.setText(value);
+                    } else {
+                        editText.setText("N/A");
+                    }
+                } else {
+                    Log.v("MyDebuggingData", data + "  getValueFromDB");
+                    String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
+                    editText.setText(res);
+                }
+            }
+        } else {
+            editText.setEnabled(true);
+        }
 
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -2108,6 +2121,24 @@ public class FormStructureFragmentReview extends Fragment {
                         }
                     }
                 }
+
+
+                if (binding.layout.getChildAt(i) instanceof RadioGroup) {
+                    RadioGroup radioGroup = (RadioGroup) binding.layout.getChildAt(i);
+                    int selectedId = radioGroup.getCheckedRadioButtonId();
+                    String id = String.valueOf(radioGroup.getId());
+
+                    List<FormStructureModalReview> form = FormStructureModalReviewList.stream()
+                            .filter(e -> e.getId().equalsIgnoreCase(id))
+                            .collect(Collectors.toList());
+
+                    if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedId == -1) {
+                        radioGroup.requestFocus();
+                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show();
+                        res = false;
+                    }
+                }
+
             }
         }
         return res;
@@ -2353,6 +2384,20 @@ public class FormStructureFragmentReview extends Fragment {
                             return name;
                         }
                     }
+
+
+                    if (view instanceof RadioGroup) {
+                        // Get the ID of the selected RadioButton
+                        int selectedId =  ((RadioGroup) view).getCheckedRadioButtonId();
+                        // Find the RadioButton by its ID
+                        RadioButton selectedRadioButton = ((RadioGroup) view).findViewById(selectedId);
+                        if (selectedRadioButton != null) {
+                            String selectedText = selectedRadioButton.getText().toString();
+                            return selectedText;
+                        }
+                    }
+
+
                 }
             }
         } catch (Exception e) {
