@@ -212,6 +212,7 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
     }
 
     public void getFormList() {
+        Log.v("UserId", sharedPreferences.getString("id", null));
         FormListRequest formListRequest = new FormListRequest();
         formListRequest.setUser_id(sharedPreferences.getString("id", null));
         ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
@@ -221,12 +222,6 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 try {
                     Log.v("HomeFragment:getForm", response.body().toString());
-//                   JSONObject jsonObject=new  JSONObject(response.body().toString());
-//                   JSONObject GIDS_SURVEY_APP= jsonObject.getJSONObject("GIDS_SURVEY_APP");
-//                   JSONArray jsonArray = GIDS_SURVEY_APP.getJSONArray("DataList");
-//                    jsonArray.remove(0);
-//                    jsonArray.remove(1);
-//                    jsonArray.remove(2);
                     insertInDb(response.body().toString());
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -292,25 +287,7 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
         return text.toString();
     }
 
-//    private String readTextDataFromFile() {
-//        FormListDao user = myDatabase.formListDao();
-//        if (user == null) {
-//            return "User not found";
-//        }
-//
-//        File file = new File(user.getAllFormList().get(0).getFilePath());
-//        StringBuilder text = new StringBuilder();
-//        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-//            String line;
-//            while ((line = br.readLine()) != null) {
-//                text.append(line).append('\n');
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return text.toString();
-//    }
+
 
 
     public void updateList() {

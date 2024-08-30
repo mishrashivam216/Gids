@@ -70,6 +70,14 @@ public class Utils {
         return text.toString();
     }
 
+    public static String getSubstringBeforeDollar(String input) {
+        int index = input.indexOf("$$");
+        if (index != -1) {
+            return input.substring(0, index).trim(); // Return substring before $$
+        }
+        return input; // If $$ is not found, return the entire string
+    }
+
 
     public static String getRawJSONFromDBForReview(Context context, String recId) {
         SurveyRoomDatabase myDatabase = SurveyRoomDatabase.getInstance(context);

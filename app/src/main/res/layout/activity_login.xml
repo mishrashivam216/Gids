@@ -148,10 +148,12 @@
     <LinearLayout
         android:id="@+id/liError"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_30sdp"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/_30sdp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/border"
-        android:visibility="gone">
+        android:visibility="gone"
+       >
 
         <TextView
             android:id="@+id/tvError"
@@ -181,6 +183,7 @@
         android:layout_width="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/_40sdp"
         android:layout_height="@dimen/_20sdp">
 
         <TextView

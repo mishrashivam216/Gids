@@ -121,7 +121,8 @@ public class LoginActivity extends AppCompatActivity {
                 try {
                     setPref(response.body());
                 }catch (Exception e){
-
+                    liError.setVisibility(View.VISIBLE);
+                    tvError.setText(e.getMessage()+" cause: "+e.getLocalizedMessage());
                     e.printStackTrace();
                 }
             }
@@ -129,8 +130,8 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<LoginModal> call, Throwable t) {
                 lodingAnim.setVisibility(View.GONE);
-                Toast.makeText(LoginActivity.this, "An error has occured", Toast.LENGTH_LONG).show();
-
+                liError.setVisibility(View.VISIBLE);
+                tvError.setText(t.getMessage()+" cause:"+t.getCause()+" "+t.getLocalizedMessage());
             }
         });
     }

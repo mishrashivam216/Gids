@@ -42,7 +42,11 @@ public class FormListAdapter extends RecyclerView.Adapter<FormListAdapter.MyView
 
     @Override
     public int getItemCount() {
-        return formListModalList.getGIDS_SURVEY_APP().getDataList().size();
+        try {
+            return formListModalList.getGIDS_SURVEY_APP().getDataList().size();
+        }catch (Exception e){
+            return 0;
+        }
     }
 
     public class MyView extends RecyclerView.ViewHolder {

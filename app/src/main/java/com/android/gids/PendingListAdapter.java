@@ -220,7 +220,7 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 onSyncStarted.onSyncStop();
                 Log.v("SyncAPI", t.getMessage() + "    :" + t.getCause());
-                Toast.makeText(mContext, "An error has occured", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, t.getMessage()+" "+t.getCause(), Toast.LENGTH_LONG).show();
 
             }
         });

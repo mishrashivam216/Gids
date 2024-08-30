@@ -28,6 +28,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -35,10 +36,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import androidx.appcompat.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,6 +51,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
@@ -136,6 +141,10 @@ public class FormStructureFragmentReview extends Fragment {
 
     FormStructureReviewBinding binding;
 
+    private String lastSearchQuery = "";
+    private String lastSearchQueryGlobal = "";
+    private String lastSearchQueryGlobalReview = "";
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -224,7 +233,7 @@ public class FormStructureFragmentReview extends Fragment {
                                     binding.scrollView.scrollTo(0, 0);
                                 } else {
                                     try {
-                                        Toast.makeText(getContext(),"Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), "Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
                                         binding.loadingAnim.setVisibility(View.GONE);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -481,7 +490,18 @@ public class FormStructureFragmentReview extends Fragment {
                         surveyData.setField_value(String.valueOf(selectedId));
                         surveyDataList.add(surveyData);
                     }
+                } else if (view instanceof LinearLayout) {
+                    LinearLayout linearLayout = (LinearLayout) view;
+                    for (int k = 0; k < linearLayout.getChildCount(); k++) {
+                        View childView = linearLayout.getChildAt(k);
+                        if (childView instanceof EditText) {
+                            Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
+                            surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+                            surveyDataList.add(surveyData);
+                        }
+                    }
                 }
+
             }
 
             // Perform the bulk insert/update operation
@@ -979,9 +999,8 @@ public class FormStructureFragmentReview extends Fragment {
         spinner.setId(Integer.valueOf(FormStructureModalReview.getId()));
         spinner.setTag(FormStructureModalReview.getVlookup_qustion_id());
 
-        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+        spinner.setAdapter(spinnerAdapter);
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1027,6 +1046,52 @@ public class FormStructureFragmentReview extends Fragment {
             Log.v("pDataformId", pData);
 
         }
+
+
+        spinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Select Item");
+
+                View view = LayoutInflater.from(getContext()).inflate(R.layout.custom_spinner_dropdown_with_search, null);
+                SearchView searchView = view.findViewById(R.id.searchView);
+                updateSearchColor(searchView);
+                ListView listView = view.findViewById(android.R.id.list);
+                listView.setAdapter(spinnerAdapter);
+
+
+                searchView.setQuery(lastSearchQuery, false);
+
+                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        lastSearchQuery = newText;  // Save the search query
+                        spinnerAdapter.getFilter().filter(newText);
+                        return false;
+                    }
+                });
+
+                builder.setView(view);
+                AlertDialog dialog = builder.create();
+                listView.setOnItemClickListener((parent, view1, position, id) -> {
+                    spinner.setSelection(position);
+                    dialog.dismiss();  // Dismiss the dialog on item click
+                });
+
+
+
+                dialog.show();
+            }
+            return true;
+        });
+
 
         return spinner;
 
@@ -1077,9 +1142,8 @@ public class FormStructureFragmentReview extends Fragment {
         spinner.setTag(FormStructureModalReview.getVlookup_qustion_id());
 
 
-        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+        spinner.setAdapter(spinnerAdapter);
 
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1144,6 +1208,52 @@ public class FormStructureFragmentReview extends Fragment {
             }
         });
 
+        // Setup the searchView
+        spinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Select Item");
+
+                View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.custom_spinner_dropdown_with_search, null);
+                SearchView searchView = dialogView.findViewById(R.id.searchView);
+
+                updateSearchColor(searchView);
+                ListView listView = dialogView.findViewById(android.R.id.list);
+                searchView.setQuery(lastSearchQueryGlobal, false);
+
+                listView.setAdapter(spinnerAdapter);
+                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        lastSearchQueryGlobal = newText;  // Save the search query
+                        spinnerAdapter.getFilter().filter(newText);
+                        return false;
+                    }
+                });
+
+                builder.setView(dialogView);
+                AlertDialog dialog = builder.create();
+                listView.setOnItemClickListener((parent, view1, position, id) -> {
+                    updatechildLayout(FormStructureModalReview.getId());
+                    spinner.setSelection(position);
+                    dialog.dismiss();  // Dismiss the dialog on item click
+                });
+
+                dialog.setOnDismissListener(dialogInterface -> {
+                    // When the dialog is dismissed, save the search query
+                    lastSearchQueryGlobal = searchView.getQuery().toString();
+                });
+
+                dialog.show();
+            }
+            return true;
+        });
+
         return spinner;
 
 
@@ -1155,14 +1265,10 @@ public class FormStructureFragmentReview extends Fragment {
             if (qid.equalsIgnoreCase(String.valueOf(binding.layout.getChildAt(j).getTag())) ||
                     qid.equalsIgnoreCase(String.valueOf(binding.layout.getChildAt(j).getId()))) {
                 View view = binding.layout.getChildAt(j);
-
-
                 if (view instanceof Spinner) {
-
                     Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
                     if (selectedItem != null) {
                         Log.v("GloaldataSetLogic", "Value find in layout Spinner ID:  " + selectedItem);
-
                         return Integer.parseInt(selectedItem.getId());
                     }
                 }
@@ -1215,9 +1321,8 @@ public class FormStructureFragmentReview extends Fragment {
 
                         Log.v("dssdsdfds", choiceList.size() + "");
 
-                        ArrayAdapter<Item> adapter = new ArrayAdapter<>(getContext(), R.layout.custom_spinner_item, choiceList);
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                        ((Spinner) view).setAdapter(adapter);
+                        CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
+                        ((Spinner) view).setAdapter(spinnerAdapter);
 
 
                         ((Spinner) view).post(() -> {
@@ -1260,6 +1365,54 @@ public class FormStructureFragmentReview extends Fragment {
                             }
                         });
 
+                        ((Spinner) view).setOnTouchListener((v, event) -> {
+                            if (event.getAction() == MotionEvent.ACTION_UP) {
+
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Select Item");
+
+                                View vss = LayoutInflater.from(getContext()).inflate(R.layout.custom_spinner_dropdown_with_search, null);
+                                SearchView searchView = vss.findViewById(R.id.searchView);
+
+
+                                updateSearchColor(searchView);
+
+
+                                ListView listView = vss.findViewById(android.R.id.list);
+                                listView.setAdapter(spinnerAdapter);
+
+                                searchView.setQuery(lastSearchQueryGlobalReview, false);
+
+                                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                                    @Override
+                                    public boolean onQueryTextSubmit(String query) {
+                                        return false;
+                                    }
+
+
+                                    @Override
+                                    public boolean onQueryTextChange(String newText) {
+                                        lastSearchQueryGlobalReview = newText;  // Save the search query
+                                        spinnerAdapter.getFilter().filter(newText);
+                                        return false;
+                                    }
+                                });
+
+                                builder.setView(vss);
+                                AlertDialog dialog = builder.create();
+                                listView.setOnItemClickListener((parent, view1, position, id) -> {
+                                    updatechildLayout(FormStructureModalReviewListt.get(0).getId());
+
+                                    ((Spinner) view).setSelection(position);
+                                    dialog.dismiss();  // Dismiss the dialog on item click
+                                });
+
+
+                                dialog.show();
+                            }
+                            return true;
+                        });
+
                     } else {
 
                         Log.v("OotOfBlock", "Out of Block:  " + pqid + "  :" + lookupId);
@@ -1269,6 +1422,36 @@ public class FormStructureFragmentReview extends Fragment {
 
             }
         }
+    }
+
+
+    private void updateSearchColor(SearchView searchView){
+
+        // Change the text color to black
+        EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
+        if (searchEditText != null) {
+            searchEditText.setTextColor(Color.BLACK);
+            searchEditText.setHintTextColor(Color.BLACK);
+            // Optionally change the hint color
+        } else {
+            Log.e("SearchViewError", "Failed to find search_src_text EditText.");
+        }
+
+        // Change the search icon color
+        ImageView searchIcon = searchView.findViewById(androidx.appcompat.R.id.search_button);
+        if (searchIcon != null) {
+            searchIcon.setColorFilter(Color.BLACK);
+        } else {
+            Log.e("SearchViewError", "Failed to find search_mag_icon ImageView.");
+        }
+
+        ImageView closeButton = searchView.findViewById(androidx.appcompat.R.id.search_close_btn);
+        if (closeButton != null) {
+            closeButton.setColorFilter(Color.BLACK);
+        } else {
+            Log.e("SearchViewError", "Failed to find search_close_btn ImageView.");
+        }
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -1485,27 +1668,7 @@ public class FormStructureFragmentReview extends Fragment {
 
                     if (checkBox.getId() == 99) {
 
-                        try {
-                            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
-                                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
-                                for (int j = 0; j < FormStructureModalReview.getCause_branching_logic().size(); j++) {
-//                                    String cause_id = FormStructureModalReview.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
-
-                                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(j).getBranching());
-
-                                    if (Arrays.asList(cause_ids).contains(String.valueOf(checkBox.getId())) && isCheckeds) {
-
-                                        Log.v("Branching:Cond", "Show Item");
-                                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), true);
-                                    } else {
-                                        Log.v("Branching:Cond", "Hide Item");
-                                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), false);
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
-                        }
+                        checkBoxOnCheckChanged(FormStructureModalReview, checkBox, isCheckeds);
                     }
 
 
@@ -1525,23 +1688,29 @@ public class FormStructureFragmentReview extends Fragment {
                     e.printStackTrace();
                 }
 
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String pData = getPrefilledData(FormStructureModalReview.getId());
+                            if (pData != null && !pData.isEmpty()) {
+                                // Convert pData to int
+                                if (pData.contains(String.valueOf(checkBox.getId()))) {
+                                    checkBox.setChecked(true);
+                                    checkBoxOnCheckChanged(FormStructureModalReview, checkBox, true);
 
-                try {
-                    String pData = getPrefilledData(FormStructureModalReview.getId());
-                    if (pData != null && !pData.isEmpty()) {
-                        // Convert pData to int
-                        if (pData.contains(String.valueOf(checkBox.getId()))) {
-                            checkBox.setChecked(true);
-                        }
-                        // Pre-select the radio button with the ID from pData
-                    } else {
-                        if (FormStructureModalReview.getAnswers().contains(String.valueOf(checkBox.getId()))) {
-                            checkBox.setChecked(true);
+                                }
+                                // Pre-select the radio button with the ID from pData
+                            } else {
+                                if (FormStructureModalReview.getAnswers().contains(String.valueOf(checkBox.getId()))) {
+                                    checkBox.setChecked(true);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                }, 100);
 
 
                 if (index != -1) {
@@ -1555,6 +1724,31 @@ public class FormStructureFragmentReview extends Fragment {
         }
 
         return index;
+    }
+
+
+    private void checkBoxOnCheckChanged(FormStructureModalReview FormStructureModalReview, CheckBox checkBox, Boolean isCheckeds) {
+        try {
+            if (FormStructureModalReview.getCause_branching_logic().size() > 0) {
+                Log.v("Branching:data", FormStructureModalReview.getCause_branching_logic().size() + "");
+                for (int j = 0; j < FormStructureModalReview.getCause_branching_logic().size(); j++) {
+//                                    String cause_id = FormStructureModalReview.getCause_branching_logic().get(j).getBranching().split("=")[1].trim();
+
+                    String[] cause_ids = extractCauseIds(FormStructureModalReview.getCause_branching_logic().get(j).getBranching());
+
+                    if (Arrays.asList(cause_ids).contains(String.valueOf(checkBox.getId())) && isCheckeds) {
+
+                        Log.v("Branching:Cond", "Show Item");
+                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), true);
+                    } else {
+                        Log.v("Branching:Cond", "Hide Item");
+                        showHideLaoyoutbyTag(FormStructureModalReview.getCause_branching_logic().get(j).getEffect_question_id(), false);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -1922,18 +2116,18 @@ public class FormStructureFragmentReview extends Fragment {
                     String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
                     editText.setText(res);
                 }
-            }else if (elementType.equalsIgnoreCase("radio")) {
+            } else if (elementType.equalsIgnoreCase("radio")) {
                 if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
                     String value = getValueFromLayoutByQuestionIdSpinner(FormStructureModalReview.getInterlink_question_id());
                     if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
-                        editText.setText(value);
+                        editText.setText(Utils.getSubstringBeforeDollar(value));
                     } else {
                         editText.setText("N/A");
                     }
                 } else {
                     Log.v("MyDebuggingData", data + "  getValueFromDB");
                     String res = getSpinnerNameFromQidFromValue(FormStructureModalReview.getInterlink_question_id(), data);
-                    editText.setText(res);
+                    editText.setText(Utils.getSubstringBeforeDollar(res));
                 }
             }
         } else {
@@ -1959,6 +2153,18 @@ public class FormStructureFragmentReview extends Fragment {
 
             }
         });
+
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    handleCauseLogicForEditText(FormStructureModalReview, editText);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 100);
 
         return editText;
     }
@@ -1999,8 +2205,6 @@ public class FormStructureFragmentReview extends Fragment {
                         // Handle the case where validationCondition[1] is empty
                         required = 0; // or some other default value
                     }
-
-
 
 
                     if (required == 1) {
@@ -2388,7 +2592,7 @@ public class FormStructureFragmentReview extends Fragment {
 
                     if (view instanceof RadioGroup) {
                         // Get the ID of the selected RadioButton
-                        int selectedId =  ((RadioGroup) view).getCheckedRadioButtonId();
+                        int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
                         // Find the RadioButton by its ID
                         RadioButton selectedRadioButton = ((RadioGroup) view).findViewById(selectedId);
                         if (selectedRadioButton != null) {
