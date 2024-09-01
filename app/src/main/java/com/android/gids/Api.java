@@ -11,9 +11,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Api {
     private static Retrofit retrofit;
-    private static String BASE_URL = "https://misoftwaresolutions.com/gids_stg/api/";
+//    private static String BASE_URL = "https://misoftwaresolutions.com/gids_stg/api/";
 
-//    private static String BASE_URL = "https://misoftwaresolutions.com/gids/api/";
+    private static String BASE_URL = "https://misoftwaresolutions.com/gids/api/";
     public static Retrofit getRetrofitInstance() {
 
         Gson gson = new GsonBuilder()
@@ -21,9 +21,9 @@ public class Api {
                 .create();
 
         OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(100, TimeUnit.SECONDS) // Increase timeout here
-                .readTimeout(100, TimeUnit.SECONDS)
-                .writeTimeout(100, TimeUnit.SECONDS)
+                .connectTimeout(200, TimeUnit.SECONDS) // Increase timeout here
+                .readTimeout(200, TimeUnit.SECONDS)
+                .writeTimeout(200, TimeUnit.SECONDS)
                 .build();
 
         if (retrofit == null) {

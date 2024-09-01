@@ -176,7 +176,7 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
         Log.v("dsdsfdsf", uuid);
         Gson gson = new Gson();
         String json = gson.toJson(formRequest);
-        Log.v("FormRequestJSON", json);
+        logLargeJson("FormRequestJSONs", json);
         try {
             insertLogInDb(json, uuid);
         } catch (Exception e) {
@@ -224,6 +224,15 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
 
             }
         });
+    }
+
+
+    private void logLargeJson(String tag, String json) {
+        final int chunkSize = 2048; // Set the chunk size according to your needs
+        for (int i = 0; i < json.length(); i += chunkSize) {
+            int end = Math.min(json.length(), i + chunkSize);
+            Log.v(tag, json.substring(i, end));
+        }
     }
 
 

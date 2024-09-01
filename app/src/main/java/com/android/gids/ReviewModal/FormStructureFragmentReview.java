@@ -1697,7 +1697,11 @@ public class FormStructureFragmentReview extends Fragment {
                                 // Convert pData to int
                                 if (pData.contains(String.valueOf(checkBox.getId()))) {
                                     checkBox.setChecked(true);
-                                    checkBoxOnCheckChanged(FormStructureModalReview, checkBox, true);
+
+                                    if(checkBox.getId() == 99) {
+                                        checkBoxOnCheckChanged(FormStructureModalReview, checkBox, true);
+                                    }
+
 
                                 }
                                 // Pre-select the radio button with the ID from pData
@@ -1786,7 +1790,9 @@ public class FormStructureFragmentReview extends Fragment {
         headingTextView.setId(0);
         headingTextView.setTag(FormStructureModalReview.getId());
         headingTextView.setTextColor(getContext().getResources().getColor(R.color.black));
+        headingTextView.setTypeface(null, Typeface.BOLD);
 
+        headingTextView.setLayoutParams(layoutParams);
 
         handleEffectBranchingLogic(FormStructureModalReview, headingTextView);
 
@@ -2080,7 +2086,8 @@ public class FormStructureFragmentReview extends Fragment {
         if (FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
             editText.setHeight(190);
         } else {
-            editText.setMinHeight(70);
+            int height = getResources().getDimensionPixelSize(com.intuit.sdp.R.dimen._35sdp);
+            editText.setMinHeight(height);
         }
         editText.setPadding(7, 0, 0, 0);
 
@@ -2503,14 +2510,14 @@ public class FormStructureFragmentReview extends Fragment {
 
             Log.v("MyDebuggingData", qid + "  Question Id");
 
-            String data = getPrefilledData(qid);
+            String data = getValueFromLayoutByQuestionId(qid);
 
             Log.v("MyDebuggingData", data + "  PrefilledData");
 
 
             if (data.equalsIgnoreCase("")) {
 
-                String value = getValueFromLayoutByQuestionId(qid);
+                String value = getPrefilledData(qid);
 
                 Log.v("MyDebuggingData", value + "  getValueFromPage");
 

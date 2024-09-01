@@ -1485,12 +1485,6 @@ public class FormStructureFragment extends Fragment {
                     }
                 });
 
-
-
-
-
-
-
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -1501,7 +1495,9 @@ public class FormStructureFragment extends Fragment {
                                 if (pData.contains(String.valueOf(checkBox.getId()))) {
                                     checkBox.setChecked(true);
 
-                                    checkBoxOnCheckChanged( formStructureModal,  checkBox,  true);
+                                    if(checkBox.getId() == 99) {
+                                        checkBoxOnCheckChanged(formStructureModal, checkBox, true);
+                                    }
 
                                 }
                                 // Pre-select the radio button with the ID from pData
@@ -1585,9 +1581,11 @@ public class FormStructureFragment extends Fragment {
         TextView headingTextView = new TextView(getContext());
         headingTextView.setText(formStructureModal.getElement_label());
         headingTextView.setId(0);
+        headingTextView.setTypeface(null, Typeface.BOLD);
         headingTextView.setTag(formStructureModal.getId());
         headingTextView.setTextColor(getContext().getResources().getColor(R.color.black));
 
+        headingTextView.setLayoutParams(layoutParams);
 
         handleEffectBranchingLogic(formStructureModal, headingTextView);
 
@@ -1886,7 +1884,8 @@ public class FormStructureFragment extends Fragment {
         if (formStructureModal.getElement_type().equalsIgnoreCase("textarea")) {
             editText.setHeight(190);
         } else {
-            editText.setMinHeight(70);
+            int height = getResources().getDimensionPixelSize(com.intuit.sdp.R.dimen._35sdp);
+            editText.setMinHeight(height);
         }
         editText.setPadding(7, 0, 0, 0);
 
@@ -2314,14 +2313,14 @@ public class FormStructureFragment extends Fragment {
 
             Log.v("MyDebuggingData", qid + "  Question Id");
 
-            String data = getPrefilledData(qid);
+            String data = getValueFromLayoutByQuestionId(qid);
 
             Log.v("MyDebuggingData", data + "  PrefilledData");
 
 
             if (data.equalsIgnoreCase("")) {
 
-                String value = getValueFromLayoutByQuestionId(qid);
+                String value = getPrefilledData(qid);
 
                 Log.v("MyDebuggingData", value + "  getValueFromPage");
 
