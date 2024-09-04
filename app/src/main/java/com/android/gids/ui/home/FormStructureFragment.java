@@ -4,13 +4,16 @@ import static android.content.Context.MODE_PRIVATE;
 import static android.view.Gravity.TOP;
 import static android.view.View.VISIBLE;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -41,12 +44,17 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
+
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -57,6 +65,7 @@ import com.android.gids.FormListModal;
 import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
+import com.android.gids.ImagePicker;
 import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
@@ -143,6 +152,13 @@ public class FormStructureFragment extends Fragment {
 
     private String getLastSearchQueryChild = "";
 
+    private ImagePicker imagePicker = new ImagePicker();
+    private ImageView imageView;
+
+
+    private static final int REQUEST_CAMERA_PERMISSION = 100;
+    private static final int REQUEST_STORAGE_PERMISSION = 101;
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -195,7 +211,7 @@ public class FormStructureFragment extends Fragment {
                                     try {
                                         createLayoutFromJson();
                                     } catch (Exception e) {
-                                        Toast.makeText(getContext(),e.getMessage()+" "+e.getCause(), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
                                         e.printStackTrace();
                                     }
 
@@ -218,7 +234,7 @@ public class FormStructureFragment extends Fragment {
 
                                 } else {
                                     try {
-                                        Toast.makeText(getContext(),"Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), "Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
                                         binding.loadingAnim.setVisibility(View.GONE);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -275,6 +291,19 @@ public class FormStructureFragment extends Fragment {
         } catch (Exception e) {
             Log.v("FormStructureFragment:", e.getMessage());
         }
+
+
+//        binding.liProjectName.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//
+//                requestCameraPermission();
+//
+//
+//            }
+//        });
+
         return root;
     }
 
@@ -941,7 +970,7 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-    private void updateSearchColor(SearchView searchView){
+    private void updateSearchColor(SearchView searchView) {
 
         // Change the text color to black
         EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
@@ -1109,6 +1138,7 @@ public class FormStructureFragment extends Fragment {
 
         return spinner;
     }
+
     private int getParentSelectedId(String qid) {
 
         for (int j = 0; j < binding.layout.getChildCount(); j++) {
@@ -1135,7 +1165,7 @@ public class FormStructureFragment extends Fragment {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void updatechildLayout(String pqid) {
-        getLastSearchQueryChild= "";
+        getLastSearchQueryChild = "";
         for (int j = 0; j < binding.layout.getChildCount(); j++) {
             View view = binding.layout.getChildAt(j);
             if (view instanceof Spinner) {
@@ -1182,8 +1212,6 @@ public class FormStructureFragment extends Fragment {
 
                         CustomSpinnerAdapter spinnerAdapter = new CustomSpinnerAdapter(getContext(), choiceList);
                         ((Spinner) view).setAdapter(spinnerAdapter);
-
-
 
 
                         ((Spinner) view).post(() -> {
@@ -1248,10 +1276,9 @@ public class FormStructureFragment extends Fragment {
                                 AlertDialog dialog = builder.create();
                                 listView.setOnItemClickListener((parent, view1, position, id) -> {
                                     ((Spinner) view).setSelection(position);
-                                   updatechildLayout(formStructureModalListt.get(0).getId());
+                                    updatechildLayout(formStructureModalListt.get(0).getId());
                                     dialog.dismiss();  // Dismiss the dialog on item click
                                 });
-
 
 
                                 dialog.show();
@@ -1481,7 +1508,7 @@ public class FormStructureFragment extends Fragment {
 
                     if (checkBox.getId() == 99) {
 
-                        checkBoxOnCheckChanged( formStructureModal,  checkBox,  isCheckeds);
+                        checkBoxOnCheckChanged(formStructureModal, checkBox, isCheckeds);
                     }
                 });
 
@@ -1495,7 +1522,7 @@ public class FormStructureFragment extends Fragment {
                                 if (pData.contains(String.valueOf(checkBox.getId()))) {
                                     checkBox.setChecked(true);
 
-                                    if(checkBox.getId() == 99) {
+                                    if (checkBox.getId() == 99) {
                                         checkBoxOnCheckChanged(formStructureModal, checkBox, true);
                                     }
 
@@ -1507,7 +1534,6 @@ public class FormStructureFragment extends Fragment {
                         }
                     }
                 }, 100);
-
 
 
                 if (index != -1) {
@@ -1523,7 +1549,7 @@ public class FormStructureFragment extends Fragment {
         return index;
     }
 
-    private void checkBoxOnCheckChanged(FormStructureModal formStructureModal, CheckBox checkBox, Boolean isCheckeds){
+    private void checkBoxOnCheckChanged(FormStructureModal formStructureModal, CheckBox checkBox, Boolean isCheckeds) {
         try {
             if (formStructureModal.getCause_branching_logic().size() > 0) {
                 Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
@@ -1922,7 +1948,7 @@ public class FormStructureFragment extends Fragment {
                     String res = getSpinnerNameFromQidFromValue(formStructureModal.getInterlink_question_id(), data);
                     editText.setText(res);
                 }
-            }else if (elementType.equalsIgnoreCase("radio")) {
+            } else if (elementType.equalsIgnoreCase("radio")) {
                 if (data.equalsIgnoreCase("0") || data.equalsIgnoreCase("")) {
                     String value = getValueFromLayoutByQuestionIdSpinner(formStructureModal.getInterlink_question_id());
                     if (!value.equalsIgnoreCase("") && !value.equalsIgnoreCase("0")) {
@@ -1971,7 +1997,6 @@ public class FormStructureFragment extends Fragment {
                 }
             }
         }, 100);
-
 
 
         return editText;
@@ -2114,7 +2139,6 @@ public class FormStructureFragment extends Fragment {
                 }
 
 
-
                 if (binding.layout.getChildAt(i) instanceof Spinner) {
                     Spinner spinner = (Spinner) binding.layout.getChildAt(i);
                     Item selectedItem = (Item) spinner.getSelectedItem();
@@ -2152,9 +2176,6 @@ public class FormStructureFragment extends Fragment {
                         res = false;
                     }
                 }
-
-
-
 
 
             }
@@ -2402,7 +2423,7 @@ public class FormStructureFragment extends Fragment {
                     if (view instanceof RadioGroup) {
 
                         // Get the ID of the selected RadioButton
-                        int selectedId =  ((RadioGroup) view).getCheckedRadioButtonId();
+                        int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
 
                         // Find the RadioButton by its ID
                         RadioButton selectedRadioButton = ((RadioGroup) view).findViewById(selectedId);
@@ -2576,79 +2597,6 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-//    public void handleEffectBranchingLogic(FormStructureModal formStructureModal, View v) {
-//
-//        if (formStructureModal.getEffect_branching_logic().size() > 0) {
-//            v.setVisibility(View.GONE);
-//            Log.v("FoundData", formStructureModal.getElement_label());
-//            try {
-//                String[] cause_ids = extractCauseIds(formStructureModal.getEffect_branching_logic().get(0).getBranching());
-//
-//                String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
-//
-//                Log.v("FoundData", cause_ids[0]);
-//
-//
-//                String selectedId = "";
-//
-//
-//
-//                for (String cause_id : cause_ids) {
-//
-//                    Log.v("FoundData", cause_id);
-//
-//
-//
-//                    int numericCauseId = Integer.parseInt(cause_id.replaceAll("[^\\d]", "")); // Remove non-numeric characters
-//
-//                    Log.v("FoundData", numericCauseId + "");
-//
-//                    if (branch.contains(">")) {
-//
-//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//
-//                        Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
-//                        if (numericSelectedId > numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    } else if (branch.contains("<")) {
-//                        selectedId = getSpinnerNameFromQidFromValue(formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), cause_id);
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//
-//                        if (numericSelectedId < numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    }else if (branch.contains("|")) {
-//                        try {
-//                            String id = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-//                            if (Arrays.asList(cause_ids).contains(id)) {
-//                                v.setVisibility(View.VISIBLE);
-//                            }
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }else {
-//                        selectedId = getPrefilledData(formStructureModal.getEffect_branching_logic().get(0).getCause_question_id());
-//                        int numericSelectedId = Integer.parseInt(selectedId);
-//                        if (numericSelectedId == numericCauseId) {
-//                            v.setVisibility(VISIBLE);
-//                            break;
-//                        }
-//                    }
-//                }
-//
-//            } catch (Exception e) {
-//                Log.v("FoundData", e.getCause() + "  " + e.getMessage());
-//
-//            }
-//
-//        } else {
-//            v.setVisibility(VISIBLE);
-//        }
-//    }
 
     public void handleCauseLogicForEditText(FormStructureModal formStructureModal, EditText editText) {
         try {
@@ -2860,6 +2808,45 @@ public class FormStructureFragment extends Fragment {
         }
 
 
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Bitmap bitmap = imagePicker.handleActivityResult(getContext(), requestCode, resultCode, data);
+
+        if (bitmap != null) {
+            // Use the bitmap (e.g., display it in an ImageView)
+            //imageView.setImageBitmap(bitmap);
+        }
+    }
+
+
+    private void requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_CAMERA_PERMISSION);
+
+        } else {
+            imagePicker.showImagePickerDialog(FormStructureFragment.this);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                imagePicker.showImagePickerDialog(FormStructureFragment.this);
+            } else {
+                Toast.makeText(getContext(), "Camera permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
 }

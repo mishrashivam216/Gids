@@ -1,9 +1,12 @@
 package com.android.gids;
 
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -115,6 +118,35 @@ public class Utils {
     public static UUID getUuid() {
         UUID uuid = UUID.randomUUID();
         return uuid;
+    }
+
+
+    public static boolean isLocationEnabled(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        // Check if either GPS or Network provider is enabled
+        boolean isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        return isGpsEnabled || isNetworkEnabled;
+    }
+
+
+    public static void showLogoutConfirmationDialog(Context context, final LogoutListener listener) {
+        new AlertDialog.Builder(context)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to log out?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (listener != null) {
+                            listener.onLogoutConfirmed();
+                        }
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    public interface LogoutListener {
+        void onLogoutConfirmed();
     }
 
 

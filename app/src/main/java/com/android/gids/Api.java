@@ -11,9 +11,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Api {
     private static Retrofit retrofit;
-//    private static String BASE_URL = "https://misoftwaresolutions.com/gids_stg/api/";
+    private static String BASE_URL = "https://misoftwaresolutions.com/gids_stg/api/";
 
-    private static String BASE_URL = "https://misoftwaresolutions.com/gids/api/";
+//    private static String BASE_URL = "https://misoftwaresolutions.com/gids/api/";
     public static Retrofit getRetrofitInstance() {
 
         Gson gson = new GsonBuilder()

@@ -57,6 +57,8 @@ public class LoginActivity extends AppCompatActivity {
         btnSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.v("lat", LocationService.getLat());
+                Log.v("lat", LocationService.getLong());
                 isValidate();
             }
         });
@@ -71,6 +73,8 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             LocationService.requestLocation(this);
         }
+
+
 
 
     }

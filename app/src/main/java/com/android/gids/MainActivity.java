@@ -71,7 +71,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onClick(View view) {
                     if (Utils.isNetworkAvailable(MainActivity.this)) {
-                        doLogout();
+
+                        Utils.showLogoutConfirmationDialog(MainActivity.this, new Utils.LogoutListener() {
+                            @Override
+                            public void onLogoutConfirmed() {
+                                // Handle the logout action here
+                                doLogout();
+                            }
+                        });
+
                     } else {
                         Toast.makeText(MainActivity.this, "Internet Connectivity is lost", Toast.LENGTH_SHORT).show();
                     }
@@ -81,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
         }
-
 
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -106,20 +113,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-
-
         int id = item.getItemId();
         if (id == R.id.nav_logout) {
-            SharedPreferences sharedPreferences = getSharedPreferences("MySharedPref", MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.clear();
-            editor.apply();
-            finish();
-            startActivity(new Intent(this, LoginActivity.class));
+            if (Utils.isNetworkAvailable(MainActivity.this)) {
+                Utils.showLogoutConfirmationDialog(MainActivity.this, new Utils.LogoutListener() {
+                    @Override
+                    public void onLogoutConfirmed() {
+                        // Handle the logout action here
+                        doLogout();
+                    }
+                });
+            } else {
+                Toast.makeText(MainActivity.this, "Internet Connectivity is lost", Toast.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.nav_home) {
             startActivity(new Intent(MainActivity.this, MainActivity.class));
-        }else if (id == R.id.nav_surveylog) {
+        } else if (id == R.id.nav_surveylog) {
             Fragment fragment = new SurveyLogFragment();
             String tag = "Survey Sync Log";
             if (fragment != null) {

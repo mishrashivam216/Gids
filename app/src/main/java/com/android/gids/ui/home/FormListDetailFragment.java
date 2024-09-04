@@ -118,15 +118,20 @@ public class FormListDetailFragment extends Fragment {
                 binding.liNewRecord.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        int instanceId = Utils.getFiveDigitUnique();
-                        String uuid = Utils.getUuid() + "";
-                        Bundle bundle = new Bundle();
-                        bundle.putInt("index", json_index);
-                        bundle.putString("from_id", id);
-                        bundle.putInt("instanceId", instanceId);
-                        bundle.putString("form_name", form_name);
-                        bundle.putString("uuid", uuid);
-                        navController.navigate(R.id.action_nav_formlistdetail_to_nav_formstructure, bundle);
+
+                        if (Utils.isLocationEnabled(getContext())) {
+                            int instanceId = Utils.getFiveDigitUnique();
+                            String uuid = Utils.getUuid() + "";
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("index", json_index);
+                            bundle.putString("from_id", id);
+                            bundle.putInt("instanceId", instanceId);
+                            bundle.putString("form_name", form_name);
+                            bundle.putString("uuid", uuid);
+                            navController.navigate(R.id.action_nav_formlistdetail_to_nav_formstructure, bundle);
+                        } else {
+                            Toast.makeText(getContext(), "Please Enable Your Mobile Location", Toast.LENGTH_SHORT).show();
+                        }
 
                     }
                 });
@@ -309,8 +314,8 @@ public class FormListDetailFragment extends Fragment {
 
 
     public void getFormStatusFeedback() {
-       Log.v("dsfdssdfsf", uid);
-       Log.v("dsfdssdfsf", id);
+        Log.v("dsfdssdfsf", uid);
+        Log.v("dsfdssdfsf", id);
         FormListStatusRequest formListStatusRequest = new FormListStatusRequest();
         formListStatusRequest.setUser_id(uid);
         formListStatusRequest.setForm_id(id);

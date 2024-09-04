@@ -4,16 +4,13 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
 
 public class LocationService {
 
@@ -21,35 +18,43 @@ public class LocationService {
     private static double longitude;
     private static boolean isLocationAvailable = false;
 
+    private static LocationManager locationManager;
+    private static LocationListener locationListener;
+
     public static void requestLocation(Context context) {
         try {
-            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-            LocationRequest locationRequest = LocationRequest.create();
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            locationRequest.setInterval(10000); // 10 seconds
-            locationRequest.setFastestInterval(5000); // 5 seconds
+            locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-            LocationCallback locationCallback = new LocationCallback() {
+            locationListener = new LocationListener() {
                 @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    if (locationResult == null) {
-                        return;
-                    }
-                    for (Location location : locationResult.getLocations()) {
+                public void onLocationChanged(Location location) {
+                    if (location != null) {
                         latitude = location.getLatitude();
                         longitude = location.getLongitude();
-                        if (location.getLatitude() != 0.0 && location.getLongitude() != 0.0) {
+                        if (latitude != 0.0 && longitude != 0.0) {
                             isLocationAvailable = true;
-                            latitude = location.getLatitude();
-                            longitude = location.getLongitude();
                         }
-//                    Toast.makeText(context, "Lat: " + latitude + " Long: " + longitude, Toast.LENGTH_LONG).show();
                     }
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
                 }
             };
 
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                // Request updates from the GPS provider
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, locationListener, Looper.getMainLooper());
             } else {
                 Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show();
             }
@@ -71,7 +76,12 @@ public class LocationService {
             return isLocationAvailable ? String.valueOf(longitude) : "0.0";
         } catch (Exception e) {
             return "0.0";
+        }
+    }
 
+    public static void stopLocationUpdates() {
+        if (locationManager != null && locationListener != null) {
+            locationManager.removeUpdates(locationListener);
         }
     }
 }
