@@ -159,6 +159,8 @@ public class FormStructureFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
     private static final int REQUEST_STORAGE_PERMISSION = 101;
 
+    int flag_for_disable_addmore = 0;
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -789,9 +791,38 @@ public class FormStructureFragment extends Fragment {
         binding.layout.addView(buttonLayout);
 
         long itrCount = clickAddmoreIfAnyAnsFilled(addMoreLists);
-        for (int i = 0; i < itrCount; i++) {
-            addButton.performClick();
+
+
+        String noCount = getPrefilledData(formStructureModal.getInterlink_question_id());
+
+        Log.v("dfdsfdsf", noCount + "   qid=> " + formStructureModal.getInterlink_question_id());
+
+
+        if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
+
+            for (int j = 1; j < Integer.parseInt(noCount); j++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(false);
+            removeButton.setClickable(false);
+
+        } else {
+            for (int i = 0; i < itrCount; i++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(true);
+            removeButton.setClickable(true);
+
+            if (flag_for_disable_addmore == 1) {
+                flag_for_disable_addmore = 0;
+                addButton.setClickable(false);
+                removeButton.setClickable(false);
+            }
         }
+
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -799,11 +830,24 @@ public class FormStructureFragment extends Fragment {
 
         long iterationCount = addMoreLists.stream()
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
-                .filter(formStructureModals ->
-                        formStructureModals.stream()
-                                .map(FormStructureModal::getId)
-                                .map(this::getPrefilledData)
-                                .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
+                .filter(formStructureModals -> formStructureModals.stream()
+                        .map(formStructureModal -> {
+                            String ans = getPrefilledData(formStructureModal.getId());
+                            if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
+                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+                                ans = getPrefilledData(interlinkQuestionId);
+                                if (ans.equalsIgnoreCase("N/A")) {
+                                    ans = "";
+                                }
+
+                                if (ans != null && !ans.trim().isEmpty() && !ans.equals("0")) {
+                                    flag_for_disable_addmore = 1;
+                                }
+
+                            }
+                            return ans;
+                        })
+                        .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
                 )
                 .count();
         return iterationCount;
@@ -958,7 +1002,6 @@ public class FormStructureFragment extends Fragment {
                     spinner.setSelection(position);
                     dialog.dismiss();  // Dismiss the dialog on item click
                 });
-
 
 
                 dialog.show();
@@ -2228,7 +2271,7 @@ public class FormStructureFragment extends Fragment {
     public String getPrefilledData(String qid) {
         SurveyDao surveyDao = myDatabase.surveyDao();
         SurveyData row = surveyDao.getPredefinedAnswer(formId, instanceId, qid);
-        if (row != null && !row.getField_value().isEmpty()) {
+        if (row != null && !row.getField_value().isEmpty() && !row.getField_value().equalsIgnoreCase("N/A")) {
             return row.getField_value();
         }
         return "";
