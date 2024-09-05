@@ -9,7 +9,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -45,22 +44,20 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
-import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.ImagePicker;
@@ -68,7 +65,6 @@ import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
 import com.android.gids.LocationService;
-import com.android.gids.LoginActivity;
 import com.android.gids.MainActivity;
 import com.android.gids.MapDependencyField;
 import com.android.gids.MapDependencyFieldDao;
@@ -76,15 +72,12 @@ import com.android.gids.MapDependencyFieldValue;
 import com.android.gids.MapDependencyFieldValueDao;
 import com.android.gids.OptionSplitter;
 import com.android.gids.R;
-import com.android.gids.SplashActivity;
 import com.android.gids.SurveyDao;
 import com.android.gids.SurveyData;
 import com.android.gids.SurveyRoomDatabase;
 import com.android.gids.Utils;
 import com.android.gids.databinding.FormStructureReviewBinding;
-import com.android.gids.databinding.FragmentFormStructureBinding;
 import com.android.gids.ui.home.BranchinglogicModal;
-import com.android.gids.ui.home.FormStructureFragment;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
@@ -160,7 +153,6 @@ public class FormStructureFragmentReview extends Fragment {
 
     private static final int REQUEST_CAMERA_PERMISSION = 100;
     private static final int REQUEST_STORAGE_PERMISSION = 101;
-
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -1040,7 +1032,7 @@ public class FormStructureFragmentReview extends Fragment {
 
 
         try {
-            if (choiceList.size() > 2) {
+            if (choiceList.size() >= 2) {
 
                 String pData = getPrefilledData(FormStructureModalReview.getId());
 
@@ -1101,7 +1093,6 @@ public class FormStructureFragmentReview extends Fragment {
                     spinner.setSelection(position);
                     dialog.dismiss();  // Dismiss the dialog on item click
                 });
-
 
 
                 dialog.show();
@@ -1442,7 +1433,7 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-    private void updateSearchColor(SearchView searchView){
+    private void updateSearchColor(SearchView searchView) {
 
         // Change the text color to black
         EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
@@ -1715,7 +1706,7 @@ public class FormStructureFragmentReview extends Fragment {
                                 if (pData.contains(String.valueOf(checkBox.getId()))) {
                                     checkBox.setChecked(true);
 
-                                    if(checkBox.getId() == 99) {
+                                    if (checkBox.getId() == 99) {
                                         checkBoxOnCheckChanged(FormStructureModalReview, checkBox, true);
                                     }
 
@@ -2997,7 +2988,6 @@ public class FormStructureFragmentReview extends Fragment {
 
 
     }
-
 
 
     @Override

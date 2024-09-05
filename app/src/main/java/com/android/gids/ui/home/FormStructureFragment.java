@@ -16,9 +16,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,16 +42,14 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
-
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -84,7 +80,6 @@ import com.android.gids.Utils;
 import com.android.gids.databinding.FragmentFormStructureBinding;
 import com.google.gson.Gson;
 
-import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -912,7 +907,6 @@ public class FormStructureFragment extends Fragment {
     }
 
 
-
     private Spinner createSpinner(FormStructureModal formStructureModal) {
         List<Item> choiceList = new ArrayList<>();
         Item item = new Item("0", "Select");
@@ -951,7 +945,7 @@ public class FormStructureFragment extends Fragment {
         handleEffectBranchingLogic(formStructureModal, spinner);
 
         try {
-            if (choiceList.size() > 2) {
+            if (choiceList.size() >= 2) {
                 String pData = getPrefilledData(formStructureModal.getId());
                 int pos = getSpinnerPosition(pData, choiceList);
                 spinner.setSelection(pos);
@@ -1888,7 +1882,6 @@ public class FormStructureFragment extends Fragment {
                     editText.setHint("*Validation: Integer b/w " + formStructureModal.getMinimum() + " To " + formStructureModal.getMaximum());
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateInteger(editText);
-
                 }
                 break;
             case 5:
@@ -1901,7 +1894,6 @@ public class FormStructureFragment extends Fragment {
                     editText.setHint("*Validation: Integer || Decimal b/w " + formStructureModal.getMinimum() + " To " + formStructureModal.getMaximum());
                     editText.setHintTextColor(ContextCompat.getColor(getContext(), R.color.darkgrey));
                     validateIntegerDecimal(editText);
-
                 }
                 break;
             case 6:
@@ -2638,7 +2630,6 @@ public class FormStructureFragment extends Fragment {
             Log.v("FoundData", e.getMessage(), e);
         }
     }
-
 
 
     public void handleCauseLogicForEditText(FormStructureModal formStructureModal, EditText editText) {

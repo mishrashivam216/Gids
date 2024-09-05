@@ -2,7 +2,6 @@ package com.android.gids.ui.home;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,15 +18,8 @@ import androidx.navigation.Navigation;
 
 import com.android.gids.Api;
 import com.android.gids.ApiInterface;
-import com.android.gids.FormListDao;
-import com.android.gids.FormListEntity;
 import com.android.gids.FormListModal;
-import com.android.gids.FormListRequest;
 import com.android.gids.FormListStatusRequest;
-import com.android.gids.LocationService;
-import com.android.gids.LoginActivity;
-import com.android.gids.LoginModal;
-import com.android.gids.LoginParam;
 import com.android.gids.R;
 import com.android.gids.SurveyDao;
 import com.android.gids.SurveyData;
@@ -42,9 +34,6 @@ import com.google.gson.JsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -210,6 +199,11 @@ public class FormListDetailFragment extends Fragment {
         binding.tvPendingRecord.setText("" + getPendingNo());
         if (Utils.isNetworkAvailable(getContext())) {
             try {
+
+                binding.loadingAnim.setVisibility(View.VISIBLE);
+
+                SurveyRecordDao surveyRecordDao = myDatabase.surveyRecordDao();
+                surveyRecordDao.deleteAllSurveyRecords();
                 getFormStatus();
                 getFormStatusFeedback();
             } catch (Exception e) {
@@ -303,7 +297,6 @@ public class FormListDetailFragment extends Fragment {
             }
 
             SurveyRecordDao surveyRecordDao = myDatabase.surveyRecordDao();
-            surveyRecordDao.deleteAllSurveyRecords();
             surveyRecordDao.insert(surveyRecords);
 
         } catch (Exception e) {
@@ -333,6 +326,7 @@ public class FormListDetailFragment extends Fragment {
 
                 } catch (Exception e) {
                     Log.v("RequestFeedback", e.getMessage());
+                    binding.loadingAnim.setVisibility(View.GONE);
 
                     e.printStackTrace();
                 }
@@ -389,10 +383,14 @@ public class FormListDetailFragment extends Fragment {
             }
 
             SurveyRecordDao surveyRecordDao = myDatabase.surveyRecordDao();
-            surveyRecordDao.deleteAllSurveyRecords();
             surveyRecordDao.insert(surveyRecords);
 
+
+            binding.loadingAnim.setVisibility(View.GONE);
+
+
         } catch (Exception e) {
+            binding.loadingAnim.setVisibility(View.GONE);
             Log.v("HomeFragment:insertDB", e.getMessage());
 
         }
