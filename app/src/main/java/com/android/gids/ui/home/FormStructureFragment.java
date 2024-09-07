@@ -1,5 +1,6 @@
 package com.android.gids.ui.home;
 
+import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
 import static android.view.Gravity.TOP;
 import static android.view.View.VISIBLE;
@@ -14,13 +15,18 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -61,7 +67,6 @@ import com.android.gids.FormListModal;
 import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
-import com.android.gids.ImagePicker;
 import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
@@ -80,6 +85,9 @@ import com.android.gids.Utils;
 import com.android.gids.databinding.FragmentFormStructureBinding;
 import com.google.gson.Gson;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +104,11 @@ public class FormStructureFragment extends Fragment {
 
     boolean fromAdd = false;
     FragmentFormStructureBinding binding;
+
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    private static final int SELECT_FILE = 2;
+
     int index;
     String json_data;
 
@@ -147,7 +160,6 @@ public class FormStructureFragment extends Fragment {
 
     private String getLastSearchQueryChild = "";
 
-    private ImagePicker imagePicker = new ImagePicker();
     private ImageView imageView;
 
 
@@ -155,6 +167,10 @@ public class FormStructureFragment extends Fragment {
     private static final int REQUEST_STORAGE_PERMISSION = 101;
 
     int flag_for_disable_addmore = 0;
+
+    ImageView elementImage;
+
+    String file_name = "";
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -290,17 +306,6 @@ public class FormStructureFragment extends Fragment {
         }
 
 
-//        binding.liProjectName.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//
-//                requestCameraPermission();
-//
-//
-//            }
-//        });
-
         return root;
     }
 
@@ -406,6 +411,20 @@ public class FormStructureFragment extends Fragment {
                 } else if (view instanceof EditText) {
                     surveyData.setField_value(((EditText) view).getText().toString());
                     surveyDataList.add(surveyData);
+                } else if (view instanceof ImageView) {
+                    if (((ImageView) view).getDrawable() != null) {
+                        surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
+                        surveyDataList.add(surveyData);
+                        Drawable drawable = ((ImageView) view).getDrawable();
+                        if (drawable instanceof BitmapDrawable) {
+                            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                            if (bitmap != null) {
+                                Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                            }
+                        } else {
+                            Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                        }
+                    }
                 } else if (view instanceof RadioGroup) {
                     int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
                     if (selectedId != -1) {
@@ -516,6 +535,11 @@ public class FormStructureFragment extends Fragment {
                         sectionId = formStructureModal.getId();
                         View v = createLabelTextView(formStructureModal);
                         binding.layout.addView(v);
+                    } else if (formStructureModal.getElement_type().equalsIgnoreCase("image")) {
+                        View v = createImageElement(formStructureModal);
+                        binding.layout.addView(v);
+                        Button button = createButtonForImage(formStructureModal);
+                        binding.layout.addView(button);
                     } else if (formStructureModal.getElement_type().equalsIgnoreCase("label")) {
                         View v = createLabelTextView(formStructureModal);
                         binding.layout.addView(v);
@@ -1688,6 +1712,69 @@ public class FormStructureFragment extends Fragment {
         return labelTextView;
     }
 
+
+    private ImageView createImageElement(FormStructureModal formStructureModal) {
+        file_name = "";
+        // Create ImageView dynamically
+        elementImage = new ImageView(getContext());
+        elementImage.setId(Integer.parseInt(formStructureModal.getId()));
+
+        elementImage.setTag(Utils.generateFileName(String.valueOf(instanceId), formId, formStructureModal.getId()));
+
+        elementImage.setPadding(10, 10, 10, 10);
+
+
+        String pData = getPrefilledData(formStructureModal.getId());
+
+        // Set the image from local storage
+        File b = Utils.getSavedImageFile(getContext(), pData);
+
+        if (b != null) {
+
+            Bitmap bit = Utils.convertFileToBitmap(b);
+            if (bit != null) {
+                Utils.setLoadedLayoutStructure(elementImage, getContext());
+                elementImage.setImageBitmap(bit);
+            } else {
+                Utils.setDummyLayoutStructure(elementImage, getContext());
+
+                elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
+                Log.e("ImageHandler", "Failed to load image.");
+            }
+        } else {
+            Utils.setDummyLayoutStructure(elementImage, getContext());
+            elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
+        }
+
+        return elementImage; // Return the dynamically created ImageView
+    }
+
+
+    private Button createButtonForImage(FormStructureModal formStructureModal) {
+        Button button = new Button(getContext());
+        button.setText("Upload Picture");
+        button.setId(Integer.valueOf(formStructureModal.getId()));
+        button.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                file_name = Utils.generateFileName(String.valueOf(instanceId), formId, formStructureModal.getId());
+
+                Log.d("UploadFile", file_name + " created");
+
+                requestCameraPermission();
+            }
+        });
+
+        return button;
+    }
+
+
     private View createLabelEditElement(FormStructureModal formStructureModal, EditText editText) {
 
         TextView elementNote = new TextView(getContext());
@@ -2840,43 +2927,106 @@ public class FormStructureFragment extends Fragment {
         } catch (Exception e) {
             Log.v("Exception:Cond", e.getMessage() + "  :" + e.getCause());
         }
-
-
     }
 
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Bitmap bitmap = imagePicker.handleActivityResult(getContext(), requestCode, resultCode, data);
 
-        if (bitmap != null) {
-            // Use the bitmap (e.g., display it in an ImageView)
-            //imageView.setImageBitmap(bitmap);
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK && data != null) {
+            Bundle extras = data.getExtras();
+            Bitmap bitmap = (Bitmap) extras.get("data");
+
+            if (bitmap != null) {
+                // Save and process the bitmap
+                File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
+                if (savedFile != null) {
+
+                    Utils.setLoadedLayoutStructure(elementImage, getContext());
+                    Bitmap correctedBitmap = Utils.correctImageOrientation(savedFile);
+                    elementImage.setImageBitmap(correctedBitmap);
+
+                    Log.d("UploadFile", savedFile.getAbsolutePath() + " saved");
+
+                }
+            }
+        } else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
+            Bitmap bitmap = handleGalleryResult(data);
+            File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
+            if (savedFile != null) {
+                Bitmap correctedBitmap = Utils.correctImageOrientation(savedFile);
+                elementImage.setImageBitmap(correctedBitmap);
+
+            }
         }
+    }
+
+    private Bitmap handleGalleryResult(Intent data) {
+        if (data != null) {
+            try {
+                Uri selectedImageUri = data.getData();
+                InputStream imageStream = getContext().getContentResolver().openInputStream(selectedImageUri);
+                Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
+                return bitmap;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Toast.makeText(getContext(), "Failed to select image from gallery", Toast.LENGTH_SHORT).show();
+            }
+        }
+        return null;
     }
 
 
     private void requestCameraPermission() {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
-
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{Manifest.permission.CAMERA},
                     REQUEST_CAMERA_PERMISSION);
-
         } else {
-            imagePicker.showImagePickerDialog(FormStructureFragment.this);
+            showImagePickerDialog(FormStructureFragment.this);
         }
     }
 
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+
+    public void showImagePickerDialog(final Fragment fragment) {
+        final CharSequence[] items = {"Take Photo", "Choose from Library", "Cancel"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getContext());
+        builder.setTitle("Add Photo");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int item) {
+                if (items[item].equals("Take Photo")) {
+                    dispatchTakePictureIntent();
+                } else if (items[item].equals("Choose from Library")) {
+                    Intent intent = new Intent(Intent.ACTION_PICK,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/*");
+                    fragment.startActivityForResult(intent, SELECT_FILE);
+                } else if (items[item].equals("Cancel")) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                imagePicker.showImagePickerDialog(FormStructureFragment.this);
+                showImagePickerDialog(FormStructureFragment.this);
             } else {
                 Toast.makeText(getContext(), "Camera permission denied", Toast.LENGTH_SHORT).show();
             }

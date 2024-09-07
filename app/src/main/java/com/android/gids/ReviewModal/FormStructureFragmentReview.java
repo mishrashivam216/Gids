@@ -5,16 +5,13 @@ import static android.content.Context.MODE_PRIVATE;
 import static android.view.Gravity.TOP;
 import static android.view.View.VISIBLE;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
@@ -48,11 +45,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.SearchView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -60,7 +54,6 @@ import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
-import com.android.gids.ImagePicker;
 import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
@@ -146,13 +139,6 @@ public class FormStructureFragmentReview extends Fragment {
     private String lastSearchQuery = "";
     private String lastSearchQueryGlobal = "";
     private String lastSearchQueryGlobalReview = "";
-
-    private ImagePicker imagePicker = new ImagePicker();
-    private ImageView imageView;
-
-
-    private static final int REQUEST_CAMERA_PERMISSION = 100;
-    private static final int REQUEST_STORAGE_PERMISSION = 101;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -2989,43 +2975,5 @@ public class FormStructureFragmentReview extends Fragment {
 
     }
 
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Bitmap bitmap = imagePicker.handleActivityResult(getContext(), requestCode, resultCode, data);
-
-        if (bitmap != null) {
-            // Use the bitmap (e.g., display it in an ImageView)
-            //imageView.setImageBitmap(bitmap);
-        }
-    }
-
-
-    private void requestCameraPermission() {
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.CAMERA},
-                    REQUEST_CAMERA_PERMISSION);
-
-        } else {
-            imagePicker.showImagePickerDialog(FormStructureFragmentReview.this);
-        }
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                imagePicker.showImagePickerDialog(FormStructureFragmentReview.this);
-            } else {
-                Toast.makeText(getContext(), "Camera permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
 
 }

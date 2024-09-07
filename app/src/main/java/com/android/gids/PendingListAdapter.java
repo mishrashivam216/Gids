@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -98,6 +101,12 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
             @Override
             public void onClick(View view) {
                 if (Utils.isNetworkAvailable(mContext)) {
+
+                    Log.d("UploadFile", " sync Started");
+
+
+                    upLoadData(list.get(position).getForm_id(), list.get(position).getInstance_id(), list.get(position).getRecord_id());
+
                     sendData(list.get(position).getForm_id(), list.get(position).getInstance_id(), list.get(position).getRecord_id());
                 } else {
                     Toast.makeText(mContext, "Please Check your internet Connection!", Toast.LENGTH_SHORT).show();
@@ -133,6 +142,37 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
             btnSync = view.findViewById(R.id.btnSync);
             created_at = view.findViewById(R.id.created_at);
             modified_at = view.findViewById(R.id.modified_at);
+        }
+    }
+
+    private void upLoadData(String formId, int instanceId, String uuid) {
+
+        SurveyDao surveyDao = myDatabase.surveyDao();
+        List<SurveyData> list = surveyDao.getToSyncByFormInstanceId(formId, instanceId);
+
+        for (int i = 0; i < list.size(); i++) {
+
+            String qid = list.get(i).getQuestion_id();
+
+            String type = Utils.getInstanceOfQuestionByQid(qid, mContext, formId);
+
+            Log.d("UploadFile", type+" Type Found");
+
+
+            if (type.equalsIgnoreCase("image")) {
+
+                Log.d("UploadFile", type+" Image Type Found");
+
+                File savedFile = Utils.getSavedImageFile(mContext, Utils.generateFileName(String.valueOf(instanceId), formId, qid));
+
+                if (savedFile != null && savedFile.exists()) {
+
+                    uploadFile(savedFile, uuid);
+
+                }
+            }else{
+                Log.d("UploadFile", type+" Image Type Not Found");
+            }
         }
     }
 
@@ -220,7 +260,7 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 onSyncStarted.onSyncStop();
                 Log.v("SyncAPI", t.getMessage() + "    :" + t.getCause());
-                Toast.makeText(mContext, t.getMessage()+" "+t.getCause(), Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, t.getMessage() + " " + t.getCause(), Toast.LENGTH_LONG).show();
 
             }
         });
@@ -264,6 +304,30 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
 
         }
     }
+
+
+    public void uploadFile(File file, String uuid) {
+        ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName()+".jpg", requestFile);
+        RequestBody recordIdBody = RequestBody.create(MediaType.parse("text/plain"), uuid);
+        Call<Void> call = methods.uploadFile(body, recordIdBody);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Log.d("FileUploader", "Upload successful!");
+                } else {
+                    Log.e("FileUploader", "Upload failed with status code: " + response.code());
+                }
+            }
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("FileUploader", "Upload failed: " + t.getMessage());
+            }
+        });
+    }
+
 
 
 }
