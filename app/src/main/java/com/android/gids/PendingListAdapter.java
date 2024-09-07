@@ -163,7 +163,7 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
 
                 Log.d("UploadFile", type+" Image Type Found");
 
-                File savedFile = Utils.getSavedImageFile(mContext, Utils.generateFileName(String.valueOf(instanceId), formId, qid));
+                File savedFile = Utils.getSavedImageFile(mContext, Utils.generateFileName(uuid));
 
                 if (savedFile != null && savedFile.exists()) {
 

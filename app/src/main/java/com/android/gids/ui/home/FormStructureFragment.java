@@ -1719,7 +1719,7 @@ public class FormStructureFragment extends Fragment {
         elementImage = new ImageView(getContext());
         elementImage.setId(Integer.parseInt(formStructureModal.getId()));
 
-        elementImage.setTag(Utils.generateFileName(String.valueOf(instanceId), formId, formStructureModal.getId()));
+        elementImage.setTag(Utils.generateFileName(uuid));
 
         elementImage.setPadding(10, 10, 10, 10);
 
@@ -1763,7 +1763,7 @@ public class FormStructureFragment extends Fragment {
             @Override
             public void onClick(View view) {
 
-                file_name = Utils.generateFileName(String.valueOf(instanceId), formId, formStructureModal.getId());
+                file_name = Utils.generateFileName(uuid);
 
                 Log.d("UploadFile", file_name + " created");
 

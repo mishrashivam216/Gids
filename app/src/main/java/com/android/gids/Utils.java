@@ -58,8 +58,9 @@ public class Utils {
         return now.format(formatter);
     }
 
-    public static String generateFileName(String instance_id, String form_id, String qid) {
-        String file_name = "form_" + form_id + "_question_" + qid + "_" + instance_id+".jpg";
+    public static String generateFileName(String uuid) {
+        //String file_name = "form_" + form_id + "_question_" + qid + "_" + instance_id+".jpg";
+        String file_name = "uuid_"+uuid;
         Log.v("UploadFile", file_name);
         return file_name;
 
