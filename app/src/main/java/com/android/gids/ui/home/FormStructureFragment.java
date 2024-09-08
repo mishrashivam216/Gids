@@ -815,6 +815,8 @@ public class FormStructureFragment extends Fragment {
         String noCount = getPrefilledData(formStructureModal.getInterlink_question_id());
 
         Log.v("dfdsfdsf", noCount + "   qid=> " + formStructureModal.getInterlink_question_id());
+        Log.v("dfdsfdsf", itrCount + "   qid=> " + formStructureModal.getInterlink_question_id());
+        Log.v("dfdsfdsf", flag_for_disable_addmore + "   qid=> " + formStructureModal.getInterlink_question_id());
 
 
         if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
@@ -852,9 +854,18 @@ public class FormStructureFragment extends Fragment {
                 .filter(formStructureModals -> formStructureModals.stream()
                         .map(formStructureModal -> {
                             String ans = getPrefilledData(formStructureModal.getId());
+                            Log.v("dfdsfdsf Ans", ans);
                             if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
+
                                 String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+
+                                Log.v("dfdsfdsf interlinkId", interlinkQuestionId);
+
+
                                 ans = getPrefilledData(interlinkQuestionId);
+
+                                Log.v("dfdsfdsf interlinkans", ans);
+
                                 if (ans.equalsIgnoreCase("N/A")) {
                                     ans = "";
                                 }
@@ -863,6 +874,15 @@ public class FormStructureFragment extends Fragment {
                                     flag_for_disable_addmore = 1;
                                 }
 
+                            } else {
+                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+                                String newans = getPrefilledData(interlinkQuestionId);
+                                if (newans.equalsIgnoreCase("N/A")) {
+                                    newans = "";
+                                }
+                                if (newans != null && !newans.trim().isEmpty() && !newans.equals("0")) {
+                                    flag_for_disable_addmore = 1;
+                                }
                             }
                             return ans;
                         })
@@ -2573,10 +2593,21 @@ public class FormStructureFragment extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-            List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
-            List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-            return elementChoices.get(0).getName();
+            if(itemId.equalsIgnoreCase("99")){
+                List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                List<BranchinglogicModal> causeLogic =formStructureModals.get(0).getCause_branching_logic().stream().filter(e ->e.getBranching().contains(itemId)).collect(Collectors.toList());
+                String efId = causeLogic.get(0).getEffect_question_id();
+                String ans = getPrefilledData(efId);
+                return elementChoices.get(0).getName()+" - "+ans;
+
+            }else{
+                List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                return elementChoices.get(0).getName();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return "";

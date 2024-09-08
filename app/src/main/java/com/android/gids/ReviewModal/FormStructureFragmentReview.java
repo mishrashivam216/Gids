@@ -2617,10 +2617,22 @@ public class FormStructureFragmentReview extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-            List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
-            List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-            return elementChoices.get(0).getName();
+            if (itemId.equalsIgnoreCase("99")) {
+                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
+
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                List<BranchinglogicModal> causeLogic = FormStructureModalReviews.get(0).getCause_branching_logic().stream().filter(e -> e.getBranching().contains(itemId)).collect(Collectors.toList());
+                String efId = causeLogic.get(0).getEffect_question_id();
+                String ans = getPrefilledData(efId);
+                return elementChoices.get(0).getName() + " -" + ans;
+
+            } else {
+                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                return elementChoices.get(0).getName();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return "";

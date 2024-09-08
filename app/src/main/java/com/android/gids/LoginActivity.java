@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onFailure(Call<LoginModal> call, Throwable t) {
                 lodingAnim.setVisibility(View.GONE);
                 liError.setVisibility(View.VISIBLE);
-                tvError.setText(t.getMessage()+" cause:"+t.getCause()+" "+t.getLocalizedMessage());
+                tvError.setText("internet too slow to Login!");
             }
         });
     }

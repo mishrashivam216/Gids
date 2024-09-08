@@ -235,8 +235,7 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
 
                 Log.v("ErrorInfo", t.getMessage() + " cause " + t.getLocalizedMessage());
 
-
-                Toast.makeText(getContext(), t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "internet too slow to load the form!", Toast.LENGTH_LONG).show();
             }
         });
     }
