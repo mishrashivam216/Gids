@@ -170,7 +170,6 @@ public class FormStructureFragmentReview extends Fragment {
     private static final int REQUEST_STORAGE_PERMISSION = 101;
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -509,7 +508,7 @@ public class FormStructureFragmentReview extends Fragment {
                 } else if (view instanceof EditText) {
                     surveyData.setField_value(((EditText) view).getText().toString());
                     surveyDataList.add(surveyData);
-                }  else if (view instanceof ImageView) {
+                } else if (view instanceof ImageView) {
                     if (((ImageView) view).getDrawable() != null) {
                         surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
                         surveyDataList.add(surveyData);
@@ -640,7 +639,7 @@ public class FormStructureFragmentReview extends Fragment {
                         binding.layout.addView(v);
                         Button button = createButtonForImage(FormStructureModalReview);
                         binding.layout.addView(button);
-                    }else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
                         View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("text") || FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
