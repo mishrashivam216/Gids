@@ -1,24 +1,33 @@
 package com.android.gids.ReviewModal;
 
 
+import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
 import static android.view.Gravity.TOP;
 import static android.view.View.VISIBLE;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -45,14 +54,17 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.android.gids.AddMoreList;
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
+import com.android.gids.FormStructureModal;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.InstanceStatus;
@@ -72,8 +84,12 @@ import com.android.gids.SurveyRoomDatabase;
 import com.android.gids.Utils;
 import com.android.gids.databinding.FormStructureReviewBinding;
 import com.android.gids.ui.home.BranchinglogicModal;
+import com.android.gids.ui.home.FormStructureFragment;
 import com.google.gson.Gson;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,7 +157,17 @@ public class FormStructureFragmentReview extends Fragment {
     private String lastSearchQueryGlobal = "";
     private String lastSearchQueryGlobalReview = "";
 
-    int flag_for_disable_addmore = 0;
+
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    private static final int SELECT_FILE = 2;
+
+    ImageView elementImage;
+
+    String file_name = "";
+
+    private static final int REQUEST_CAMERA_PERMISSION = 100;
+    private static final int REQUEST_STORAGE_PERMISSION = 101;
 
 
 
@@ -483,6 +509,20 @@ public class FormStructureFragmentReview extends Fragment {
                 } else if (view instanceof EditText) {
                     surveyData.setField_value(((EditText) view).getText().toString());
                     surveyDataList.add(surveyData);
+                }  else if (view instanceof ImageView) {
+                    if (((ImageView) view).getDrawable() != null) {
+                        surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
+                        surveyDataList.add(surveyData);
+                        Drawable drawable = ((ImageView) view).getDrawable();
+                        if (drawable instanceof BitmapDrawable) {
+                            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                            if (bitmap != null) {
+                                Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                            }
+                        } else {
+                            Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                        }
+                    }
                 } else if (view instanceof RadioGroup) {
                     int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
                     if (selectedId != -1) {
@@ -595,7 +635,12 @@ public class FormStructureFragmentReview extends Fragment {
                         sectionId = FormStructureModalReview.getId();
                         View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
-                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
+                    } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("image")) {
+                        View v = createImageElement(FormStructureModalReview);
+                        binding.layout.addView(v);
+                        Button button = createButtonForImage(FormStructureModalReview);
+                        binding.layout.addView(button);
+                    }else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
                         View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("text") || FormStructureModalReview.getElement_type().equalsIgnoreCase("textarea")) {
@@ -701,6 +746,158 @@ public class FormStructureFragmentReview extends Fragment {
         }
     }
 
+    private ImageView createImageElement(FormStructureModalReview formStructureModal) {
+        file_name = "";
+        // Create ImageView dynamically
+        elementImage = new ImageView(getContext());
+        elementImage.setId(Integer.parseInt(formStructureModal.getId()));
+
+        elementImage.setTag(Utils.generateFileName(uuid));
+
+        elementImage.setPadding(10, 10, 10, 10);
+
+
+        String pData = getPrefilledData(formStructureModal.getId());
+
+        // Set the image from local storage
+        File b = Utils.getSavedImageFile(getContext(), pData);
+
+        if (b != null) {
+
+            Bitmap bit = Utils.convertFileToBitmap(b);
+            if (bit != null) {
+                Utils.setLoadedLayoutStructure(elementImage, getContext());
+                elementImage.setImageBitmap(bit);
+            } else {
+                Utils.setDummyLayoutStructure(elementImage, getContext());
+
+                elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
+                Log.e("ImageHandler", "Failed to load image.");
+            }
+        } else {
+            Utils.setDummyLayoutStructure(elementImage, getContext());
+            elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
+        }
+
+        return elementImage; // Return the dynamically created ImageView
+    }
+
+
+    private Button createButtonForImage(FormStructureModalReview formStructureModal) {
+        Button button = new Button(getContext());
+        button.setText("Upload Picture");
+        button.setId(Integer.valueOf(formStructureModal.getId()));
+        button.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                file_name = Utils.generateFileName(uuid);
+
+                Log.d("UploadFile", file_name + " created");
+
+                requestCameraPermission();
+            }
+        });
+
+        return button;
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK && data != null) {
+            Bundle extras = data.getExtras();
+            Bitmap bitmap = (Bitmap) extras.get("data");
+
+            if (bitmap != null) {
+                // Save and process the bitmap
+                File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
+                if (savedFile != null) {
+
+                    Utils.setLoadedLayoutStructure(elementImage, getContext());
+                    Bitmap correctedBitmap = Utils.correctImageOrientation(savedFile);
+                    elementImage.setImageBitmap(correctedBitmap);
+
+                    Log.d("UploadFile", savedFile.getAbsolutePath() + " saved");
+
+                }
+            }
+        } else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
+            Bitmap bitmap = handleGalleryResult(data);
+            File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
+            if (savedFile != null) {
+                Bitmap correctedBitmap = Utils.correctImageOrientation(savedFile);
+                elementImage.setImageBitmap(correctedBitmap);
+
+            }
+        }
+    }
+
+    private Bitmap handleGalleryResult(Intent data) {
+        if (data != null) {
+            try {
+                Uri selectedImageUri = data.getData();
+                InputStream imageStream = getContext().getContentResolver().openInputStream(selectedImageUri);
+                Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
+                return bitmap;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Toast.makeText(getContext(), "Failed to select image from gallery", Toast.LENGTH_SHORT).show();
+            }
+        }
+        return null;
+    }
+
+    private void requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_CAMERA_PERMISSION);
+        } else {
+            showImagePickerDialog(FormStructureFragmentReview.this);
+        }
+    }
+
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+
+    public void showImagePickerDialog(final Fragment fragment) {
+        final CharSequence[] items = {"Take Photo", "Choose from Library", "Cancel"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getContext());
+        builder.setTitle("Add Photo");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int item) {
+                if (items[item].equals("Take Photo")) {
+                    dispatchTakePictureIntent();
+                } else if (items[item].equals("Choose from Library")) {
+                    Intent intent = new Intent(Intent.ACTION_PICK,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/*");
+                    fragment.startActivityForResult(intent, SELECT_FILE);
+                } else if (items[item].equals("Cancel")) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
+
     public ArrayList<AddMoreListReview> getObjectsWithId(String targetId) {
         ArrayList<AddMoreListReview> objectsWithId = new ArrayList<>();
         for (AddMoreListReview obj : addMoreListList) {
@@ -711,7 +908,20 @@ public class FormStructureFragmentReview extends Fragment {
         return objectsWithId;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                showImagePickerDialog(FormStructureFragmentReview.this);
+            } else {
+                Toast.makeText(getContext(), "Camera permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+    }
+
     private void createButton(FormStructureModalReview FormStructureModalReview) {
 
         stackIds = new Stack<>();
@@ -886,67 +1096,25 @@ public class FormStructureFragmentReview extends Fragment {
         binding.layout.addView(buttonLayout);
 
         long itrCount = clickAddmoreIfAnyAnsFilled(addMoreLists);
-
-
-        String noCount = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
-
-        Log.v("dfdsfdsf", noCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
-
-
-        if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
-
-            for (int j = 1; j < Integer.parseInt(noCount); j++) {
-                addButton.performClick();
-            }
-
-            addButton.setClickable(false);
-            removeButton.setClickable(false);
-
-        } else {
-            for (int i = 0; i < itrCount; i++) {
-                addButton.performClick();
-            }
-
-            addButton.setClickable(true);
-            removeButton.setClickable(true);
-
-            if (flag_for_disable_addmore == 1) {
-                flag_for_disable_addmore = 0;
-                addButton.setClickable(false);
-                removeButton.setClickable(false);
-            }
+        for (int i = 0; i < itrCount; i++) {
+            addButton.performClick();
         }
     }
-
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private long clickAddmoreIfAnyAnsFilled(ArrayList<AddMoreListReview> addMoreLists) {
 
         long iterationCount = addMoreLists.stream()
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
-                .filter(formStructureModals -> formStructureModals.stream()
-                        .map(formStructureModal -> {
-                            String ans = getPrefilledData(formStructureModal.getId());
-                            if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
-                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
-                                ans = getPrefilledData(interlinkQuestionId);
-                                if (ans.equalsIgnoreCase("N/A")) {
-                                    ans = "";
-                                }
-
-                                if (ans != null && !ans.trim().isEmpty() && !ans.equals("0")) {
-                                    flag_for_disable_addmore = 1;
-                                }
-
-                            }
-                            return ans;
-                        })
-                        .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
+                .filter(FormStructureModalReviews ->
+                        FormStructureModalReviews.stream()
+                                .map(FormStructureModalReview::getId)
+                                .map(this::getPrefilledData)
+                                .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
                 )
                 .count();
         return iterationCount;
     }
-
 
     private void removeFromID() {
         counter--;
@@ -1004,8 +1172,6 @@ public class FormStructureFragmentReview extends Fragment {
 
             e.printStackTrace();
         }
-
-
     }
 
     //While Adding new Element checking if already visible the skip
@@ -2443,13 +2609,15 @@ public class FormStructureFragmentReview extends Fragment {
     public String getPrefilledData(String qid) {
         SurveyDao surveyDao = myDatabase.surveyDao();
         SurveyData row = surveyDao.getPredefinedAnswer(formId, instanceId, qid);
-        if (row != null && !row.getField_value().isEmpty() && !row.getField_value().equalsIgnoreCase("N/A")) {
+        if (row != null && !row.getField_value().isEmpty()) {
             return row.getField_value();
         }
         return "";
     }
 
-
+    public String getPrefilledDatas(FormStructureModalReview formStructureModalReview) {
+        return formStructureModalReview.getAnswers();
+    }
 
     public int getSpinnerPosition(String val, List<Item> choiceList) {
         for (int i = 0; i < choiceList.size(); i++) {
@@ -2664,22 +2832,10 @@ public class FormStructureFragmentReview extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            if (itemId.equalsIgnoreCase("99")) {
-                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
-
-                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-                List<BranchinglogicModal> causeLogic = FormStructureModalReviews.get(0).getCause_branching_logic().stream().filter(e -> e.getBranching().contains(itemId)).collect(Collectors.toList());
-                String efId = causeLogic.get(0).getEffect_question_id();
-                String ans = getPrefilledData(efId);
-                return elementChoices.get(0).getName() + " -" + ans;
-
-            } else {
-                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
-                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-                return elementChoices.get(0).getName();
-            }
+            List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+            List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
+            List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+            return elementChoices.get(0).getName();
         } catch (Exception e) {
             e.printStackTrace();
             return "";
