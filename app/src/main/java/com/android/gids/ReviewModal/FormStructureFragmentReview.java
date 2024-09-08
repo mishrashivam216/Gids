@@ -50,6 +50,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.android.gids.AddMoreList;
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.GlobalDataSetValue;
@@ -139,6 +140,9 @@ public class FormStructureFragmentReview extends Fragment {
     private String lastSearchQuery = "";
     private String lastSearchQueryGlobal = "";
     private String lastSearchQueryGlobalReview = "";
+
+    int flag_for_disable_addmore = 0;
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -707,6 +711,7 @@ public class FormStructureFragmentReview extends Fragment {
         return objectsWithId;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void createButton(FormStructureModalReview FormStructureModalReview) {
 
         stackIds = new Stack<>();
@@ -881,25 +886,67 @@ public class FormStructureFragmentReview extends Fragment {
         binding.layout.addView(buttonLayout);
 
         long itrCount = clickAddmoreIfAnyAnsFilled(addMoreLists);
-        for (int i = 0; i < itrCount; i++) {
-            addButton.performClick();
+
+
+        String noCount = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
+
+        Log.v("dfdsfdsf", noCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+
+
+        if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
+
+            for (int j = 1; j < Integer.parseInt(noCount); j++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(false);
+            removeButton.setClickable(false);
+
+        } else {
+            for (int i = 0; i < itrCount; i++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(true);
+            removeButton.setClickable(true);
+
+            if (flag_for_disable_addmore == 1) {
+                flag_for_disable_addmore = 0;
+                addButton.setClickable(false);
+                removeButton.setClickable(false);
+            }
         }
     }
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private long clickAddmoreIfAnyAnsFilled(ArrayList<AddMoreListReview> addMoreLists) {
 
         long iterationCount = addMoreLists.stream()
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
-                .filter(FormStructureModalReviews ->
-                        FormStructureModalReviews.stream()
-                                .map(FormStructureModalReview::getId)
-                                .map(this::getPrefilledData)
-                                .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
+                .filter(formStructureModals -> formStructureModals.stream()
+                        .map(formStructureModal -> {
+                            String ans = getPrefilledData(formStructureModal.getId());
+                            if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
+                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+                                ans = getPrefilledData(interlinkQuestionId);
+                                if (ans.equalsIgnoreCase("N/A")) {
+                                    ans = "";
+                                }
+
+                                if (ans != null && !ans.trim().isEmpty() && !ans.equals("0")) {
+                                    flag_for_disable_addmore = 1;
+                                }
+
+                            }
+                            return ans;
+                        })
+                        .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
                 )
                 .count();
         return iterationCount;
     }
+
 
     private void removeFromID() {
         counter--;
@@ -957,6 +1004,8 @@ public class FormStructureFragmentReview extends Fragment {
 
             e.printStackTrace();
         }
+
+
     }
 
     //While Adding new Element checking if already visible the skip
@@ -2394,15 +2443,13 @@ public class FormStructureFragmentReview extends Fragment {
     public String getPrefilledData(String qid) {
         SurveyDao surveyDao = myDatabase.surveyDao();
         SurveyData row = surveyDao.getPredefinedAnswer(formId, instanceId, qid);
-        if (row != null && !row.getField_value().isEmpty()) {
+        if (row != null && !row.getField_value().isEmpty() && !row.getField_value().equalsIgnoreCase("N/A")) {
             return row.getField_value();
         }
         return "";
     }
 
-    public String getPrefilledDatas(FormStructureModalReview formStructureModalReview) {
-        return formStructureModalReview.getAnswers();
-    }
+
 
     public int getSpinnerPosition(String val, List<Item> choiceList) {
         for (int i = 0; i < choiceList.size(); i++) {
