@@ -31,8 +31,11 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -1994,8 +1997,22 @@ public class FormStructureFragmentReview extends Fragment {
 
     private TextView createLabelCheckbox(FormStructureModalReview FormStructureModalReview) {
 
+        String label = FormStructureModalReview.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (FormStructureModalReview.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
         TextView headingTextView = new TextView(getContext());
-        headingTextView.setText(FormStructureModalReview.getElement_label());
+        headingTextView.setText(spannableString);
         headingTextView.setId(0);
         headingTextView.setTag(FormStructureModalReview.getId());
         headingTextView.setTextColor(getContext().getResources().getColor(R.color.black));
@@ -2011,8 +2028,23 @@ public class FormStructureFragmentReview extends Fragment {
 
 
     private TextView createLabelRadio(FormStructureModalReview FormStructureModalReview) {
+
+        String label = FormStructureModalReview.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (FormStructureModalReview.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(FormStructureModalReview.getElement_label());
+        labelTextView.setText(spannableString);
         labelTextView.setId(0);
         labelTextView.setTag(FormStructureModalReview.getId());
         labelTextView.setTextColor(getContext().getResources().getColor(R.color.black));
@@ -2027,8 +2059,23 @@ public class FormStructureFragmentReview extends Fragment {
 
 
     private View createLabelEditTextView(FormStructureModalReview FormStructureModalReview) {
+        String label = FormStructureModalReview.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (FormStructureModalReview.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(FormStructureModalReview.getElement_label());
+        labelTextView.setText(spannableString);
         labelTextView.setId(0);
         labelTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
         labelTextView.setTypeface(null, Typeface.BOLD);

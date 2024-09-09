@@ -30,8 +30,11 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -392,12 +395,12 @@ public class FormStructureFragment extends Fragment {
                         try {
                             preQid = String.valueOf(view.getTag());
                             checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
 
-                    if(j != binding.layout.getChildCount()-1){
+                    if (j != binding.layout.getChildCount() - 1) {
                         continue;
                     }
                 }
@@ -1469,7 +1472,6 @@ public class FormStructureFragment extends Fragment {
         });
 
 
-
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -1608,7 +1610,7 @@ public class FormStructureFragment extends Fragment {
                         try {
                             String pData = getPrefilledData(formStructureModal.getId());
 
-                            Log.v("fwfwsefw", pData+" -"+formStructureModal.getElement_label());
+                            Log.v("fwfwsefw", pData + " -" + formStructureModal.getElement_label());
 
 
                             if (pData != null && !pData.isEmpty()) {
@@ -1697,9 +1699,21 @@ public class FormStructureFragment extends Fragment {
 
 
     private TextView createLabelCheckbox(FormStructureModal formStructureModal) {
-
+        String label = formStructureModal.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (formStructureModal.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         TextView headingTextView = new TextView(getContext());
-        headingTextView.setText(formStructureModal.getElement_label());
+        headingTextView.setText(spannableString);
         headingTextView.setId(0);
         headingTextView.setTypeface(null, Typeface.BOLD);
         headingTextView.setTag(formStructureModal.getId());
@@ -1715,8 +1729,23 @@ public class FormStructureFragment extends Fragment {
 
 
     private TextView createLabelRadio(FormStructureModal formStructureModal) {
+
+        String label = formStructureModal.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (formStructureModal.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(formStructureModal.getElement_label());
+        labelTextView.setText(spannableString);
         labelTextView.setId(0);
         labelTextView.setTag(formStructureModal.getId());
         labelTextView.setTextColor(getContext().getResources().getColor(R.color.black));
@@ -1731,8 +1760,23 @@ public class FormStructureFragment extends Fragment {
 
 
     private View createLabelEditTextView(FormStructureModal formStructureModal) {
+        String label = formStructureModal.getElement_label();
+        String req = "";
+        int colorRed = ContextCompat.getColor(getContext(), R.color.red); // Define or use the actual color resource
+        if (formStructureModal.getElement_required().equalsIgnoreCase("1")) {
+            req = "*";
+        }
+        String fullText = label + req;
+        SpannableString spannableString = new SpannableString(fullText);
+        if (!req.isEmpty()) {
+            int start = fullText.indexOf(req);
+            int end = start + req.length();
+            spannableString.setSpan(new ForegroundColorSpan(colorRed), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+
         TextView labelTextView = new TextView(getContext());
-        labelTextView.setText(formStructureModal.getElement_label());
+        labelTextView.setText(spannableString);
         labelTextView.setId(0);
         labelTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.black));
         labelTextView.setTypeface(null, Typeface.BOLD);
@@ -2606,16 +2650,16 @@ public class FormStructureFragment extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            if(itemId.equalsIgnoreCase("99")){
+            if (itemId.equalsIgnoreCase("99")) {
                 List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
                 List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
                 List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-                List<BranchinglogicModal> causeLogic =formStructureModals.get(0).getCause_branching_logic().stream().filter(e ->e.getBranching().contains(itemId)).collect(Collectors.toList());
+                List<BranchinglogicModal> causeLogic = formStructureModals.get(0).getCause_branching_logic().stream().filter(e -> e.getBranching().contains(itemId)).collect(Collectors.toList());
                 String efId = causeLogic.get(0).getEffect_question_id();
                 String ans = getPrefilledData(efId);
-                return elementChoices.get(0).getName()+" - "+ans;
+                return elementChoices.get(0).getName() + " - " + ans;
 
-            }else{
+            } else {
                 List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
                 List<ElementChoice> items = formStructureModals.get(0).getElement_choices();
                 List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
