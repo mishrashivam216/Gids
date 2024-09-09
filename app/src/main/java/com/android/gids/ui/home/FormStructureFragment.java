@@ -389,10 +389,17 @@ public class FormStructureFragment extends Fragment {
 
                 if (view instanceof CheckBox) {
                     if (((CheckBox) view).isChecked()) {
-                        preQid = String.valueOf(view.getTag());
-                        checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                        try {
+                            preQid = String.valueOf(view.getTag());
+                            checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
-                    continue;
+
+                    if(j != binding.layout.getChildCount()-1){
+                        continue;
+                    }
                 }
 
                 if (!checkBoxData.isEmpty()) {
@@ -1461,6 +1468,8 @@ public class FormStructureFragment extends Fragment {
             }
         });
 
+
+
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -1598,6 +1607,10 @@ public class FormStructureFragment extends Fragment {
                     public void run() {
                         try {
                             String pData = getPrefilledData(formStructureModal.getId());
+
+                            Log.v("fwfwsefw", pData+" -"+formStructureModal.getElement_label());
+
+
                             if (pData != null && !pData.isEmpty()) {
                                 // Convert pData to int
                                 if (pData.contains(String.valueOf(checkBox.getId()))) {

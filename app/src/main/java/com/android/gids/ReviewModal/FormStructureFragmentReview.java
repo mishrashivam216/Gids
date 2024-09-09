@@ -489,8 +489,9 @@ public class FormStructureFragmentReview extends Fragment {
                         preQid = String.valueOf(view.getTag());
                         checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
                     }
-                    continue;
-                }
+                    if(j != binding.layout.getChildCount()-1){
+                        continue;
+                    }                }
 
                 if (!checkBoxData.isEmpty()) {
                     surveyDataList.add(createSurveyData(preQid, checkBoxData));
