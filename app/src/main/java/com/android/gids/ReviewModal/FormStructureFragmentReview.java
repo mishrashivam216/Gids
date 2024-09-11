@@ -65,6 +65,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.android.gids.AddMoreList;
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormStructureModal;
@@ -99,6 +100,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Stack;
@@ -171,6 +173,9 @@ public class FormStructureFragmentReview extends Fragment {
 
     private static final int REQUEST_CAMERA_PERMISSION = 100;
     private static final int REQUEST_STORAGE_PERMISSION = 101;
+
+    int flag_for_disable_addmore = 0;
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -1094,14 +1099,47 @@ public class FormStructureFragmentReview extends Fragment {
 
             }
         });
+
+
+
         int initialIndex = binding.layout.indexOfChild(addButton);
         binding.layout.addView(labelTextView);
         binding.layout.addView(buttonLayout);
 
         long itrCount = clickAddmoreIfAnyAnsFilled(addMoreLists);
-        for (int i = 0; i < itrCount; i++) {
-            addButton.performClick();
+
+
+        String noCount = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
+
+        Log.v("dfdsfdsf", noCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+        Log.v("dfdsfdsf", itrCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+        Log.v("dfdsfdsf", flag_for_disable_addmore + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+
+
+        if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
+
+            for (int j = 1; j < Integer.parseInt(noCount); j++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(false);
+            removeButton.setClickable(false);
+
+        } else {
+            for (int i = 0; i < itrCount; i++) {
+                addButton.performClick();
+            }
+
+            addButton.setClickable(true);
+            removeButton.setClickable(true);
+
+            if (flag_for_disable_addmore == 1) {
+                flag_for_disable_addmore = 0;
+                addButton.setClickable(false);
+                removeButton.setClickable(false);
+            }
         }
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -1109,11 +1147,42 @@ public class FormStructureFragmentReview extends Fragment {
 
         long iterationCount = addMoreLists.stream()
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
-                .filter(FormStructureModalReviews ->
-                        FormStructureModalReviews.stream()
-                                .map(FormStructureModalReview::getId)
-                                .map(this::getPrefilledData)
-                                .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
+                .filter(FormStructureModalReviews -> FormStructureModalReviews.stream()
+                        .map(formStructureModal -> {
+                            String ans = getPrefilledData(formStructureModal.getId());
+                            Log.v("dfdsfdsf Ans", ans);
+                            if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
+
+                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+
+                                Log.v("dfdsfdsf interlinkId", interlinkQuestionId);
+
+
+                                ans = getPrefilledData(interlinkQuestionId);
+
+                                Log.v("dfdsfdsf interlinkans", ans);
+
+                                if (ans.equalsIgnoreCase("N/A")) {
+                                    ans = "";
+                                }
+
+                                if (ans != null && !ans.trim().isEmpty() && !ans.equals("0")) {
+                                    flag_for_disable_addmore = 1;
+                                }
+
+                            } else {
+                                String interlinkQuestionId = formStructureModal.getInterlink_question_id();
+                                String newans = getPrefilledData(interlinkQuestionId);
+                                if (newans.equalsIgnoreCase("N/A")) {
+                                    newans = "";
+                                }
+                                if (newans != null && !newans.trim().isEmpty() && !newans.equals("0")) {
+                                    flag_for_disable_addmore = 1;
+                                }
+                            }
+                            return ans;
+                        })
+                        .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
                 )
                 .count();
         return iterationCount;
@@ -2712,10 +2781,12 @@ public class FormStructureFragmentReview extends Fragment {
 
         if (functionName.equalsIgnoreCase("MISS_MULTIPLY")) {
             float mul = answerList.stream()
+                    .filter(Objects::nonNull) // Filters out null values
+                    .filter(a -> a != 0) // Optional: Filters out zero values if needed
                     .reduce(1.0f, (a, b) -> a * b);
 
             Log.v("Function Name: ", mul + "  Total Multiply");
-            return mul;
+            return answerList.isEmpty() ? 0 : mul; // Return 0 if the list is empty
         }
 
         if (functionName.equalsIgnoreCase("MISS_MINUS")) {

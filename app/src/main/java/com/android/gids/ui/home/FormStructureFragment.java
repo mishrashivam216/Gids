@@ -97,6 +97,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Stack;
@@ -1027,9 +1028,7 @@ public class FormStructureFragment extends Fragment {
                 ListView listView = view.findViewById(android.R.id.list);
                 listView.setAdapter(spinnerAdapter);
 
-
 //                searchView.setQuery(lastSearchQuery, false);
-
                 searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                     @Override
                     public boolean onQueryTextSubmit(String query) {
@@ -1043,15 +1042,12 @@ public class FormStructureFragment extends Fragment {
                         return false;
                     }
                 });
-
                 builder.setView(view);
                 AlertDialog dialog = builder.create();
                 listView.setOnItemClickListener((parent, view1, position, id) -> {
                     spinner.setSelection(position);
                     dialog.dismiss();  // Dismiss the dialog on item click
                 });
-
-
                 dialog.show();
             }
             return true;
@@ -2479,10 +2475,12 @@ public class FormStructureFragment extends Fragment {
 
         if (functionName.equalsIgnoreCase("MISS_MULTIPLY")) {
             float mul = answerList.stream()
+                    .filter(Objects::nonNull) // Filters out null values
+                    .filter(a -> a != 0) // Optional: Filters out zero values if needed
                     .reduce(1.0f, (a, b) -> a * b);
 
             Log.v("Function Name: ", mul + "  Total Multiply");
-            return mul;
+            return answerList.isEmpty() ? 0 : mul; // Return 0 if the list is empty
         }
 
         if (functionName.equalsIgnoreCase("MISS_MINUS")) {
