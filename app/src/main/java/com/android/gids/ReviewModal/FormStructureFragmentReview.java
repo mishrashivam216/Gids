@@ -1029,14 +1029,24 @@ public class FormStructureFragmentReview extends Fragment {
                                 binding.layout.addView(etLabel, indexToAdd++);
                                 EditText view = createEditText(FormStructureModalReviews.get(i));
                                 binding.layout.addView(view, indexToAdd++);
+
                                 View elElement = createLabelEditElement(FormStructureModalReviews.get(i), view);
-                                binding.layout.addView(elElement, indexToAdd++);
+                                if (!FormStructureModalReviews.get(i).getFeedback().isEmpty()) {
+                                    binding.layout.addView(elElement, indexToAdd++);
+                                }
+
                             } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("select")) {
                                 View label = createLabelEditTextView(FormStructureModalReviews.get(i));
                                 binding.layout.addView(label, indexToAdd++);
                                 if (FormStructureModalReviews.get(i).getSelect_type().equalsIgnoreCase("global")) {
                                     Spinner spinner = createSpinnerForGlobal(FormStructureModalReviews.get(i));
                                     binding.layout.addView(spinner, indexToAdd++);
+
+                                    View elElement = createLabelEditElement(FormStructureModalReviews.get(i), spinner);
+                                    if (!FormStructureModalReviews.get(i).getFeedback().isEmpty()) {
+                                        binding.layout.addView(elElement, indexToAdd++);
+                                    }
+
                                 } else {
                                     Spinner spinner = createSpinner(FormStructureModalReviews.get(i));
                                     binding.layout.addView(spinner, indexToAdd++);
@@ -1046,6 +1056,12 @@ public class FormStructureFragmentReview extends Fragment {
                                 binding.layout.addView(tv, indexToAdd++);
                                 RadioGroup radioGroup = createRadioButton(FormStructureModalReviews.get(i));
                                 binding.layout.addView(radioGroup, indexToAdd++);
+
+                                View elElement = createLabelEditElement(FormStructureModalReviews.get(i), radioGroup);
+                                if (!FormStructureModalReviews.get(i).getFeedback().isEmpty()) {
+                                    binding.layout.addView(elElement, indexToAdd++);
+                                }
+
                             } else if (FormStructureModalReviews.get(i).getElement_type().equalsIgnoreCase("checkbox")) {
                                 TextView tv = createLabelCheckbox(FormStructureModalReviews.get(i));
                                 binding.layout.addView(tv, indexToAdd++);
@@ -1111,9 +1127,9 @@ public class FormStructureFragmentReview extends Fragment {
 
         String noCount = getPrefilledData(FormStructureModalReview.getInterlink_question_id());
 
-        Log.v("dfdsfdsf", noCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
-        Log.v("dfdsfdsf", itrCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
-        Log.v("dfdsfdsf", flag_for_disable_addmore + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+        Log.v("dsafdfdfdsf", noCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+        Log.v("dsafdfdfdsf", itrCount + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+        Log.v("dsafdfdfdsf", flag_for_disable_addmore + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
 
 
         if (noCount != null && !noCount.equalsIgnoreCase("") && Integer.parseInt(noCount) != 0) {
@@ -1149,7 +1165,7 @@ public class FormStructureFragmentReview extends Fragment {
                 .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
                 .filter(FormStructureModalReviews -> FormStructureModalReviews.stream()
                         .map(formStructureModal -> {
-                            String ans = getPrefilledData(formStructureModal.getId());
+                            String ans = formStructureModal.getAnswers();
                             Log.v("dfdsfdsf Ans", ans);
                             if (ans == null || ans.trim().isEmpty() || ans.equals("0") || ans.equals("N/A")) {
 
