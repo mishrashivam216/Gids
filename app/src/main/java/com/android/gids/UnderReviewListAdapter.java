@@ -198,7 +198,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         Log.v("dsdsfdsf", uuid);
         Gson gson = new Gson();
         String json = gson.toJson(formRequest);
-        Log.v("FormRequestJSON", json);
+        logLargeJson("FormRequestJSONs", json);
         try {
             insertLogInDb(json, uuid);
         } catch (Exception e) {
@@ -242,11 +242,20 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 onSyncStarted.onSyncStop();
                 Log.v("SyncAPI", t.getMessage() + "    :" + t.getCause());
-                Toast.makeText(mContext, "An error has occured", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, t.getMessage() + " " + t.getCause(), Toast.LENGTH_LONG).show();
 
             }
         });
     }
+
+    private void logLargeJson(String tag, String json) {
+        final int chunkSize = 2048; // Set the chunk size according to your needs
+        for (int i = 0; i < json.length(); i += chunkSize) {
+            int end = Math.min(json.length(), i + chunkSize);
+            Log.v(tag, json.substring(i, end));
+        }
+    }
+
 
     public void insertLogInDb(String rawjson, String uuid) {
         try {

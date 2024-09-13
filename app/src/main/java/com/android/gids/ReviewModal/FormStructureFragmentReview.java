@@ -177,7 +177,6 @@ public class FormStructureFragmentReview extends Fragment {
     int flag_for_disable_addmore = 0;
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -455,8 +454,16 @@ public class FormStructureFragmentReview extends Fragment {
 
 
         binding.spinnerPaging.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+
+                try {
+                    createLayoutFromJson();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 
                 if (position != 0) {
                     try {
@@ -497,9 +504,10 @@ public class FormStructureFragmentReview extends Fragment {
                         preQid = String.valueOf(view.getTag());
                         checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
                     }
-                    if(j != binding.layout.getChildCount()-1){
+                    if (j != binding.layout.getChildCount() - 1) {
                         continue;
-                    }                }
+                    }
+                }
 
                 if (!checkBoxData.isEmpty()) {
                     surveyDataList.add(createSurveyData(preQid, checkBoxData));
@@ -1115,7 +1123,6 @@ public class FormStructureFragmentReview extends Fragment {
 
             }
         });
-
 
 
         int initialIndex = binding.layout.indexOfChild(addButton);
@@ -1887,7 +1894,7 @@ public class FormStructureFragmentReview extends Fragment {
                     child.setVisibility(VISIBLE);
                 } else {
                     child.setVisibility(View.GONE);
-                    resetViews(child);
+                    //resetViews(child);
 
                     new Thread(new Runnable() {
                         @Override
@@ -2318,6 +2325,7 @@ public class FormStructureFragmentReview extends Fragment {
         return layout;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private EditText createEditText(FormStructureModalReview FormStructureModalReview) {
         EditText editText = new EditText(getContext());
 
