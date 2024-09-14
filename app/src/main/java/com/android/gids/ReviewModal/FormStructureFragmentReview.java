@@ -340,7 +340,7 @@ public class FormStructureFragmentReview extends Fragment {
                 instanceStatus.setInstance_id(instanceId);
                 instanceStatus.setIsSubmitted(1);
                 instanceStatus.setForm_id(formId);
-                instanceStatus.setUuid(uuid);
+                instanceStatus.setUuid(recid);
                 InstanceStatusDao instanceStatusDao = myDatabase.instanceStatusDao();
                 instanceStatusDao.insert(instanceStatus);
                 dialog.dismiss();
@@ -458,28 +458,27 @@ public class FormStructureFragmentReview extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 
-                try {
-                    createLayoutFromJson();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-
-                if (position != 0) {
-                    try {
-                        currentPageIndex = position - 1;
-                        parseData(currentPageIndex);
-                        binding.finalSubmitButton.setVisibility(View.GONE);
-                        binding.nextButton.setText("SAVE AND NEXT");
-                        if (currentPageIndex == list.size() - 1) {
-                            binding.finalSubmitButton.setVisibility(VISIBLE);
-                            binding.nextButton.setText("SAVE AND SUBMIT");
-                        }
-                    } catch (Exception e) {
-                        Log.v("afsdfsd", e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
+//                try {
+//                    createLayoutFromJson();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//                if (position != 0) {
+//                    try {
+//                        currentPageIndex = position - 1;
+//                        parseData(currentPageIndex);
+//                        binding.finalSubmitButton.setVisibility(View.GONE);
+//                        binding.nextButton.setText("SAVE AND NEXT");
+//                        if (currentPageIndex == list.size() - 1) {
+//                            binding.finalSubmitButton.setVisibility(VISIBLE);
+//                            binding.nextButton.setText("SAVE AND SUBMIT");
+//                        }
+//                    } catch (Exception e) {
+//                        Log.v("afsdfsd", e.getMessage());
+//                        e.printStackTrace();
+//                    }
+//                }
             }
 
             @Override
@@ -574,7 +573,7 @@ public class FormStructureFragmentReview extends Fragment {
         surveyData.setSection_id(sectionId);
         surveyData.setUser_id(userId);
         surveyData.setInstance_id(instanceId);
-        surveyData.setRecord_id(uuid);
+        surveyData.setRecord_id(recid);
         surveyData.setSource(Utils.FEEDBACK_RECORD);
         surveyData.setLat(LocationService.getLat());
         surveyData.setLogitude(LocationService.getLong());

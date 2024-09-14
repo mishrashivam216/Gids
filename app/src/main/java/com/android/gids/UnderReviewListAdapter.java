@@ -82,7 +82,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             uuid = data.getGIDS_SURVEY_APP().getDataList().get(0).getUuid();
 
             instanceStatusDao = myDatabase.instanceStatusDao();
-            InstanceStatus instanceStatus = instanceStatusDao.getToSyncByFormByUUID(list.get(position).getFormId(), uuid);
+            InstanceStatus instanceStatus = instanceStatusDao.getToSyncByFormByUUID(list.get(position).getFormId(), list.get(position).getRecordId());
             Log.v("dfdsfdsf", instanceStatus.getIsSubmitted() + "");
 
             if (instanceStatus != null && instanceStatus.getIsSubmitted() == 1) {
@@ -113,7 +113,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             public void onClick(View view) {
                 try {
                     SurveyDao s = myDatabase.surveyDao();
-                    SurveyData surveyData = s.getInstanceID(list.get(position).getFormId(), uuid);
+                    SurveyData surveyData = s.getInstanceID(list.get(position).getFormId(), list.get(position).getRecordId());
                     if (surveyData != null && surveyData.getRecord_id() != null && !surveyData.getRecord_id().isEmpty()) {
                         int instanceId = surveyData.getInstance_id();
                         if (Utils.isNetworkAvailable(mContext)) {
