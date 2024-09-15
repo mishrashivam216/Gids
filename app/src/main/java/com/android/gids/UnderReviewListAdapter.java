@@ -115,9 +115,8 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
                     SurveyDao s = myDatabase.surveyDao();
                     SurveyData surveyData = s.getInstanceID(list.get(position).getFormId(), list.get(position).getRecordId());
                     if (surveyData != null && surveyData.getRecord_id() != null && !surveyData.getRecord_id().isEmpty()) {
-                        int instanceId = surveyData.getInstance_id();
                         if (Utils.isNetworkAvailable(mContext)) {
-                            sendData(list.get(position).getFormId(), instanceId, uuid);
+                            sendData(list.get(position).getFormId(), list.get(position).getRecordId(), uuid);
                         } else {
                             Toast.makeText(mContext, "Please Check your internet Connection!", Toast.LENGTH_SHORT).show();
                         }
@@ -159,10 +158,10 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         }
     }
 
-    public void sendData(String formId, int instanceId, String uuid) {
+    public void sendData(String formId, String recId, String uuid) {
         onSyncStarted.onSyncStarted();
         SurveyDao surveyDao = myDatabase.surveyDao();
-        List<SurveyData> list = surveyDao.getToSyncByFormInstanceId(formId, instanceId);
+        List<SurveyData> list = surveyDao.getToSyncByFormRecordId(formId, recId);
         List<SurveyData> list1 = surveyDao.getAll();
         Log.v("getData", list1.size() + " all");
         Log.v("getData", list.size() + " sync");
@@ -223,8 +222,8 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
 
                             Toast.makeText(mContext, GIDS_SURVEY_APP.getString("res_msg"), Toast.LENGTH_SHORT).show();
 
-                            surveyDao.deletebyFormIdInstanceId(formId, instanceId);
-                            instanceStatusDao.deletebyInstanceId(formId, instanceId);
+                            surveyDao.deletebyFormIdRecordId(formId, recId);
+                            instanceStatusDao.deletebyRecordId(formId, recId);
                             mContext.startActivity(new Intent(mContext, MainActivity.class));
 
                         } else {

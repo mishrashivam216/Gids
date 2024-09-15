@@ -36,6 +36,10 @@ public interface SurveyDao {
     List<SurveyData> getToSyncByFormInstanceId(String formId, int instanceId);
 
 
+    @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :recordId")
+    List<SurveyData> getToSyncByFormRecordId(String formId, String recordId);
+
+
     @Query("update survey_data set sync_status = '1' where sync_status = '0'")
     void updateSyncStatus();
 
@@ -46,6 +50,9 @@ public interface SurveyDao {
     @Query("delete FROM survey_data WHERE form_id = :formId and instance_id = :instanceId")
     void deletebyFormIdInstanceId(String formId, int instanceId);
 
+    @Query("delete FROM survey_data WHERE form_id = :formId and record_id = :recordId")
+    void deletebyFormIdRecordId(String formId, String recordId);
+
     @Query("delete FROM survey_data WHERE form_id = :formId and record_id = :recId")
     void deletebyFormUUID(String formId, String recId);
 
@@ -53,11 +60,18 @@ public interface SurveyDao {
     @Query("SELECT * FROM survey_data WHERE form_id = :formId and instance_id = :instanceId and question_id = :qid")
     SurveyData getPredefinedAnswer(String formId, int instanceId, String qid);
 
+    @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :recId and question_id = :qid")
+    SurveyData getPredefinedAnswerReview(String formId, String recId, String qid);
+
     @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :uuid and question_id = :qid")
     SurveyData getPredefinedAnswerByUUID(String formId, String uuid, String qid);
 
     @Query("SELECT * FROM survey_data WHERE form_id = :formId AND instance_id = :instanceId  ORDER BY id DESC LIMIT 1")
     SurveyData getLastEntryByForm(String formId, int instanceId);
+
+
+    @Query("SELECT * FROM survey_data WHERE form_id = :formId AND record_id = :recId  ORDER BY id DESC LIMIT 1")
+    SurveyData getLastEntryByRecId(String formId, String recId);
 
     @Query("SELECT * FROM survey_data WHERE form_id = :formId and instance_id = :instanceId")
     List<SurveyData> getPredefinedAnswerList(String formId, int instanceId);
@@ -65,6 +79,9 @@ public interface SurveyDao {
 
     @Query("UPDATE survey_data SET field_value = :newFieldValue WHERE question_id = :questionId AND instance_id = :instanceId AND form_id = :formId")
     void updateByFields(String questionId, int instanceId, String formId, String newFieldValue);
+
+    @Query("UPDATE survey_data SET field_value = :newFieldValue WHERE question_id = :questionId AND record_id = :recId AND form_id = :formId")
+    void updateByFieldsReview(String questionId, String recId, String formId, String newFieldValue);
 
 
     @Query("delete FROM survey_data WHERE question_id = :qid")

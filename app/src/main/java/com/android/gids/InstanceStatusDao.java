@@ -18,6 +18,9 @@ public interface InstanceStatusDao {
     @Query("delete FROM instance_status WHERE form_id= :formId and instance_id = :instanceId and isSubmitted = 1")
     void deletebyInstanceId(String formId, int instanceId);
 
+    @Query("delete FROM instance_status WHERE form_id= :formId and uuid = :uuid and isSubmitted = 1")
+    void deletebyRecordId(String formId, String  uuid);
+
 
     @Query("SELECT * FROM instance_status WHERE  form_id= :formId and instance_id = :instanceId and isSubmitted = 1")
     InstanceStatus getToSyncByFormInstanceId(String formId, int instanceId);

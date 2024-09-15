@@ -151,9 +151,6 @@ public class FormStructureFragmentReview extends Fragment {
 
     public String recid = "0";
 
-    public int instanceId = 0;
-
-
     SharedPreferences sharedPreferences;
 
     FormStructureReviewBinding binding;
@@ -203,21 +200,10 @@ public class FormStructureFragmentReview extends Fragment {
             uuid = data.getGIDS_SURVEY_APP().getDataList().get(index).getUuid();
             Log.v("FormStructureFragment:", FormStructureModalReviewList.size() + " Size");
 
-            try {
-                SurveyDao s = myDatabase.surveyDao();
-                SurveyData surveyData = s.getInstanceID(formId, uuid);
-                if (surveyData != null && surveyData.getRecord_id() != null && !surveyData.getRecord_id().isEmpty()) {
-                    instanceId = surveyData.getInstance_id();
-                } else {
-                    instanceId = getArguments().getInt("instanceId");
-                }
-            } catch (Exception e) {
-                instanceId = getArguments().getInt("instanceId");
-            }
 
             prepareData();
 
-            binding.tvProjectName.setText(data.getGIDS_SURVEY_APP().getDataList().get(index).getName());
+            binding.tvProjectName.setText(data.getGIDS_SURVEY_APP().getDataList().get(index).getName() + "\nRecord Id: " + recid);
             layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -337,7 +323,7 @@ public class FormStructureFragmentReview extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 createLayoutFromJson();
                 InstanceStatus instanceStatus = new InstanceStatus();
-                instanceStatus.setInstance_id(instanceId);
+
                 instanceStatus.setIsSubmitted(1);
                 instanceStatus.setForm_id(formId);
                 instanceStatus.setUuid(recid);
@@ -498,68 +484,75 @@ public class FormStructureFragmentReview extends Fragment {
         try {
             for (int j = 0; j < binding.layout.getChildCount(); j++) {
                 View view = binding.layout.getChildAt(j);
-                if (view instanceof CheckBox) {
-                    if (((CheckBox) view).isChecked()) {
-                        preQid = String.valueOf(view.getTag());
-                        checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
-                    }
-                    if (j != binding.layout.getChildCount() - 1) {
-                        continue;
-                    }
-                }
 
-                if (!checkBoxData.isEmpty()) {
-                    surveyDataList.add(createSurveyData(preQid, checkBoxData));
-                    checkBoxData = "";
-                    preQid = "";
-                }
+                if (view.getVisibility() == VISIBLE) {
 
-                SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
-                if (view instanceof Spinner) {
-                    Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
-                    if (selectedItem != null) {
-                        surveyData.setField_value(selectedItem.getId());
-                        surveyDataList.add(surveyData);
-                    }
-                } else if (view instanceof EditText) {
-                    surveyData.setField_value(((EditText) view).getText().toString());
-                    surveyDataList.add(surveyData);
-                } else if (view instanceof ImageView) {
-                    if (((ImageView) view).getDrawable() != null) {
-                        surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
-                        surveyDataList.add(surveyData);
-                        Drawable drawable = ((ImageView) view).getDrawable();
-                        if (drawable instanceof BitmapDrawable) {
-                            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
-                            if (bitmap != null) {
-                                Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
-                            }
-                        } else {
-                            Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+
+                    if (view instanceof CheckBox) {
+                        if (((CheckBox) view).isChecked()) {
+                            preQid = String.valueOf(view.getTag());
+                            checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                        }
+                        if (j != binding.layout.getChildCount() - 1) {
+                            continue;
                         }
                     }
-                } else if (view instanceof RadioGroup) {
-                    int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
-                    if (selectedId != -1) {
-                        surveyData.setField_value(String.valueOf(selectedId));
-                        surveyDataList.add(surveyData);
+
+                    if (!checkBoxData.isEmpty()) {
+                        surveyDataList.add(createSurveyData(preQid, checkBoxData));
+                        checkBoxData = "";
+                        preQid = "";
                     }
-                } else if (view instanceof LinearLayout) {
-                    LinearLayout linearLayout = (LinearLayout) view;
-                    for (int k = 0; k < linearLayout.getChildCount(); k++) {
-                        View childView = linearLayout.getChildAt(k);
-                        if (childView instanceof EditText) {
-                            Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
-                            surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+
+                    SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
+
+                    if (view instanceof Spinner) {
+                        Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
+                        if (selectedItem != null) {
+                            surveyData.setField_value(selectedItem.getId());
                             surveyDataList.add(surveyData);
                         }
+                    } else if (view instanceof EditText) {
+                        surveyData.setField_value(((EditText) view).getText().toString());
+                        surveyDataList.add(surveyData);
+                    } else if (view instanceof ImageView) {
+                        if (((ImageView) view).getDrawable() != null) {
+                            surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
+                            surveyDataList.add(surveyData);
+                            Drawable drawable = ((ImageView) view).getDrawable();
+                            if (drawable instanceof BitmapDrawable) {
+                                Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                                if (bitmap != null) {
+                                    Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                                }
+                            } else {
+                                Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                            }
+                        }
+                    } else if (view instanceof RadioGroup) {
+                        int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
+                        if (selectedId != -1) {
+                            surveyData.setField_value(String.valueOf(selectedId));
+                            surveyDataList.add(surveyData);
+                        }
+                    } else if (view instanceof LinearLayout) {
+                        LinearLayout linearLayout = (LinearLayout) view;
+                        for (int k = 0; k < linearLayout.getChildCount(); k++) {
+                            View childView = linearLayout.getChildAt(k);
+                            if (childView instanceof EditText) {
+                                Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
+                                surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+                                surveyDataList.add(surveyData);
+                            }
+                        }
                     }
+
+
+                    // Perform the bulk insert/update operation
+                    addInDb(surveyDataList);
                 }
 
             }
-
-            // Perform the bulk insert/update operation
-            addInDb(surveyDataList);
 
         } catch (Exception e) {
             Log.v("FormStructureFragment", e.getMessage());
@@ -572,7 +565,6 @@ public class FormStructureFragmentReview extends Fragment {
         surveyData.setForm_id(String.valueOf(formId));
         surveyData.setSection_id(sectionId);
         surveyData.setUser_id(userId);
-        surveyData.setInstance_id(instanceId);
         surveyData.setRecord_id(recid);
         surveyData.setSource(Utils.FEEDBACK_RECORD);
         surveyData.setLat(LocationService.getLat());
@@ -592,9 +584,9 @@ public class FormStructureFragmentReview extends Fragment {
 
             for (SurveyData s : surveyDataList) {
                 Log.v("InsertedDataInDB", s.getField_value());
-                SurveyData insertedData = surveyDao.getPredefinedAnswer(formId, instanceId, s.getQuestion_id());
+                SurveyData insertedData = surveyDao.getPredefinedAnswerReview(formId, recid, s.getQuestion_id());
                 if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
-                    surveyDao.updateByFields(s.getQuestion_id(), instanceId, formId, s.getField_value());
+                    surveyDao.updateByFieldsReview(s.getQuestion_id(), recid, formId, s.getField_value());
                 } else {
                     surveyDao.insert(s);
                 }
@@ -937,6 +929,7 @@ public class FormStructureFragmentReview extends Fragment {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void createButton(FormStructureModalReview FormStructureModalReview) {
 
         stackIds = new Stack<>();
@@ -1147,7 +1140,7 @@ public class FormStructureFragmentReview extends Fragment {
             addButton.setClickable(false);
             removeButton.setClickable(false);
 
-        } else {
+        } else if (itrCount != 0) {
             for (int i = 0; i < itrCount; i++) {
                 addButton.performClick();
             }
@@ -1159,6 +1152,13 @@ public class FormStructureFragmentReview extends Fragment {
                 flag_for_disable_addmore = 0;
                 addButton.setClickable(false);
                 removeButton.setClickable(false);
+            }
+        } else {
+            long n = clickAddmoreIfAnyAnsFilledItself(addMoreLists);
+            Log.v("dsafdfdfdsf", n + "   qid=> " + FormStructureModalReview.getInterlink_question_id());
+
+            for (int i = 0; i < n; i++) {
+                addButton.performClick();
             }
         }
 
@@ -1202,6 +1202,23 @@ public class FormStructureFragmentReview extends Fragment {
                                     flag_for_disable_addmore = 1;
                                 }
                             }
+                            return ans;
+                        })
+                        .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
+                )
+                .count();
+        return iterationCount;
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private long clickAddmoreIfAnyAnsFilledItself(ArrayList<AddMoreListReview> addMoreLists) {
+
+        long iterationCount = addMoreLists.stream()
+                .flatMap(addMoreList -> addMoreList.getAddMoreList().stream())
+                .filter(FormStructureModalReviews -> FormStructureModalReviews.stream()
+                        .map(formStructureModal -> {
+                            String ans = getPrefilledData(formStructureModal.getId());
                             return ans;
                         })
                         .anyMatch(ans -> ans != null && !ans.trim().isEmpty() && !ans.equals("0"))
@@ -1400,6 +1417,7 @@ public class FormStructureFragmentReview extends Fragment {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private Spinner createSpinnerForGlobal(FormStructureModalReview FormStructureModalReview) {
 
 
@@ -2747,7 +2765,7 @@ public class FormStructureFragmentReview extends Fragment {
 
     public String getPrefilledData(String qid) {
         SurveyDao surveyDao = myDatabase.surveyDao();
-        SurveyData row = surveyDao.getPredefinedAnswer(formId, instanceId, qid);
+        SurveyData row = surveyDao.getPredefinedAnswerReview(formId, recid, qid);
         if (row != null && !row.getField_value().isEmpty()) {
             return row.getField_value();
         }
@@ -2973,14 +2991,26 @@ public class FormStructureFragmentReview extends Fragment {
     private String getSpinnerNameFromQidFromValue(String qid, String itemId) {
 
         try {
-            List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
-            List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
-            List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
-            return elementChoices.get(0).getName();
+            if (itemId.equalsIgnoreCase("99")) {
+                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                List<BranchinglogicModal> causeLogic = FormStructureModalReviews.get(0).getCause_branching_logic().stream().filter(e -> e.getBranching().contains(itemId)).collect(Collectors.toList());
+                String efId = causeLogic.get(0).getEffect_question_id();
+                String ans = getPrefilledData(efId);
+                return elementChoices.get(0).getName() + " - " + ans;
+
+            } else {
+                List<FormStructureModalReview> FormStructureModalReviews = FormStructureModalReviewList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+                List<ElementChoice> items = FormStructureModalReviews.get(0).getElement_choices();
+                List<ElementChoice> elementChoices = items.stream().filter(e -> e.getId().equalsIgnoreCase(itemId)).collect(Collectors.toList());
+                return elementChoices.get(0).getName();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return "";
         }
+
     }
 
 
@@ -2988,7 +3018,7 @@ public class FormStructureFragmentReview extends Fragment {
     private void getCurrentIndex() {
         try {
             SurveyDao surveyDao = myDatabase.surveyDao();
-            SurveyData s = surveyDao.getLastEntryByForm(formId, instanceId);
+            SurveyData s = surveyDao.getLastEntryByRecId(formId, recid);
 
             if (s != null && s.getQuestion_id() != null) {
 

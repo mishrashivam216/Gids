@@ -148,15 +148,17 @@ public class UnderReviewFragment extends Fragment implements OnClickFormListItem
     public void onClickFormListItem(String formId, String recid) {
         try {
             if (isClick) {
+
+                binding.loadingAnim.setVisibility(View.VISIBLE);
                 if (Utils.isNetworkAvailable(getContext())) {
                     getFormList(recid);
                 } else {
-                    int instanceId = Utils.getFiveDigitUnique();
                     Bundle bundle = new Bundle();
-                    bundle.putInt("instanceId", instanceId);
                     bundle.putString("recid", recid);
                     bundle.putString("from_id", formId);
                     navController.navigate(R.id.action_nav_underreview_to_nav_formstructure_review, bundle);
+                    binding.loadingAnim.setVisibility(View.GONE);
+
                 }
             }
         } catch (Exception e) {
@@ -212,6 +214,8 @@ public class UnderReviewFragment extends Fragment implements OnClickFormListItem
                 fos.write(rawjson.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
+                binding.loadingAnim.setVisibility(View.GONE);
+
             }
             Log.v("HomeFragment:insertDB", rawjson);
             ReviewListEntity reviewList = new ReviewListEntity();
@@ -221,15 +225,16 @@ public class UnderReviewFragment extends Fragment implements OnClickFormListItem
             reviewListDao.deleteReviewsByRecId(recId);
             reviewListDao.insert(reviewList);
 
-            int instanceId = Utils.getFiveDigitUnique();
             Bundle bundle = new Bundle();
-            bundle.putInt("instanceId", instanceId);
             bundle.putString("recid", recId);
             bundle.putString("from_id", formId);
             navController.navigate(R.id.action_nav_underreview_to_nav_formstructure_review, bundle);
+            binding.loadingAnim.setVisibility(View.GONE);
 
         } catch (Exception e) {
             Log.v("HomeFragment:insertDB", e.getMessage());
+            binding.loadingAnim.setVisibility(View.GONE);
+
 
         }
     }
