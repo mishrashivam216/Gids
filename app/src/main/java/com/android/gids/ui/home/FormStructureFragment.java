@@ -81,6 +81,7 @@ import com.android.gids.MapDependencyFieldValue;
 import com.android.gids.MapDependencyFieldValueDao;
 import com.android.gids.OptionSplitter;
 import com.android.gids.R;
+import com.android.gids.ReviewModal.FormStructureModalReview;
 import com.android.gids.SurveyDao;
 import com.android.gids.SurveyData;
 import com.android.gids.SurveyRoomDatabase;
@@ -839,6 +840,10 @@ public class FormStructureFragment extends Fragment {
             addButton.setClickable(false);
             removeButton.setClickable(false);
 
+            addButton.setVisibility(View.GONE);
+            removeButton.setVisibility(View.GONE);
+
+
         } else {
             for (int i = 0; i < itrCount; i++) {
                 addButton.performClick();
@@ -847,10 +852,16 @@ public class FormStructureFragment extends Fragment {
             addButton.setClickable(true);
             removeButton.setClickable(true);
 
+            addButton.setVisibility(VISIBLE);
+            removeButton.setVisibility(VISIBLE);
+
             if (flag_for_disable_addmore == 1) {
                 flag_for_disable_addmore = 0;
                 addButton.setClickable(false);
                 removeButton.setClickable(false);
+
+                addButton.setVisibility(View.GONE);
+                removeButton.setVisibility(View.GONE);
             }
         }
 
@@ -2361,14 +2372,25 @@ public class FormStructureFragment extends Fragment {
                     int selectedId = radioGroup.getCheckedRadioButtonId();
                     String id = String.valueOf(radioGroup.getId());
 
+                    // Filter the list to find the form element based on id
                     List<FormStructureModal> form = formStructureModalList.stream()
                             .filter(e -> e.getId().equalsIgnoreCase(id))
                             .collect(Collectors.toList());
 
+                    // Check if the form element is required and no radio button is selected
                     if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedId == -1) {
-                        radioGroup.requestFocus();
-                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show();
-                        res = false;
+                        radioGroup.requestFocus(); // Set focus to the RadioGroup
+                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show(); // Show error message
+
+                        // Optional: Highlight the RadioGroup to indicate error
+                        for (int j = 0; j < radioGroup.getChildCount(); j++) {
+                            View radioButton = radioGroup.getChildAt(j);
+                            if (radioButton instanceof RadioButton) {
+                                ((RadioButton) radioButton).setError("Please select an option");
+                            }
+                        }
+
+                        res = false; // Set the result as false indicating a validation failure
                     }
                 }
 

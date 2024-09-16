@@ -1140,6 +1140,9 @@ public class FormStructureFragmentReview extends Fragment {
             addButton.setClickable(false);
             removeButton.setClickable(false);
 
+            addButton.setVisibility(View.GONE);
+            removeButton.setVisibility(View.GONE);
+
         } else if (itrCount != 0) {
             for (int i = 0; i < itrCount; i++) {
                 addButton.performClick();
@@ -1148,10 +1151,16 @@ public class FormStructureFragmentReview extends Fragment {
             addButton.setClickable(true);
             removeButton.setClickable(true);
 
+            addButton.setVisibility(VISIBLE);
+            removeButton.setVisibility(VISIBLE);
+
             if (flag_for_disable_addmore == 1) {
                 flag_for_disable_addmore = 0;
                 addButton.setClickable(false);
                 removeButton.setClickable(false);
+
+                addButton.setVisibility(View.GONE);
+                removeButton.setVisibility(View.GONE);
             }
         } else {
             long n = clickAddmoreIfAnyAnsFilledItself(addMoreLists);
@@ -2084,6 +2093,7 @@ public class FormStructureFragmentReview extends Fragment {
         checkBox.setTextColor(getContext().getResources().getColor(R.color.black));
         int color = getContext().getResources().getColor(R.color.black); // Replace my_color with your color resource
         checkBox.getButtonDrawable().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        checkBox.setPadding(16, 25, 16, 25); // Padding in pixels (can convert to dp)
 
         return checkBox;
     }
@@ -2705,16 +2715,28 @@ public class FormStructureFragmentReview extends Fragment {
                     int selectedId = radioGroup.getCheckedRadioButtonId();
                     String id = String.valueOf(radioGroup.getId());
 
+                    // Filter the list to find the form element based on id
                     List<FormStructureModalReview> form = FormStructureModalReviewList.stream()
                             .filter(e -> e.getId().equalsIgnoreCase(id))
                             .collect(Collectors.toList());
 
+                    // Check if the form element is required and no radio button is selected
                     if (!form.isEmpty() && form.get(0).getElement_required().equalsIgnoreCase("1") && selectedId == -1) {
-                        radioGroup.requestFocus();
-                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show();
-                        res = false;
+                        radioGroup.requestFocus(); // Set focus to the RadioGroup
+                        Toast.makeText(getContext(), "Please select an option", Toast.LENGTH_SHORT).show(); // Show error message
+
+                        // Optional: Highlight the RadioGroup to indicate error
+                        for (int j = 0; j < radioGroup.getChildCount(); j++) {
+                            View radioButton = radioGroup.getChildAt(j);
+                            if (radioButton instanceof RadioButton) {
+                                ((RadioButton) radioButton).setError("Please select an option");
+                            }
+                        }
+
+                        res = false; // Set the result as false indicating a validation failure
                     }
                 }
+
 
             }
         }
