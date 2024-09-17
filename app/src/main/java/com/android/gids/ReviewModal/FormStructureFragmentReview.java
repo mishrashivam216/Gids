@@ -2871,6 +2871,35 @@ public class FormStructureFragmentReview extends Fragment {
             return divideResult;
         }
 
+        // Handle MISS_PERCENTAGE function
+        if (functionName.equalsIgnoreCase("MISS_PERCENTAGE")) {
+            if (parameters.length < 3) {
+                throw new IllegalArgumentException("MISS_PERCENTAGE requires three parameters.");
+            }
+
+            float totalValue;
+            float percentageValue;
+            int returnType;
+
+            try {
+                totalValue = answerList.get(0);
+                percentageValue = answerList.get(1);
+                returnType = Integer.parseInt(parameters[2].trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid number format in MISS_PERCENTAGE parameters.", e);
+            }
+
+            float result = (totalValue * percentageValue) / 100;
+
+            if (returnType == 0) {
+                // Return integer value
+                return (int) result;
+            } else {
+                // Return decimal value
+                return result;
+            }
+        }
+
         return 0;
     }
 
@@ -2878,16 +2907,18 @@ public class FormStructureFragmentReview extends Fragment {
     private List<String> findQuestionIdFromElementVariable(List<String> parameterList) {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
-            try {
-                String str = FormStructureModalReviewList.stream()
-                        .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
-                        .map(FormStructureModalReview::getId)
-                        .findFirst()
-                        .get();
+            if(!(elementVariable.equalsIgnoreCase("0") ||  elementVariable.equalsIgnoreCase("1"))) {
+                try {
+                    String str = FormStructureModalReviewList.stream()
+                            .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
+                            .map(FormStructureModalReview::getId)
+                            .findFirst()
+                            .get();
 
-                allQestionId.add(str);
-            }catch (Exception e){
-                e.printStackTrace();
+                    allQestionId.add(str);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         return allQestionId;
