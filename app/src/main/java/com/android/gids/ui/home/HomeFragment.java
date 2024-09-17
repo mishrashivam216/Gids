@@ -3,6 +3,7 @@ package com.android.gids.ui.home;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -52,6 +53,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intuit.sdp.BuildConfig;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,6 +63,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -78,7 +83,6 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
     OnClickFormListItem onClickFormListItem;
 
 
-
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -88,7 +92,6 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
                     Toast.makeText(getContext(), "Permission Denied", Toast.LENGTH_SHORT).show();
                 }
             });
-
 
 
     @Override
@@ -146,7 +149,7 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
                 }
             });
 
-            binding.tvOffline.setText("Offline Application [Version:"+ Utils.getVersionName(getContext())+"]");
+            binding.tvOffline.setText("Offline Application [Version:" + Utils.getVersionName(getContext()) + "]");
 
             binding.tvOffline.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -157,14 +160,11 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
             });
 
 
-
-
         } catch (Exception e) {
             Toast.makeText(getContext(), e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
         }
         return root;
     }
-
 
 
     private boolean hasStoragePermission() {
@@ -196,9 +196,6 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
     }
 
 
-
-
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -212,9 +209,11 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
     }
 
     public void getFormList() {
+        Log.v("NewUpdatedTimeStampSend", Utils.getSavedTimeStamp(getContext()) + "");
         Log.v("UserId", sharedPreferences.getString("id", null));
         FormListRequest formListRequest = new FormListRequest();
         formListRequest.setUser_id(sharedPreferences.getString("id", null));
+        formListRequest.setLast_sync_time(Utils.getSavedTimeStamp(getContext()) + "");
         ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
         Call<JsonObject> call = methods.formList(formListRequest);
         call.enqueue(new Callback<JsonObject>() {
@@ -222,19 +221,22 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 try {
                     Log.v("HomeFragment:getForm", response.body().toString());
-                    insertInDb(response.body().toString());
+                    JSONObject jsonObject = new JSONObject(response.body().toString());
+                    JSONObject GIDS_SURVEY_APP = jsonObject.getJSONObject("GIDS_SURVEY_APP");
+                    if (GIDS_SURVEY_APP.getString("res_code").equalsIgnoreCase("1")) {
+                        insertInDb(response.body().toString());
+                        Utils.saveTimeStamp(getContext(), GIDS_SURVEY_APP.getLong("synced_timestamp"));
+                    } else {
+                        updateList();
+                    }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    binding.rvForm.setVisibility(View.VISIBLE);
-                    binding.loadingAnim.setVisibility(View.GONE);
+                    updateList();
                 }
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-
                 Log.v("ErrorInfo", t.getMessage() + " cause " + t.getLocalizedMessage());
-
                 Toast.makeText(getContext(), "internet too slow to load the form!", Toast.LENGTH_LONG).show();
             }
         });
@@ -285,8 +287,6 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
 
         return text.toString();
     }
-
-
 
 
     public void updateList() {
@@ -355,7 +355,7 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
         formRequest.setUser_id(list.get(0).getUser_id());
         formRequest.setForm_data(formDataList);
 
-        Log.v("FormRequestJSON Size", formDataList.size()+"");
+        Log.v("FormRequestJSON Size", formDataList.size() + "");
 
         Log.v("dsdsfdsf", formRequest.toString());
 

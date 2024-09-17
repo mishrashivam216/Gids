@@ -178,7 +178,7 @@ public class FormListDetailFragment extends Fragment {
 
     public void updateData(FormListModal formListModal) {
         if (formListModal != null && formListModal.getGIDS_SURVEY_APP().getDataList().size() > 0) {
-            binding.tvPendingRecord.setText("" + formListModal.getGIDS_SURVEY_APP().getDataList().get(json_index).getPending_records_count());
+            binding.tvPendingRecord.setText("Online: " + formListModal.getGIDS_SURVEY_APP().getDataList().get(json_index).getPending_records_count());
             binding.tvFeedback.setText("" + formListModal.getGIDS_SURVEY_APP().getDataList().get(json_index).getFeedback_records_count());
             binding.tvComplete.setText("" + formListModal.getGIDS_SURVEY_APP().getDataList().get(json_index).getComplete_records_count());
             binding.tvTotal.setText("" + formListModal.getGIDS_SURVEY_APP().getDataList().get(json_index).getTotal_records_count());
@@ -196,7 +196,7 @@ public class FormListDetailFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        binding.tvPendingRecord.setText("" + getPendingNo());
+        binding.tvPendingRecordServer.setText("Offline: " + getPendingNo());
         if (Utils.isNetworkAvailable(getContext())) {
             try {
 

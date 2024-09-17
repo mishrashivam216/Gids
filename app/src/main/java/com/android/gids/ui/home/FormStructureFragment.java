@@ -2531,10 +2531,8 @@ public class FormStructureFragment extends Fragment {
     private List<String> findQuestionIdFromElementVariable(List<String> parameterList) {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
-
-
             String str = formStructureModalList.stream()
-                    .filter(e -> e.getElement_variable().equalsIgnoreCase(elementVariable))
+                    .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
                     .map(FormStructureModal::getId)
                     .findFirst()
                     .get();

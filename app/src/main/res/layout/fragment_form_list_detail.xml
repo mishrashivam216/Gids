@@ -67,7 +67,7 @@
         <LinearLayout
             android:id="@+id/liPending"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/_50sdp"
+            android:layout_height="@dimen/_55sdp"
             android:orientation="horizontal">
 
             <ImageView
@@ -95,6 +95,15 @@
 
                 <TextView
                     android:id="@+id/tvPendingRecord"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="0"
+                    android:textColor="@color/green"
+                    android:textSize="@dimen/_11sdp" />
+
+
+                <TextView
+                    android:id="@+id/tvPendingRecordServer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:text="0"

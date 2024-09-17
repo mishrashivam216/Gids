@@ -4,6 +4,7 @@ package com.android.gids;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -42,6 +43,34 @@ public class Utils {
     public static final int PENDING_RECORD = 1;
     public static final int REVIEW_RECORD = 2;
     public static final int FEEDBACK_RECORD = 3;
+
+    public static long timeStamp;
+
+    private static final String PREFS_NAME = "AppPrefs";
+    private static final String TIMESTAMP_KEY = "timeStamp";
+
+    public static long getCurrentTimestampInMillis() {
+        return System.currentTimeMillis();
+    }
+
+
+    public static void saveTimeStamp(Context context, long timeStamp) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(TIMESTAMP_KEY, timeStamp);
+        editor.apply();  // Commit the changes asynchronously
+    }
+
+    public static long getSavedTimeStamp(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return sharedPreferences.getLong(TIMESTAMP_KEY, 0);  // Default value is 0 if not found
+    }
+
+    public static void clearShared(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        sharedPreferences.edit().clear().commit();  // Default value is 0 if not found
+    }
+
 
 
     public static boolean isNetworkAvailable(Context context) {

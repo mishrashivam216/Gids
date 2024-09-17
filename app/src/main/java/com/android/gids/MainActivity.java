@@ -163,11 +163,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     myEdit = sharedPreferences.edit();
                     myEdit.clear();
                     myEdit.commit();
+                    Utils.clearShared(MainActivity.this);
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
                 }
             }
-
             @Override
             public void onFailure(Call<LogoutRes> call, Throwable t) {
                 Toast.makeText(MainActivity.this, "An error has occured", Toast.LENGTH_LONG).show();
@@ -180,6 +180,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             myEdit = sharedPreferences.edit();
             myEdit.clear();
             myEdit.commit();
+            Utils.clearShared(MainActivity.this);
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             finish();
         } else {

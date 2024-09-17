@@ -2878,15 +2878,17 @@ public class FormStructureFragmentReview extends Fragment {
     private List<String> findQuestionIdFromElementVariable(List<String> parameterList) {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
+            try {
+                String str = FormStructureModalReviewList.stream()
+                        .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
+                        .map(FormStructureModalReview::getId)
+                        .findFirst()
+                        .get();
 
-
-            String str = FormStructureModalReviewList.stream()
-                    .filter(e -> e.getElement_variable().equalsIgnoreCase(elementVariable))
-                    .map(FormStructureModalReview::getId)
-                    .findFirst()
-                    .get();
-
-            allQestionId.add(str);
+                allQestionId.add(str);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
         return allQestionId;
     }
