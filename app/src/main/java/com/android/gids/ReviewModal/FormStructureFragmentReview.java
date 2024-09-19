@@ -1246,7 +1246,7 @@ public class FormStructureFragmentReview extends Fragment {
 
             for (int i = 0; i < layoutAddedList.peek().size(); i++) {
 
-                surveyDao.deletebyFormQuestionId(layoutAddedList.peek().get(i));
+                surveyDao.deletebyFormQuestionIdReview(layoutAddedList.peek().get(i), recid, formId);
 
                 for (int j = 0; j < binding.layout.getChildCount(); j++) {
 
@@ -1926,7 +1926,7 @@ public class FormStructureFragmentReview extends Fragment {
                         @Override
                         public void run() {
                             SurveyDao surveyDao = myDatabase.surveyDao();
-                            surveyDao.deletebyFormQuestionId(childId);
+                            surveyDao.deletebyFormQuestionIdReview(childId, recid, formId);
                         }
                     }).start();
 

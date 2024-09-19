@@ -84,8 +84,11 @@ public interface SurveyDao {
     void updateByFieldsReview(String questionId, String recId, String formId, String newFieldValue);
 
 
-    @Query("delete FROM survey_data WHERE question_id = :qid")
-    void deletebyFormQuestionId(String qid);
+    @Query("delete FROM survey_data WHERE question_id = :qid AND instance_id = :instanceId AND form_id = :formId")
+    void deletebyFormQuestionId(String qid, int instanceId, String formId );
 
+
+    @Query("delete FROM survey_data WHERE question_id = :qid AND record_id = :record_id AND form_id = :formId")
+    void deletebyFormQuestionIdReview(String qid, String record_id, String formId);
 
 }
