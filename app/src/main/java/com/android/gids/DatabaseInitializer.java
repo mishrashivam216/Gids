@@ -32,6 +32,7 @@ public class DatabaseInitializer {
             populateWithGlobalDataSetValue(db, context);
             populateWithMapDependencyFieldValue(db, context);
             populateWithMapDependencyField(db, context);
+            populateDistrictTable(db, context);
             return null;
         }
     }
@@ -160,6 +161,37 @@ public class DatabaseInitializer {
         }
     }
 
+
+    private static void populateDistrictTable(SurveyRoomDatabase db, Context context) {
+        try (InputStream is = context.getAssets().open("district.sql");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            StringBuilder sqlBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Ignore comments and empty lines
+                if (line.trim().isEmpty() || line.trim().startsWith("--")) {
+                    continue;
+                }
+                sqlBuilder.append(line).append("\n");
+                if (line.trim().endsWith(";")) {  // End of SQL statement
+                    String sql = sqlBuilder.toString().trim();
+                    sqlBuilder.setLength(0);  // Clear the builder
+
+                    // Log the SQL statement
+                    Log.d("DatabaseInitializer", "Executing SQL: " + sql);
+
+                    // Execute the SQL statement
+                    try {
+                        db.getOpenHelper().getWritableDatabase().execSQL(sql);
+                    } catch (Exception e) {
+                        Log.e("DatabaseInitializer", "Error executing SQL: " + sql, e);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Log.e("DatabaseInitializer", "Error reading SQL file", e);
+        }
+    }
 
 
 }

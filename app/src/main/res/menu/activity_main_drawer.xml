@@ -11,6 +11,13 @@
            />
 
         <item
+            android:id="@+id/nav_randome"
+            app:actionLayout="@layout/drawer_randome_layout"
+            app:showAsAction="always"
+            />
+
+
+        <item
             android:id="@+id/nav_surveylog"
             app:actionLayout="@layout/log_layout"
             app:showAsAction="always"

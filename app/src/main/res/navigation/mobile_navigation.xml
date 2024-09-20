@@ -23,6 +23,9 @@
         <action
             android:id="@+id/action_nav_home_to_nav_formstructure_review"
             app:destination="@id/nav_formstructure_review" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_randomfragment"
+            app:destination="@id/nav_randome" />
 
     </fragment>
 
@@ -137,5 +140,12 @@
         android:name="com.android.gids.ReviewModal.FormStructureFragmentReview"
         android:label="Form"
         tools:layout="@layout/fragment_form_structure" ></fragment>
+
+
+    <fragment
+        android:id="@+id/nav_randome"
+        android:name="com.android.gids.RandomModule.RandomFragment"
+        android:label="Random"
+        tools:layout="@layout/fragment_random" ></fragment>
 
 </navigation>
