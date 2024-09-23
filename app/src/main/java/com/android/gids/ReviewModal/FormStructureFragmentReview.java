@@ -104,6 +104,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -444,27 +446,32 @@ public class FormStructureFragmentReview extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 
-//                try {
-//                    createLayoutFromJson();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//                if (position != 0) {
-//                    try {
-//                        currentPageIndex = position - 1;
-//                        parseData(currentPageIndex);
-//                        binding.finalSubmitButton.setVisibility(View.GONE);
-//                        binding.nextButton.setText("SAVE AND NEXT");
-//                        if (currentPageIndex == list.size() - 1) {
-//                            binding.finalSubmitButton.setVisibility(VISIBLE);
-//                            binding.nextButton.setText("SAVE AND SUBMIT");
-//                        }
-//                    } catch (Exception e) {
-//                        Log.v("afsdfsd", e.getMessage());
-//                        e.printStackTrace();
-//                    }
-//                }
+                binding.loadingAnim.setVisibility(VISIBLE);
+                try {
+                    createLayoutFromJson();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    binding.loadingAnim.setVisibility(View.GONE);
+                }
+
+                if (position != 0) {
+                    try {
+                        currentPageIndex = position - 1;
+                        parseData(currentPageIndex);
+                        binding.finalSubmitButton.setVisibility(View.GONE);
+                        binding.nextButton.setText("SAVE AND NEXT");
+                        if (currentPageIndex == list.size() - 1) {
+                            binding.finalSubmitButton.setVisibility(VISIBLE);
+                            binding.nextButton.setText("SAVE AND SUBMIT");
+                        }
+                        binding.loadingAnim.setVisibility(View.GONE);
+                    } catch (Exception e) {
+                        Log.v("afsdfsd", e.getMessage());
+                        e.printStackTrace();
+                        binding.loadingAnim.setVisibility(View.GONE);
+                    }
+                }
+                binding.loadingAnim.setVisibility(View.GONE);
             }
 
             @Override
@@ -473,6 +480,53 @@ public class FormStructureFragmentReview extends Fragment {
             }
         });
     }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void inserAllQuestionIdToSync() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<SurveyData> surveyDataList = new ArrayList<>();
+                for (int i = 0; i < FormStructureModalReviewList.size(); i++) {
+                    try {
+                        if (!FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("section") &&
+                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("label") &&
+                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("repeat")) {
+
+                            SurveyData surveyData = createSurveyData(String.valueOf(FormStructureModalReviewList.get(i).getId()), FormStructureModalReviewList.get(i).getAnswers());
+                            surveyDataList.add(surveyData);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                addAnswerInDb(surveyDataList);
+            }
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void addAnswerInDb(List<SurveyData> surveyDataList) {
+        try {
+            SurveyDao surveyDao = myDatabase.surveyDao();
+
+            for (SurveyData s : surveyDataList) {
+                Log.v("InsertedDataInDB", s.getField_value());
+                SurveyData insertedData = surveyDao.getPredefinedAnswerReview(formId, recid, s.getQuestion_id());
+                if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
+                    Log.v("gfdgfdgfdgf:", "Data is already there - "+recid);
+                } else {
+                    surveyDao.insert(s);
+                    Log.v("gfdgfdgfdgf:", "SuccessFully Inserted - "+recid);
+                }
+            }
+        } catch (Exception e) {
+            Log.v("gfdgfdgfdgf:", e.getMessage());
+        }
+    }
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -3069,7 +3123,7 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void getCurrentIndex() {
         try {
             SurveyDao surveyDao = myDatabase.surveyDao();
@@ -3083,9 +3137,10 @@ public class FormStructureFragmentReview extends Fragment {
                         .filter(i -> list.get(i).stream().anyMatch(form -> form.getId().equals(lastQid)))
                         .findFirst();
                 if (sectionIndex.isPresent()) {
+                    inserAllQuestionIdToSync();
                     System.out.println("QID found in section index: " + sectionIndex.getAsInt());
                     currentPageIndex = sectionIndex.getAsInt();
-                    parseData(sectionIndex.getAsInt());
+                    parseData(0);
                 } else {
                     System.out.println("QID found in section index: 0");
                     parseData(0);

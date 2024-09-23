@@ -67,18 +67,13 @@
                 <Spinner
                     android:id="@+id/spinnerPaging"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/_30sdp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="@dimen/_35sdp"
                     android:background="@drawable/border"
                     />
 
 
             </LinearLayout>
-
-
-
-
-
-
 
             <RelativeLayout
                 android:layout_width="match_parent"
