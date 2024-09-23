@@ -23,6 +23,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.android.gids.RandomModule.HCRAFragment;
 import com.android.gids.RandomModule.RandomFragment;
 import com.android.gids.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // Passing each menu ID as a set of Ids because each
             // menu should be considered as top level destinations.
             mAppBarConfiguration = new AppBarConfiguration.Builder(
-                    R.id.nav_home, R.id.nav_formlistdetail, R.id.nav_formstructure, R.id.nav_randome)
+                    R.id.nav_home, R.id.nav_formlistdetail, R.id.nav_formstructure, R.id.nav_randome, R.id.nav_hcra)
                     .setOpenableLayout(drawer)
                     .build();
             NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
@@ -140,8 +141,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         .addToBackStack(null) // Optional: add the transaction to the back stack
                         .commit();
             }
-        }else if (id == R.id.nav_randome) {
+        } else if (id == R.id.nav_randome) {
             Fragment fragment = new RandomFragment();
+            String tag = "Randome";
+            if (fragment != null) {
+                // Replace the current fragment
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                fragmentManager.beginTransaction()
+                        .replace(R.id.nav_host_fragment_content_main, fragment, tag) // Replace fragment_container with your container ID
+                        .addToBackStack(null) // Optional: add the transaction to the back stack
+                        .commit();
+            }
+        } else if (id == R.id.nav_hcra) {
+            Fragment fragment = new HCRAFragment();
             String tag = "Randome";
             if (fragment != null) {
                 // Replace the current fragment
@@ -180,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     finish();
                 }
             }
+
             @Override
             public void onFailure(Call<LogoutRes> call, Throwable t) {
                 Toast.makeText(MainActivity.this, "An error has occured", Toast.LENGTH_LONG).show();

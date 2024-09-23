@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/white"
-    android:clickable="false"
+    android:clickable="true"
+    android:focusable="true"
     android:padding="16dp">
 
     <Spinner

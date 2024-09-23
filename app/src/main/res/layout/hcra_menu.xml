@@ -24,7 +24,7 @@
             android:id="@+id/item_text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Random Hamlet Selection"
+            android:text="Select Household Selection"
             android:textStyle="bold"
             android:textSize="@dimen/_11sdp"
             android:textColor="@color/black"/>
@@ -32,7 +32,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Hamlet Group"
+            android:text="Select Household"
             android:textSize="@dimen/_11sdp"
             android:textColor="@color/darkgrey"/>
 

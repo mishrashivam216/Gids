@@ -26,6 +26,9 @@
         <action
             android:id="@+id/action_nav_home_to_nav_randomfragment"
             app:destination="@id/nav_randome" />
+        <action
+            android:id="@+id/action_nav_home_to_nav_hcra"
+            app:destination="@id/nav_hcra" />
 
     </fragment>
 
@@ -147,5 +150,12 @@
         android:name="com.android.gids.RandomModule.RandomFragment"
         android:label="Random"
         tools:layout="@layout/fragment_random" ></fragment>
+
+
+    <fragment
+        android:id="@+id/nav_hcra"
+        android:name="com.android.gids.RandomModule.HCRAFragment"
+        android:label="HCRA"
+        tools:layout="@layout/fragment_h_c_r_a" ></fragment>
 
 </navigation>

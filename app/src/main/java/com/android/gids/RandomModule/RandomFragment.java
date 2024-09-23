@@ -110,6 +110,7 @@ public class RandomFragment extends Fragment {
                 //Toast.makeText(getContext(), "Selected: " + districtId + " " + districtData.get(0).getName(), Toast.LENGTH_SHORT).show();
                 districtColumnValues = DistrctDataUtils.getDistrictData(districtId);
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 Toast.makeText(getContext(), "No district selected", Toast.LENGTH_SHORT).show();
@@ -131,6 +132,10 @@ public class RandomFragment extends Fragment {
             comparisonDigits = maxNodeValue % 100;  // Take the last two digits of max node value
         }
 
+        if(maxLength == 10){
+            comparisonDigits = 10;
+        }
+
         // Traverse the district column and select values based on the comparison
         List<String> selectedNodes = new ArrayList<>();
         for (int districtValue : districtColumn) {
@@ -142,7 +147,7 @@ public class RandomFragment extends Fragment {
             }
 
             // Compare and select values
-            if (lastDigits <= comparisonDigits && lastDigits!=0) {
+            if (lastDigits <= comparisonDigits && lastDigits != 0) {
                 selectedNodes.add("H" + lastDigits);  // Select the corresponding node
                 if (selectedNodes.size() == remainingValues.size()) {
                     break;  // Stop if we've filled the remaining values
@@ -150,9 +155,57 @@ public class RandomFragment extends Fragment {
             }
         }
 
-        // Output the selected nodes to Random Node field
-        String randomNode = String.join(", ", selectedNodes.get(0));
-        randomNodeEditText.setText(randomNode);  // Set the selected random node
+        if (selectedNodes != null && selectedNodes.size() > 0) {
+            // Output the selected nodes to Random Node field
+            String randomNode = String.join(", ", selectedNodes.get(0));
+            randomNodeEditText.setText(randomNode);
+        }// Set the selected random node
     }
+
+
+//    private void calculateRandomNode(List<String> remainingValues, List<Integer> districtColumn, int maxLength) {
+//        // Get the max value (e.g., H1, H2, H10, H100, H1000)
+//        int maxNodeValue = Integer.parseInt(remainingValues.get(maxLength - 1).substring(1));
+//
+//        // Determine the number of comparison digits based on maxLength
+//        int comparisonDigits;
+//        if (maxLength <= 10) {
+//            comparisonDigits = maxNodeValue % 10;      // Use the last 1 digit
+//        } else if (maxLength <= 100) {
+//            comparisonDigits = maxNodeValue % 100;     // Use the last 2 digits
+//        } else if (maxLength <= 1000) {
+//            comparisonDigits = maxNodeValue % 1000;    // Use the last 3 digits
+//        } else {
+//            comparisonDigits = maxNodeValue % 10000;   // Use the last 4 digits
+//        }
+//
+//        // Traverse the district column and select values based on the comparison
+//        List<String> selectedNodes = new ArrayList<>();
+//        for (int districtValue : districtColumn) {
+//            int lastDigits;
+//            if (maxLength <= 10) {
+//                lastDigits = districtValue % 10;       // Last 1 digit
+//            } else if (maxLength <= 100) {
+//                lastDigits = districtValue % 100;      // Last 2 digits
+//            } else if (maxLength <= 1000) {
+//                lastDigits = districtValue % 1000;     // Last 3 digits
+//            } else {
+//                lastDigits = districtValue % 10000;    // Last 4 digits
+//            }
+//
+//            // Compare and select values
+//            if (lastDigits <= comparisonDigits && lastDigits != 0) {
+//                selectedNodes.add("H" + lastDigits);  // Select the corresponding node
+//                if (selectedNodes.size() == remainingValues.size()) {
+//                    break;  // Stop if we've filled the remaining values
+//                }
+//            }
+//        }
+//
+//        // Output the selected nodes to the Random Node field
+//        String randomNode = String.join(", ", selectedNodes);
+//        randomNodeEditText.setText(randomNode);  // Set the selected random node
+//    }
+
 
 }
