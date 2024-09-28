@@ -392,72 +392,76 @@ public class FormStructureFragment extends Fragment {
             for (int j = 0; j < binding.layout.getChildCount(); j++) {
                 View view = binding.layout.getChildAt(j);
 
-                if (view instanceof CheckBox) {
-                    if (((CheckBox) view).isChecked()) {
-                        try {
-                            preQid = String.valueOf(view.getTag());
-                            checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+                if (view.getVisibility() == VISIBLE) {
 
-                    if (j != binding.layout.getChildCount() - 1) {
-                        continue;
-                    }
-                }
-
-                if (!checkBoxData.isEmpty()) {
-                    surveyDataList.add(createSurveyData(preQid, checkBoxData));
-                    checkBoxData = "";
-                    preQid = "";
-                }
-
-                SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
-                if (view instanceof Spinner) {
-                    Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
-                    if (selectedItem != null) {
-                        surveyData.setField_value(selectedItem.getId());
-                        surveyDataList.add(surveyData);
-                    }
-                } else if (view instanceof EditText) {
-                    surveyData.setField_value(((EditText) view).getText().toString());
-                    surveyDataList.add(surveyData);
-                } else if (view instanceof ImageView) {
-                    if (((ImageView) view).getDrawable() != null) {
-                        surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
-                        surveyDataList.add(surveyData);
-                        Drawable drawable = ((ImageView) view).getDrawable();
-                        if (drawable instanceof BitmapDrawable) {
-                            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
-                            if (bitmap != null) {
-                                Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                    if (view instanceof CheckBox) {
+                        if (((CheckBox) view).isChecked()) {
+                            try {
+                                preQid = String.valueOf(view.getTag());
+                                checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                        } else {
-                            Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                        }
+
+                        if (j != binding.layout.getChildCount() - 1) {
+                            continue;
                         }
                     }
-                } else if (view instanceof RadioGroup) {
-                    int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
-                    if (selectedId != -1) {
-                        surveyData.setField_value(String.valueOf(selectedId));
-                        surveyDataList.add(surveyData);
+
+                    if (!checkBoxData.isEmpty()) {
+                        surveyDataList.add(createSurveyData(preQid, checkBoxData));
+                        checkBoxData = "";
+                        preQid = "";
                     }
-                } else if (view instanceof LinearLayout) {
-                    LinearLayout linearLayout = (LinearLayout) view;
-                    for (int k = 0; k < linearLayout.getChildCount(); k++) {
-                        View childView = linearLayout.getChildAt(k);
-                        if (childView instanceof EditText) {
-                            Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
-                            surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+
+                    SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
+                    if (view instanceof Spinner) {
+                        Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
+                        if (selectedItem != null) {
+                            surveyData.setField_value(selectedItem.getId());
                             surveyDataList.add(surveyData);
                         }
+                    } else if (view instanceof EditText) {
+                        surveyData.setField_value(((EditText) view).getText().toString());
+                        surveyDataList.add(surveyData);
+                    } else if (view instanceof ImageView) {
+                        if (((ImageView) view).getDrawable() != null) {
+                            surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
+                            surveyDataList.add(surveyData);
+                            Drawable drawable = ((ImageView) view).getDrawable();
+                            if (drawable instanceof BitmapDrawable) {
+                                Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                                if (bitmap != null) {
+                                    Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                                }
+                            } else {
+                                Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                            }
+                        }
+                    } else if (view instanceof RadioGroup) {
+                        int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
+                        if (selectedId != -1) {
+                            surveyData.setField_value(String.valueOf(selectedId));
+                            surveyDataList.add(surveyData);
+                        }
+                    } else if (view instanceof LinearLayout) {
+                        LinearLayout linearLayout = (LinearLayout) view;
+                        for (int k = 0; k < linearLayout.getChildCount(); k++) {
+                            View childView = linearLayout.getChildAt(k);
+                            if (childView instanceof EditText) {
+                                Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
+                                surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+                                surveyDataList.add(surveyData);
+                            }
+                        }
                     }
-                }
 
+
+                    // Perform the bulk insert/update operation
+                    addInDb(surveyDataList);
+                }
             }
-            // Perform the bulk insert/update operation
-            addInDb(surveyDataList);
 
         } catch (Exception e) {
             Log.v("FormStructureFragment", e.getMessage());
