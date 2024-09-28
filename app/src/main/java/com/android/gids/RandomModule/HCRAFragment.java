@@ -234,31 +234,23 @@ public class HCRAFragment extends Fragment {
                 showHcraGroupWise();
             } else {
                 renameVarHcra(2);
-                divideinTwoParts();
+                hideHcraGroup2();
             }
         } else {
             if (isTypeOneSelected) {
                 renameVar(1);
-                hideHcrtGroupWise();
+                showHcrtGroup2();
             } else {
                 renameVar(2);
-                showHcraGroupHCRT();
+                hideHcrtGroup2();
+
             }
         }
     }
 
 
     private void renameVarHcra(int group) {
-        if (group == 2) {
-            hcra9.setText("H1");
-            hcra10.setText("H2");
-            hcra11.setText("H3");
-            hcra12.setText("H4");
-            hcra13.setText("H5");
-            hcra14.setText("H6");
-            hcra15.setText("H7");
-            hcra16.setText("H8");
-        } else {
+        if (group == 1) {
             hcra9.setText("H9");
             hcra10.setText("H10");
             hcra11.setText("H11");
@@ -271,17 +263,10 @@ public class HCRAFragment extends Fragment {
     }
 
     private void renameVar(int group) {
-        if (group == 2) {
-            hcrt7.setText("H1");
-            hcrt8.setText("H2");
-            hcrt9.setText("H3");
-            hcrt10.setText("H4");
-            hcrt11.setText("H5");
-            hcrt12.setText("H6");
-        } else {
+        if (group == 1) {
             hcrt7.setText("H7");
-            hcrt9.setText("H8");
-            hcrt10.setText("H9");
+            hcrt8.setText("H8");
+            hcrt9.setText("H9");
             hcrt10.setText("H10");
             hcrt11.setText("H11");
             hcrt12.setText("H12");
@@ -289,74 +274,50 @@ public class HCRAFragment extends Fragment {
     }
 
 
-//    public List<Integer> matchNumbers(List<Integer> numbers, int selectedNumber) {
-//        // Create a new modifiable list if the passed list might be unmodifiable
-//        List<Integer> modifiableNumbers = new ArrayList<>(numbers);
-//
-//        List<Integer> numbers1 = DistrctDataUtils.getDistrictData(districtId + 1);
-//        List<Integer> numbers2 = DistrctDataUtils.getDistrictData(districtId + 2);
-//        List<Integer> numbers3 = DistrctDataUtils.getDistrictData(districtId + 3);
-//        List<Integer> numbers4 = DistrctDataUtils.getDistrictData(districtId + 4);
-//        List<Integer> numbers5 = DistrctDataUtils.getDistrictData(districtId + 5);
-//
-//        if (numbers1 != null && !numbers1.isEmpty()) {
-//            modifiableNumbers.addAll(numbers1);
-//        }
-//
-//        if (numbers2 != null && !numbers2.isEmpty()) {
-//            modifiableNumbers.addAll(numbers2);
-//        }
-//
-//        if (numbers3 != null && !numbers3.isEmpty()) {
-//            modifiableNumbers.addAll(numbers3);
-//        }
-//
-//        if (numbers4 != null && !numbers4.isEmpty()) {
-//            modifiableNumbers.addAll(numbers4);
-//        }
-//
-//        if (numbers5 != null && !numbers5.isEmpty()) {
-//            modifiableNumbers.addAll(numbers5);
-//        }
-//
-//        System.out.println("Combined List: " + modifiableNumbers);
-//
-//        List<Integer> matchedList = new ArrayList<>();
-//        for (int number : modifiableNumbers) {
-//            int checkValue = (selectedNumber <= 10) ? number % 10 : number % 100;
-//            System.out.println("Check Value: " + checkValue);
-//
-//            if (checkValue <= selectedNumber && checkValue != 0 && !matchedList.contains(checkValue)) {
-//                matchedList.add(checkValue);
-//            }
-//        }
-//
-//        return matchedList;
-//    }
+    private void hideHcrtGroup2() {
+        li_hcrt7.setVisibility(View.GONE);
+        li_hcrt8.setVisibility(View.GONE);
+        li_hcrt9.setVisibility(View.GONE);
+        li_hcrt10.setVisibility(View.GONE);
+        li_hcrt11.setVisibility(View.GONE);
+        li_hcrt12.setVisibility(View.GONE);
+    }
 
-//    @RequiresApi(api = Build.VERSION_CODES.N)
-//    public List<Integer> matchNumbers(List<Integer> numbers, int selectedNumber) {
-//        List<Integer> modifiableNumbers = new ArrayList<>(numbers);
-//
-//        for (int i = 1; i <= 5; i++) {
-//            List<Integer> districtData = DistrctDataUtils.getDistrictData(districtId + i);
-//            if (districtData != null && !districtData.isEmpty()) {
-//                modifiableNumbers.addAll(districtData);
-//            }
-//        }
-//
-//        System.out.println("Combined List: " + modifiableNumbers);
-//
-//        // Determine the divisor based on selectedNumber
-//        int divisor = (selectedNumber <= 10) ? 10 : 100;
-//
-//        // Find matched numbers
-//        return modifiableNumbers.stream()
-//                .map(number -> number % divisor)
-//                .filter(checkValue -> checkValue <= selectedNumber && checkValue != 0)
-//                .distinct()
-//                .collect(Collectors.toList());
-//    }
+
+    private void showHcrtGroup2() {
+        li_hcrt7.setVisibility(View.VISIBLE);
+        li_hcrt8.setVisibility(View.VISIBLE);
+        li_hcrt9.setVisibility(View.VISIBLE);
+        li_hcrt10.setVisibility(View.VISIBLE);
+        li_hcrt11.setVisibility(View.VISIBLE);
+        li_hcrt12.setVisibility(View.VISIBLE);
+    }
+
+
+    private void hideHcraGroup2() {
+        li_hcra9.setVisibility(View.GONE);
+        li_hcra10.setVisibility(View.GONE);
+        li_hcra11.setVisibility(View.GONE);
+        li_hcra12.setVisibility(View.GONE);
+        li_hcra13.setVisibility(View.GONE);
+        li_hcra14.setVisibility(View.GONE);
+        li_hcra15.setVisibility(View.GONE);
+        li_hcra16.setVisibility(View.GONE);
+
+    }
+
+    private void showHcraGroup2() {
+        li_hcra9.setVisibility(View.VISIBLE);
+        li_hcra10.setVisibility(View.VISIBLE);
+        li_hcra11.setVisibility(View.VISIBLE);
+        li_hcra12.setVisibility(View.VISIBLE);
+        li_hcra13.setVisibility(View.VISIBLE);
+        li_hcra14.setVisibility(View.VISIBLE);
+        li_hcra15.setVisibility(View.VISIBLE);
+        li_hcra16.setVisibility(View.VISIBLE);
+
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public List<Integer> matchNumbers(List<Integer> numbers, int selectedNumber) {
@@ -389,7 +350,6 @@ public class HCRAFragment extends Fragment {
                 .distinct()
                 .collect(Collectors.toList());
     }
-
 
 
     private void showHcraGroupWise() {
@@ -428,8 +388,16 @@ public class HCRAFragment extends Fragment {
         try {
             List<Integer> result = matchNumbers(districtColumnValues, Integer.valueOf(maxLengthEditText.getText().toString()));
 
+            TextView[] textViews;
             if (!result.isEmpty()) {
-                TextView[] textViews = {tvH1, tvH2, tvH3, tvH4, tvH5, tvH6, tvH7, tvH8, tvH9, tvH10, tvH11, tvH12, tvH13, tvH14, tvH15, tvH16};
+
+                if (group == 1) {
+                    textViews = new TextView[]{tvH1, tvH2, tvH3, tvH4, tvH5, tvH6, tvH7, tvH8, tvH9, tvH10, tvH11, tvH12, tvH13, tvH14, tvH15, tvH16};
+
+                } else {
+                    textViews = new TextView[]{tvH1, tvH2, tvH3, tvH4, tvH5, tvH6, tvH7, tvH8};
+                }
+
 
                 int hcrtIndex = 0;
                 for (int i = 0; i < result.size() && i < textViews.length; i++) {
@@ -437,7 +405,7 @@ public class HCRAFragment extends Fragment {
                     hcrtIndex++;
                 }
 
-                tvGroup2.setVisibility(group == 2 ? View.VISIBLE : View.GONE);
+                //tvGroup2.setVisibility(group == 2 ? View.VISIBLE : View.GONE);
 
                 if ("HCRA RT".equalsIgnoreCase(type)) {
                     triggerHcrt(group, result, hcrtIndex);
@@ -455,15 +423,20 @@ public class HCRAFragment extends Fragment {
     private void triggerHcrt(int group, List<Integer> result, int index) {
         try {
             Log.v("vbfdhgfd", result.size() + "");
-
+            TextView[] hcrtTextViews;
             if (!result.isEmpty()) {
-                TextView[] hcrtTextViews = {tvHcrt1, tvHcrt2, tvHcrt3, tvHcrt4, tvHcrt5, tvHcrt6, tvHcrt7, tvHcrt8, tvHcrt9, tvHcrt10, tvHcrt11, tvHcrt12};
+
+                if (group == 1) {
+                    hcrtTextViews = new TextView[]{tvHcrt1, tvHcrt2, tvHcrt3, tvHcrt4, tvHcrt5, tvHcrt6, tvHcrt7, tvHcrt8, tvHcrt9, tvHcrt10, tvHcrt11, tvHcrt12};
+                } else {
+                    hcrtTextViews = new TextView[]{tvHcrt1, tvHcrt2, tvHcrt3, tvHcrt4, tvHcrt5, tvHcrt6};
+                }
 
                 for (int i = 0; i < hcrtTextViews.length && index + i < result.size(); i++) {
                     hcrtTextViews[i].setText(String.valueOf(result.get(index + i)));
                 }
 
-                tvGroup2.setVisibility(group == 2 ? View.VISIBLE : View.GONE);
+               // tvGroup2.setVisibility(group == 2 ? View.VISIBLE : View.GONE);
 
 
             } else {
@@ -472,6 +445,28 @@ public class HCRAFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    private void setBlankTextHcrt() {
+        tvHcrt9.setText("");
+        tvHcrt10.setText("");
+        tvHcrt11.setText("");
+        tvHcrt12.setText("");
+    }
+
+
+    private void setBlankTextHcra() {
+
+        tvH9.setText("");
+        tvH10.setText("");
+        tvH11.setText("");
+        tvH12.setText("");
+        tvH13.setText("");
+        tvH14.setText("");
+        tvH15.setText("");
+        tvH16.setText("");
+
     }
 
 

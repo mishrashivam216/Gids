@@ -18,7 +18,7 @@
 
     <EditText
         android:id="@+id/maxLengthEditText"
-        android:hint="Max Length"
+        android:hint="Total number of Hamlet Groups created"
         android:inputType="number"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_45sdp"
@@ -29,7 +29,7 @@
 
     <EditText
         android:id="@+id/selectedNodeEditText"
-        android:hint="Selected Node"
+        android:hint="Position of the first Hamlet Group, and"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_45sdp"
         android:layout_marginTop="@dimen/_10sdp"
@@ -49,7 +49,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/mainColor"
-            android:text="Get Hamlet"
+            android:text="Submit"
             android:textSize="@dimen/_12sdp"
             android:textColor="@color/white"
             app:backgroundTint="@color/mainColor" />
@@ -57,7 +57,7 @@
 
     <EditText
         android:id="@+id/randomNodeEditText"
-        android:hint="Random Node"
+        android:hint="Second Hamlet Group based on the defined algorithm."
         android:layout_marginTop="@dimen/_10sdp"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_45sdp"
