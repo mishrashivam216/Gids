@@ -751,6 +751,11 @@ public class FormStructureFragmentReview extends Fragment {
                         binding.layout.addView(tv);
                         RadioGroup radioGroup = createRadioButton(FormStructureModalReview);
                         binding.layout.addView(radioGroup);
+
+                        View elElement = createLabelEditElement(FormStructureModalReview, radioGroup);
+                        if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                            binding.layout.addView(elElement);
+                        }
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("checkbox")) {
                         TextView tv = createLabelCheckbox(FormStructureModalReview);
                         binding.layout.addView(tv);
