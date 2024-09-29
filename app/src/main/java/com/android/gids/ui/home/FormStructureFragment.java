@@ -1997,6 +1997,7 @@ public class FormStructureFragment extends Fragment {
             public void onClick(View view) {
                 try {
                     float data = calculateLogic(formStructureModal.getCalculation_logic());
+                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
                     editText.setText(data + "");
                 } catch (Exception e) {
 //                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -2566,7 +2567,7 @@ public class FormStructureFragment extends Fragment {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
 
-            if(!(elementVariable.equalsIgnoreCase("0") ||  elementVariable.equalsIgnoreCase("1"))) {
+            if (!(elementVariable.equalsIgnoreCase("0") || elementVariable.equalsIgnoreCase("1"))) {
 
                 String str = formStructureModalList.stream()
                         .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
@@ -2579,6 +2580,24 @@ public class FormStructureFragment extends Fragment {
         }
         return allQestionId;
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private String findQuestionIdFromElementVariable(String elementVariable) {
+
+        if (!(elementVariable.equalsIgnoreCase("0") || elementVariable.equalsIgnoreCase("1"))) {
+
+            String str = formStructureModalList.stream()
+                    .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
+                    .map(FormStructureModal::getId)
+                    .findFirst()
+                    .get();
+
+            return str;
+        }
+
+        return "";
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private ArrayList<Float> findAllValueFromLayoutAndDb(List<String> allQestionId) {
@@ -2654,6 +2673,51 @@ public class FormStructureFragment extends Fragment {
     private String getViewInstanceByQuestionId(String qid) {
         List<FormStructureModal> formStructureModals = formStructureModalList.stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
         return formStructureModals.get(0).getElement_type();
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String getIdFromLayoutByQuestionIdSpinner(String qid) {
+        try {
+            for (int j = 0; j < binding.layout.getChildCount(); j++) {
+
+                View view = binding.layout.getChildAt(j);
+
+                if (String.valueOf(binding.layout.getChildAt(j).getId()).equalsIgnoreCase(qid)) {
+
+                    if (view instanceof Spinner) {
+
+                        Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
+                        if (selectedItem != null) {
+                            String name = selectedItem.getId();
+                            return name;
+                        }
+                    }
+
+                    if (view instanceof RadioGroup) {
+
+                        // Get the ID of the selected RadioButton
+                        int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
+
+                        // Find the RadioButton by its ID
+                        RadioButton selectedRadioButton = ((RadioGroup) view).findViewById(selectedId);
+
+                        if (selectedRadioButton != null) {
+
+                            String selectedText = String.valueOf(selectedRadioButton.getId());
+
+                            return selectedText;
+
+                        }
+
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.v("FormStructureFragment", e.getMessage());
+            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+        return "";
     }
 
 
@@ -2829,7 +2893,127 @@ public class FormStructureFragment extends Fragment {
                 int numericCauseId = Integer.parseInt(causeId.replaceAll("\\D", ""));
                 String selectedId;
 
-                if (branch.contains(">")) {
+                if (branch.contains("&&")) {
+                    Log.v("EdittextBranchCause", "Called");
+
+                    String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
+
+                    Log.v("EdittextBranchCause", arr.length + " arr.length");
+
+
+                    if (arr.length >= 2) {
+                        boolean status = false;
+                        try {
+                            for (int k = 0; k < arr.length; k++) {
+                                if (arr[k].contains("=") || arr[k].contains(">") || arr[k].contains("<")) {
+
+                                    String operator = "";
+                                    if (arr[k].contains(">=")) {
+                                        operator = ">=";
+                                    } else if (arr[k].contains("<=")) {
+                                        operator = "<=";
+                                    } else if (arr[k].contains(">")) {
+                                        operator = ">";
+                                    } else if (arr[k].contains("<")) {
+                                        operator = "<";
+                                    } else if (arr[k].contains("=")) {
+                                        operator = "=";
+                                    }
+
+                                    Log.v("EdittextBranchCause", operator + " operator");
+
+
+                                    String[] subArr = arr[k].split(operator);
+
+                                    Log.v("EdittextBranchCause", subArr + " subArr.length");
+
+
+                                    if (subArr.length >= 2) {
+
+                                        String first = subArr[0];
+                                        String sec = subArr[1];
+                                        String qid = findQuestionIdFromElementVariable(first);
+
+                                        String filledData = getPrefilledData(qid);
+
+                                        Log.v("EdittextBranchCause", filledData + " filledData");
+
+
+                                        List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
+                                                .filter(e -> e.getId().equalsIgnoreCase(qid))
+                                                .collect(Collectors.toList());
+
+
+                                        String data = getIdFromLayoutByQuestionIdSpinner(qid);
+                                        String data2 = getValueFromLayoutByQuestionId(qid);
+
+                                        if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
+                                                ||
+                                                (data2 != null && !data2.equalsIgnoreCase("") && !data2.equalsIgnoreCase("0"))
+                                        ) {
+
+
+                                            if (formStructureModal1.get(0).getElement_type().equalsIgnoreCase("select") ||
+                                                    formStructureModal1.get(0).getElement_type().equalsIgnoreCase("radio")) {
+
+                                                Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                Log.v("EdittextBranchCause", data + "=" + sec + "compareValues");
+
+
+                                                if (compareValues(data.trim(), sec.trim(), operator)) {
+                                                    status = true;
+                                                } else {
+                                                    status = false;
+                                                    break;
+                                                }
+                                            } else {
+                                                Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                if (compareValues(data2.trim(), sec.trim(), operator)) {
+                                                    status = true;
+                                                } else {
+                                                    status = false;
+                                                    break;
+                                                }
+                                            }
+                                        } else if (filledData != null && !filledData.equalsIgnoreCase("") && !filledData.equalsIgnoreCase("0")) {
+                                            // Parse filledData and sec as numbers if possible
+                                            try {
+
+                                                Log.v("EdittextBranchCause", filledData.trim() + operator + sec.trim() + " elementtype");
+
+
+                                                if (compareValues(filledData.trim(), sec.trim(), operator)) {
+                                                    status = true;
+                                                } else {
+                                                    status = false;
+                                                    break;
+                                                }
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
+
+                                        }
+
+
+                                    }
+                                }
+                            }
+
+                            Log.v("EdittextBranchCause", status + " status");
+
+                            if (status) {
+                                v.setVisibility(VISIBLE);
+                            } else {
+                                v.setVisibility(View.GONE);
+                            }
+                        } catch (Exception e) {
+                            Log.v("fdsfdsfdsf", e.getMessage() + e.getCause() + "");
+                        }
+                    }
+
+                } else if (branch.contains(">")) {
                     selectedId = getSpinnerNameFromQidFromValue(
                             formStructureModal.getCause_branching_logic().get(0).getEffect_question_id(), causeId);
                     if (Integer.parseInt(selectedId) > numericCauseId) {
@@ -2863,6 +3047,7 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void handleCauseLogicForEditText(FormStructureModal formStructureModal, EditText editText) {
         try {
 
@@ -2888,7 +3073,131 @@ public class FormStructureFragment extends Fragment {
                         Log.v("FoundData", numericSelectedId + "");
                         Log.v("FoundData", numericCauseId + "");
 
-                        if (branch.contains(">")) {
+
+                        if (branch.contains("&&")) {
+                            Log.v("EdittextBranchCause", "Called");
+
+
+                            String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
+
+                            Log.v("EdittextBranchCause", arr.length + " arr.length");
+
+
+                            if (arr.length >= 2) {
+                                boolean status = false;
+                                try {
+                                    for (int k = 0; k < arr.length; k++) {
+                                        if (arr[k].contains("=") || arr[k].contains(">") || arr[k].contains("<")) {
+
+                                            String operator = "";
+                                            if (arr[k].contains(">=")) {
+                                                operator = ">=";
+                                            } else if (arr[k].contains("<=")) {
+                                                operator = "<=";
+                                            } else if (arr[k].contains(">")) {
+                                                operator = ">";
+                                            } else if (arr[k].contains("<")) {
+                                                operator = "<";
+                                            } else if (arr[k].contains("=")) {
+                                                operator = "=";
+                                            }
+
+                                            Log.v("EdittextBranchCause", operator + " operator");
+
+
+                                            String[] subArr = arr[k].split(operator);
+
+                                            Log.v("EdittextBranchCause", subArr + " subArr.length");
+
+
+                                            if (subArr.length >= 2) {
+
+                                                String first = subArr[0];
+
+                                                String sec = subArr[1];
+
+                                                String qid = findQuestionIdFromElementVariable(first);
+
+                                                String filledData = getPrefilledData(qid);
+
+                                                Log.v("EdittextBranchCause", filledData + " filledData");
+
+
+                                                List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
+                                                        .filter(e -> e.getId().equalsIgnoreCase(qid))
+                                                        .collect(Collectors.toList());
+
+
+                                                String data = getIdFromLayoutByQuestionIdSpinner(qid);
+                                                String data2 = getValueFromLayoutByQuestionId(qid);
+
+                                                if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
+                                                        ||
+                                                        (data2 != null && !data2.equalsIgnoreCase("") && !data2.equalsIgnoreCase("0"))
+                                                ) {
+
+
+                                                    if (formStructureModal1.get(0).getElement_type().equalsIgnoreCase("select") ||
+                                                            formStructureModal1.get(0).getElement_type().equalsIgnoreCase("radio")) {
+
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        Log.v("EdittextBranchCause", data + "=" + sec + "compareValues");
+
+
+                                                        if (compareValues(data.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        if (compareValues(data2.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    }
+                                                } else if (filledData != null && !filledData.equalsIgnoreCase("") && !filledData.equalsIgnoreCase("0")) {
+                                                    // Parse filledData and sec as numbers if possible
+                                                    try {
+
+                                                        Log.v("EdittextBranchCause", filledData.trim() + operator + sec.trim() + " elementtype");
+
+
+                                                        if (compareValues(filledData.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                }
+
+
+                                            }
+                                        }
+                                    }
+
+                                    Log.v("EdittextBranchCause", status + " status");
+
+                                    if (status) {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                    } else {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                    }
+                                } catch (Exception e) {
+                                    Log.v("fdsfdsfdsf", e.getMessage() + e.getCause() + "");
+                                }
+                            }
+
+                        } else if (branch.contains(">")) {
                             Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
                             if (numericSelectedId > numericCauseId) {
                                 showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
@@ -2926,6 +3235,7 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void handleCauseLogicForSpinner(FormStructureModal formStructureModal, int position) {
         try {
 
@@ -2957,7 +3267,130 @@ public class FormStructureFragment extends Fragment {
                         Log.v("FoundData", numericSelectedId + "");
                         Log.v("FoundData", numericCauseId + "");
 
-                        if (branch.contains(">")) {
+
+                        if (branch.contains("&&")) {
+                            Log.v("EdittextBranchCause", "Called");
+
+                            String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
+
+                            Log.v("EdittextBranchCause", arr.length + " arr.length");
+
+
+                            if (arr.length >= 2) {
+                                boolean status = false;
+                                try {
+                                    for (int k = 0; k < arr.length; k++) {
+                                        if (arr[k].contains("=") || arr[k].contains(">") || arr[k].contains("<")) {
+
+                                            String operator = "";
+                                            if (arr[k].contains(">=")) {
+                                                operator = ">=";
+                                            } else if (arr[k].contains("<=")) {
+                                                operator = "<=";
+                                            } else if (arr[k].contains(">")) {
+                                                operator = ">";
+                                            } else if (arr[k].contains("<")) {
+                                                operator = "<";
+                                            } else if (arr[k].contains("=")) {
+                                                operator = "=";
+                                            }
+
+                                            Log.v("EdittextBranchCause", operator + " operator");
+
+
+                                            String[] subArr = arr[k].split(operator);
+
+                                            Log.v("EdittextBranchCause", subArr + " subArr.length");
+
+
+                                            if (subArr.length >= 2) {
+
+                                                String first = subArr[0];
+
+                                                String sec = subArr[1];
+
+                                                String qid = findQuestionIdFromElementVariable(first);
+
+                                                String filledData = getPrefilledData(qid);
+
+                                                Log.v("EdittextBranchCause", filledData + " filledData");
+
+
+                                                List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
+                                                        .filter(e -> e.getId().equalsIgnoreCase(qid))
+                                                        .collect(Collectors.toList());
+
+
+                                                String data = getIdFromLayoutByQuestionIdSpinner(qid);
+                                                String data2 = getValueFromLayoutByQuestionId(qid);
+
+                                                if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
+                                                        ||
+                                                        (data2 != null && !data2.equalsIgnoreCase("") && !data2.equalsIgnoreCase("0"))
+                                                ) {
+
+
+                                                    if (formStructureModal1.get(0).getElement_type().equalsIgnoreCase("select") ||
+                                                            formStructureModal1.get(0).getElement_type().equalsIgnoreCase("radio")) {
+
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        Log.v("EdittextBranchCause", data + "=" + sec + "compareValues");
+
+
+                                                        if (compareValues(data.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        if (compareValues(data2.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    }
+                                                } else if (filledData != null && !filledData.equalsIgnoreCase("") && !filledData.equalsIgnoreCase("0")) {
+                                                    // Parse filledData and sec as numbers if possible
+                                                    try {
+
+                                                        Log.v("EdittextBranchCause", filledData.trim() + operator + sec.trim() + " elementtype");
+
+
+                                                        if (compareValues(filledData.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                }
+
+
+                                            }
+                                        }
+                                    }
+
+                                    Log.v("EdittextBranchCause", status + " status");
+
+                                    if (status) {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                    } else {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                    }
+                                } catch (Exception e) {
+                                    Log.v("fdsfdsfdsf", e.getMessage() + e.getCause() + "");
+                                }
+                            }
+
+                        } else if (branch.contains(">")) {
                             Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
                             numericSelectedId = Integer.parseInt(formStructureModal.getElement_choices().get(position - 1).getName());
 
@@ -3008,6 +3441,35 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+    // Helper method for comparing values
+    private boolean compareValues(String filledData, String sec, String operator) {
+        try {
+            if (sec.contains("|") && sec.contains(filledData)) {
+                return true;
+            } else {
+                double filledValue = Double.parseDouble(filledData);
+                double secValue = Double.parseDouble(sec);
+                switch (operator) {
+
+                    case ">=":
+                        return filledValue >= secValue;
+                    case "<=":
+                        return filledValue <= secValue;
+                    case ">":
+                        return filledValue > secValue;
+                    case "<":
+                        return filledValue < secValue;
+                    case "=":
+                        return filledValue == secValue;
+                }
+            }
+        } catch (NumberFormatException e) {
+            return operator.equals("=") && filledData.equalsIgnoreCase(sec);
+        }
+        return false;
+    }
+
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void handleCauseBranchingLogicRadio(FormStructureModal formStructureModal, int selectedId, String selectedText) {
         try {
@@ -3024,7 +3486,128 @@ public class FormStructureFragment extends Fragment {
                         Log.v("FoundData", numericSelectedId + "");
                         Log.v("FoundData", numericCauseId + "");
 
-                        if (branch.contains(">")) {
+                        if (branch.contains("&&")) {
+                            Log.v("EdittextBranchCause", "Called");
+
+
+                            String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
+
+                            Log.v("EdittextBranchCause", arr.length + " arr.length");
+
+
+                            if (arr.length >= 2) {
+                                boolean status = false;
+                                try {
+                                    for (int k = 0; k < arr.length; k++) {
+                                        if (arr[k].contains("=") || arr[k].contains(">") || arr[k].contains("<")) {
+
+                                            String operator = "";
+                                            if (arr[k].contains(">=")) {
+                                                operator = ">=";
+                                            } else if (arr[k].contains("<=")) {
+                                                operator = "<=";
+                                            } else if (arr[k].contains(">")) {
+                                                operator = ">";
+                                            } else if (arr[k].contains("<")) {
+                                                operator = "<";
+                                            } else if (arr[k].contains("=")) {
+                                                operator = "=";
+                                            }
+
+                                            Log.v("EdittextBranchCause", operator + " operator");
+
+
+                                            String[] subArr = arr[k].split(operator);
+
+                                            Log.v("EdittextBranchCause", subArr + " subArr.length");
+
+
+                                            if (subArr.length >= 2) {
+
+                                                String first = subArr[0];
+                                                String sec = subArr[1];
+                                                String qid = findQuestionIdFromElementVariable(first);
+
+                                                String filledData = getPrefilledData(qid);
+
+                                                Log.v("EdittextBranchCause", filledData + " filledData");
+
+
+                                                List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
+                                                        .filter(e -> e.getId().equalsIgnoreCase(qid))
+                                                        .collect(Collectors.toList());
+
+
+                                                String data = getIdFromLayoutByQuestionIdSpinner(qid);
+                                                String data2 = getValueFromLayoutByQuestionId(qid);
+
+                                                if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
+                                                        ||
+                                                        (data2 != null && !data2.equalsIgnoreCase("") && !data2.equalsIgnoreCase("0"))
+                                                ) {
+
+
+                                                    if (formStructureModal1.get(0).getElement_type().equalsIgnoreCase("select") ||
+                                                            formStructureModal1.get(0).getElement_type().equalsIgnoreCase("radio")) {
+
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        Log.v("EdittextBranchCause", data + "=" + sec + "compareValues");
+
+
+                                                        if (compareValues(data.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        Log.v("EdittextBranchCause", formStructureModal1.get(0).getElement_type() + " elementtype");
+
+                                                        if (compareValues(data2.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    }
+                                                } else if (filledData != null && !filledData.equalsIgnoreCase("") && !filledData.equalsIgnoreCase("0")) {
+                                                    // Parse filledData and sec as numbers if possible
+                                                    try {
+
+                                                        Log.v("EdittextBranchCause", filledData.trim() + operator + sec.trim() + " elementtype");
+
+
+                                                        if (compareValues(filledData.trim(), sec.trim(), operator)) {
+                                                            status = true;
+                                                        } else {
+                                                            status = false;
+                                                            break;
+                                                        }
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                }
+
+
+                                            }
+                                        }
+                                    }
+
+                                    Log.v("EdittextBranchCause", status + " status");
+
+                                    if (status) {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
+                                    } else {
+                                        showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), false);
+                                    }
+                                } catch (Exception e) {
+                                    Log.v("fdsfdsfdsf", e.getMessage() + e.getCause() + "");
+                                }
+                            }
+
+                        } else if (branch.contains(">")) {
                             Log.v("FoundData", numericSelectedId + "  >" + numericCauseId);
                             numericSelectedId = Integer.parseInt(selectedText);
 
