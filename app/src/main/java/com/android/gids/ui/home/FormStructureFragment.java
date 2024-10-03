@@ -102,6 +102,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -2887,9 +2889,11 @@ public class FormStructureFragment extends Fragment {
 
             v.setVisibility(View.GONE);
             String branch = formStructureModal.getEffect_branching_logic().get(0).getBranching();
+            String[] causeIds = extractCauseIds(branch);
+
 
             if (branch.contains("&&")) {
-                Log.v("EdittextBranchCause", "Called");
+                Log.v("EdittextBranchCause", "Called causeId"+causeIds);
 
                 String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
 
@@ -3012,9 +3016,6 @@ public class FormStructureFragment extends Fragment {
 
                 return;
             }
-
-
-            String[] causeIds = extractCauseIds(branch);
 
             for (String causeId : causeIds) {
                 int numericCauseId = Integer.parseInt(causeId.replaceAll("\\D", ""));
@@ -3267,7 +3268,7 @@ public class FormStructureFragment extends Fragment {
 
 
                     if (branch.contains("&&")) {
-                        Log.v("EdittextBranchCause", "Called");
+                        Log.v("EdittextBranchCause", "Called"+formStructureModal.getCause_branching_logic().get(i).getEffect_question_id());
 
                         String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
 
@@ -3308,9 +3309,6 @@ public class FormStructureFragment extends Fragment {
 
                                             String qid = findQuestionIdFromElementVariable(first);
 
-                                            String filledData = getPrefilledData(qid);
-
-                                            Log.v("EdittextBranchCause", filledData + " filledData");
 
 
                                             List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
@@ -3320,6 +3318,13 @@ public class FormStructureFragment extends Fragment {
 
                                             String data = getIdFromLayoutByQuestionIdSpinner(qid);
                                             String data2 = getValueFromLayoutByQuestionId(qid);
+
+
+
+                                            String filledData = getPrefilledData(qid);
+
+                                            Log.v("EdittextBranchCause", "question id  "+qid+" "+filledData + " filledData");
+
 
                                             if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
                                                     ||
