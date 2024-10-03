@@ -2561,6 +2561,35 @@ public class FormStructureFragment extends Fragment {
             }
         }
 
+
+        if (functionName.equalsIgnoreCase("MISS_PER_INC")) {
+            if (answerList.size() >= 2) {
+                float variable1 = answerList.get(0);
+                float variable2 = answerList.get(1);
+
+                float perIncResult = (variable1 / variable2) * 100;
+                Log.v("Function Name: ", perIncResult + "  Total Percentage Increase");
+                return perIncResult;
+            } else {
+                Log.v("Function Name: ", "Insufficient data for MISS_PER_INC");
+                return 0.0f;
+            }
+        }
+
+        if (functionName.equalsIgnoreCase("MISS_GAP_PER")) {
+            if (answerList.size() >= 2) {
+                float variable1 = answerList.get(0);
+                float variable2 = answerList.get(1);
+
+                float gapPerResult = ((variable1 - variable2) / variable1) * 100;
+                Log.v("Function Name: ", gapPerResult + "  Total Gap Percentage");
+                return gapPerResult;
+            } else {
+                Log.v("Function Name: ", "Insufficient data for MISS_GAP_PER");
+                return 0.0f;
+            }
+        }
+
         return 0;
     }
 

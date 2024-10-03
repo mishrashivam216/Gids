@@ -172,8 +172,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void doLogout() {
         LogoutParam logoutParam = new LogoutParam();
         logoutParam.setUser_id(sharedPreferences.getString("id", null));
-        logoutParam.setLatitude("4554");
-        logoutParam.setLongtitude("65465");
+        logoutParam.setLatitude(LocationService.getLat());
+        logoutParam.setLongtitude(LocationService.getLong());
         ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
         Call<LogoutRes> call = methods.doLogout(logoutParam);
         call.enqueue(new Callback<LogoutRes>() {
