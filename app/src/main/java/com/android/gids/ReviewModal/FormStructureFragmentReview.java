@@ -23,6 +23,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -229,27 +230,8 @@ public class FormStructureFragmentReview extends Fragment {
                             public void run() {
                                 if (validateEmpty()) {
 
-                                    try {
-                                        createLayoutFromJson();
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
+                                    new ProcessSurveyTask().execute();
 
-                                    if (binding.nextButton.getText().toString().equalsIgnoreCase("SAVE AND SUBMIT")) {
-                                        startActivity(new Intent(getContext(), MainActivity.class));
-                                        getActivity().finish();
-                                    }
-
-                                    if (currentPageIndex < list.size() - 1) {
-                                        currentPageIndex++;
-                                        parseData(currentPageIndex);
-
-                                    }
-                                    if (currentPageIndex == list.size() - 1) {
-                                        binding.finalSubmitButton.setVisibility(VISIBLE);
-                                        binding.nextButton.setText("SAVE AND SUBMIT");
-                                    }
-                                    binding.scrollView.scrollTo(0, 0);
                                 } else {
                                     try {
                                         Toast.makeText(getContext(), "Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
@@ -313,6 +295,131 @@ public class FormStructureFragmentReview extends Fragment {
             Log.v("FormStructureFragment", e.getMessage());
         }
         return root;
+    }
+
+
+    private class ProcessSurveyTask extends AsyncTask<Void, Void, String> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Show loading animation before starting the task
+            binding.loadingAnim.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected String doInBackground(Void... voids) {
+
+            String checkBoxData = "";
+            String preQid = "";
+            List<SurveyData> surveyDataList = new ArrayList<>();
+
+            try {
+                for (int j = 0; j < binding.layout.getChildCount(); j++) {
+                    View view = binding.layout.getChildAt(j);
+
+                    if (view.getVisibility() == VISIBLE) {
+
+
+                        if (view instanceof CheckBox) {
+                            if (((CheckBox) view).isChecked()) {
+                                preQid = String.valueOf(view.getTag());
+                                checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                            }
+                            if (j != binding.layout.getChildCount() - 1) {
+                                continue;
+                            }
+                        }
+
+                        if (!checkBoxData.isEmpty()) {
+                            surveyDataList.add(createSurveyData(preQid, checkBoxData));
+                            checkBoxData = "";
+                            preQid = "";
+                        }
+
+                        SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
+
+                        if (view instanceof Spinner) {
+                            Item selectedItem = (Item) ((Spinner) view).getSelectedItem();
+                            if (selectedItem != null) {
+                                surveyData.setField_value(selectedItem.getId());
+                                surveyDataList.add(surveyData);
+                            }
+                        } else if (view instanceof EditText) {
+                            surveyData.setField_value(((EditText) view).getText().toString());
+                            surveyDataList.add(surveyData);
+                        } else if (view instanceof ImageView) {
+                            if (((ImageView) view).getDrawable() != null) {
+                                surveyData.setField_value(String.valueOf(((ImageView) view).getTag()));
+                                surveyDataList.add(surveyData);
+                                Drawable drawable = ((ImageView) view).getDrawable();
+                                if (drawable instanceof BitmapDrawable) {
+                                    Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                                    if (bitmap != null) {
+                                        Utils.saveBitmapToLocalStorage(getContext(), bitmap, String.valueOf(((ImageView) view).getTag()));
+                                    }
+                                } else {
+                                    Log.e("ImageViewCheck", "Drawable is not a BitmapDrawable.");
+                                }
+                            }
+                        } else if (view instanceof RadioGroup) {
+                            int selectedId = ((RadioGroup) view).getCheckedRadioButtonId();
+                            if (selectedId != -1) {
+                                surveyData.setField_value(String.valueOf(selectedId));
+                                surveyDataList.add(surveyData);
+                            }
+                        } else if (view instanceof LinearLayout) {
+                            LinearLayout linearLayout = (LinearLayout) view;
+                            for (int k = 0; k < linearLayout.getChildCount(); k++) {
+                                View childView = linearLayout.getChildAt(k);
+                                if (childView instanceof EditText) {
+                                    Log.v("MyDebuggingData", ((EditText) childView).getText().toString() + " EditText found");
+                                    surveyData.setField_value(String.valueOf(((EditText) childView).getText().toString()));
+                                    surveyDataList.add(surveyData);
+                                }
+                            }
+                        }
+
+
+                        // Perform the bulk insert/update operation
+                        addInDb(surveyDataList);
+                    }
+
+                }
+
+            } catch (Exception e) {
+                Log.v("FormStructureFragment", e.getMessage());
+                Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+
+            return null; // No error, return null
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+
+            // Hide the loading animation after task completion
+            binding.loadingAnim.setVisibility(View.GONE);
+
+            if (binding.nextButton.getText().toString().equalsIgnoreCase("SAVE AND SUBMIT")) {
+                startActivity(new Intent(getContext(), MainActivity.class));
+                getActivity().finish();
+            }
+
+            if (currentPageIndex < list.size() - 1) {
+                currentPageIndex++;
+                parseData(currentPageIndex);
+
+            }
+            if (currentPageIndex == list.size() - 1) {
+                binding.finalSubmitButton.setVisibility(VISIBLE);
+                binding.nextButton.setText("SAVE AND SUBMIT");
+            }
+            binding.scrollView.scrollTo(0, 0);
+
+
+        }
     }
 
 
@@ -516,10 +623,10 @@ public class FormStructureFragmentReview extends Fragment {
                 Log.v("InsertedDataInDB", s.getField_value());
                 SurveyData insertedData = surveyDao.getPredefinedAnswerReview(formId, recid, s.getQuestion_id());
                 if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
-                    Log.v("gfdgfdgfdgf:", "Data is already there - "+recid);
+                    Log.v("gfdgfdgfdgf:", "Data is already there - " + recid);
                 } else {
                     surveyDao.insert(s);
-                    Log.v("gfdgfdgfdgf:", "SuccessFully Inserted - "+recid);
+                    Log.v("gfdgfdgfdgf:", "SuccessFully Inserted - " + recid);
                 }
             }
         } catch (Exception e) {
@@ -528,9 +635,10 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createLayoutFromJson() {
+
+
         String checkBoxData = "";
         String preQid = "";
         List<SurveyData> surveyDataList = new ArrayList<>();
@@ -2966,7 +3074,7 @@ public class FormStructureFragmentReview extends Fragment {
     private List<String> findQuestionIdFromElementVariable(List<String> parameterList) {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
-            if(!(elementVariable.equalsIgnoreCase("0") ||  elementVariable.equalsIgnoreCase("1"))) {
+            if (!(elementVariable.equalsIgnoreCase("0") || elementVariable.equalsIgnoreCase("1"))) {
                 try {
                     String str = FormStructureModalReviewList.stream()
                             .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
