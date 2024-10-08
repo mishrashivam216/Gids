@@ -9,6 +9,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -62,6 +63,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.android.gids.AddMoreList;
@@ -88,10 +90,12 @@ import com.android.gids.SurveyData;
 import com.android.gids.SurveyRoomDatabase;
 import com.android.gids.Utils;
 import com.android.gids.databinding.FragmentFormStructureBinding;
+import com.github.chrisbanes.photoview.PhotoView;
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -179,6 +183,9 @@ public class FormStructureFragment extends Fragment {
     ImageView elementImage;
 
     String file_name = "";
+
+    private Uri photoURI;
+    private File photoFile;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -1915,7 +1922,22 @@ public class FormStructureFragment extends Fragment {
             elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
         }
 
+        elementImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showImageZoomDialog();
+            }
+        });
+
         return elementImage; // Return the dynamically created ImageView
+    }
+
+    private void showImageZoomDialog() {
+        Dialog dialog = new Dialog(getContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_image_zoom);
+        PhotoView photoView = dialog.findViewById(R.id.photoView);
+        photoView.setImageDrawable(elementImage.getDrawable()); // Use the image currently shown
+        dialog.show();
     }
 
 
@@ -3806,24 +3828,13 @@ public class FormStructureFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK && data != null) {
-            Bundle extras = data.getExtras();
-            Bitmap bitmap = (Bitmap) extras.get("data");
-
-            if (bitmap != null) {
-                // Save and process the bitmap
-                File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
-                if (savedFile != null) {
-
-                    Utils.setLoadedLayoutStructure(elementImage, getContext());
-                    Bitmap correctedBitmap = Utils.correctImageOrientation(savedFile);
-                    elementImage.setImageBitmap(correctedBitmap);
-
-                    Log.d("UploadFile", savedFile.getAbsolutePath() + " saved");
-
-                }
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK ) {
+            if (photoFile != null) {
+                Bitmap bitmap = Utils.correctImageOrientation(photoFile);
+                elementImage.setImageBitmap(bitmap); // Display the high-resolution image
+                Log.d("UploadFile", "Image saved at: " + photoFile.getAbsolutePath());
             }
-        } else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
+        }  else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
             Bitmap bitmap = handleGalleryResult(data);
             File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
             if (savedFile != null) {
@@ -3864,8 +3875,20 @@ public class FormStructureFragment extends Fragment {
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            // Create the file where the photo should go
+            try {
+                photoFile = Utils.createImageFile(getContext()); // You need to implement this method to create the file
+                if (photoFile != null) {
+                    photoURI = FileProvider.getUriForFile(getContext(), "com.android.gids.fileprovider", photoFile);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                }
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
         }
     }
 
