@@ -3252,7 +3252,7 @@ public class FormStructureFragmentReview extends Fragment {
                 if (sectionIndex.isPresent()) {
 //                    inserAllQuestionIdToSync();
                     System.out.println("QID found in section index: " + sectionIndex.getAsInt());
-                    currentPageIndex = sectionIndex.getAsInt();
+                    currentPageIndex = 0;
                     parseData(0);
                 } else {
                     System.out.println("QID found in section index: 0");
