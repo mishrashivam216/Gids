@@ -106,6 +106,14 @@ public class Utils {
     }
 
 
+    private static String getFormattedValue(String original, float numericValue) {
+        // Extract the number of decimal places in the original string
+        int decimalPlaces = original.contains(".") ? original.split("\\.")[1].length() : 0;
+
+        // Use String.format to maintain the original decimal places
+        return String.format("%." + decimalPlaces + "f", numericValue);
+    }
+
 
     public static int getFiveDigitUnique() {
         Random r = new Random(System.currentTimeMillis());

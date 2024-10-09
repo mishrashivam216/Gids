@@ -71,6 +71,8 @@ import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormListModal;
 import com.android.gids.FormStructureModal;
+import com.android.gids.FormattedFloat;
+import com.android.gids.FunctionProcessor;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.InstanceStatus;
@@ -97,6 +99,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,6 +114,8 @@ import java.util.OptionalInt;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -186,6 +193,8 @@ public class FormStructureFragment extends Fragment {
 
     private Uri photoURI;
     private File photoFile;
+
+    FormattedFloat formattedFloat;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -2100,8 +2109,9 @@ public class FormStructureFragment extends Fragment {
             public void onClick(View view) {
                 try {
                     float data = calculateLogic(formStructureModal.getCalculation_logic());
-                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
-                    editText.setText(data + "");
+
+//                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
+                    editText.setText(data+"");
                 } catch (Exception e) {
 //                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
@@ -2691,7 +2701,55 @@ public class FormStructureFragment extends Fragment {
             }
         }
 
+
+        if (functionName.equalsIgnoreCase("MISS_INTDEC")) {
+
+
+            try {
+                FunctionProcessor functionProcessor = new FunctionProcessor();
+                String val = functionProcessor.processMISSFunction(calculationLogic, answerList);
+                return Float.valueOf(val);
+            }catch (Exception e){
+                Log.v("Function Name: ", e.getMessage()+"  "+e.getCause());
+            }
+        }
+
         return 0;
+    }
+
+
+    private String getExpressionFromInput() {
+        // For example, this method would return something like "MISS_INTDEC(MISS_SUM(...), 1, 3)"
+        return "MISS_INTDEC(MISS_SUM(factory_area, storage_area), 1, 3)";
+    }
+
+    // Method to extract the inner function name from the expression
+    private String extractInnerFunctionName(String expression) {
+        // Use regex to find the first function name within the brackets
+        Pattern pattern = Pattern.compile("MISS_\\w+");
+        Matcher matcher = pattern.matcher(expression);
+        if (matcher.find()) {
+            return matcher.group(0); // Return the found function name (e.g., MISS_SUM)
+        }
+        return ""; // Return empty if no function found
+    }
+
+
+    // Utility method to round a float to the specified decimal places
+    private float roundToDecimal(float value, int decimalPlaces) {
+        BigDecimal bd = new BigDecimal(Float.toString(value));
+        bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
+        return bd.floatValue();
+    }
+
+    // Utility method to format a float to a fixed number of decimal places (digits)
+    private String formatNumberToDigits(float value, int numberOfDigits) {
+        StringBuilder formatPattern = new StringBuilder("#.");
+        for (int i = 0; i < numberOfDigits; i++) {
+            formatPattern.append("0");
+        }
+        DecimalFormat df = new DecimalFormat(formatPattern.toString());
+        return df.format(value);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -2699,7 +2757,7 @@ public class FormStructureFragment extends Fragment {
         List<String> allQestionId = new ArrayList<>();
         for (String elementVariable : parameterList) {
 
-            if (!(elementVariable.equalsIgnoreCase("0") || elementVariable.equalsIgnoreCase("1"))) {
+            if (!(elementVariable.equalsIgnoreCase("0") || elementVariable.equalsIgnoreCase("1") || elementVariable.contains("MISS_"))) {
 
                 String str = formStructureModalList.stream()
                         .filter(e -> e.getElement_variable().trim().equalsIgnoreCase(elementVariable.trim()))
@@ -3023,7 +3081,7 @@ public class FormStructureFragment extends Fragment {
 
 
             if (branch.contains("&&")) {
-                Log.v("EdittextBranchCause", "Called causeId"+causeIds);
+                Log.v("EdittextBranchCause", "Called causeId" + causeIds);
 
                 String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
 
@@ -3051,7 +3109,8 @@ public class FormStructureFragment extends Fragment {
 
                                 Log.v("EdittextBranchCause", operator + " operator");
 
-                                String[] subArr = arr[k].split(operator);;
+                                String[] subArr = arr[k].split(operator);
+                                ;
 
                                 Log.v("EdittextBranchCause", subArr + " subArr.length");
 
@@ -3234,7 +3293,8 @@ public class FormStructureFragment extends Fragment {
 
                                         Log.v("EdittextBranchCause", operator + " operator");
 
-                                        String[] subArr = arr[k].split(operator);;
+                                        String[] subArr = arr[k].split(operator);
+                                        ;
 
                                         Log.v("EdittextBranchCause", subArr + " subArr.length");
 
@@ -3398,7 +3458,7 @@ public class FormStructureFragment extends Fragment {
 
 
                     if (branch.contains("&&")) {
-                        Log.v("EdittextBranchCause", "Called"+formStructureModal.getCause_branching_logic().get(i).getEffect_question_id());
+                        Log.v("EdittextBranchCause", "Called" + formStructureModal.getCause_branching_logic().get(i).getEffect_question_id());
 
                         String[] arr = branch.trim().replace("[", "").replace("]", "").split("&&");
 
@@ -3440,7 +3500,6 @@ public class FormStructureFragment extends Fragment {
                                             String qid = findQuestionIdFromElementVariable(first);
 
 
-
                                             List<FormStructureModal> formStructureModal1 = formStructureModalList.stream()
                                                     .filter(e -> e.getId().equalsIgnoreCase(qid))
                                                     .collect(Collectors.toList());
@@ -3450,10 +3509,9 @@ public class FormStructureFragment extends Fragment {
                                             String data2 = getValueFromLayoutByQuestionId(qid);
 
 
-
                                             String filledData = getPrefilledData(qid);
 
-                                            Log.v("EdittextBranchCause", "question id  "+qid+" "+filledData + " filledData");
+                                            Log.v("EdittextBranchCause", "question id  " + qid + " " + filledData + " filledData");
 
 
                                             if ((data != null && !data.equalsIgnoreCase("") && !data.equalsIgnoreCase("0"))
@@ -3748,7 +3806,7 @@ public class FormStructureFragment extends Fragment {
                                     }
                                 }
 
-                                Log.v("EdittextBranchCause", formStructureModal.getCause_branching_logic().get(i).getEffect_question_id()+" => "+status + " status");
+                                Log.v("EdittextBranchCause", formStructureModal.getCause_branching_logic().get(i).getEffect_question_id() + " => " + status + " status");
 
                                 if (status) {
                                     showHideLaoyoutbyTag(formStructureModal.getCause_branching_logic().get(i).getEffect_question_id(), true);
@@ -3802,7 +3860,7 @@ public class FormStructureFragment extends Fragment {
                             }
                         } else {
                             Log.v("Branching:Cond", "FOR EQUAL");
-                            Log.v("Branching:Cond", numericCauseId +" "+selectedId);
+                            Log.v("Branching:Cond", numericCauseId + " " + selectedId);
 
                             numericSelectedId = selectedId;
                             if (numericSelectedId == numericCauseId) {
@@ -3828,13 +3886,13 @@ public class FormStructureFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK ) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             if (photoFile != null) {
                 Bitmap bitmap = Utils.correctImageOrientation(photoFile);
                 elementImage.setImageBitmap(bitmap); // Display the high-resolution image
                 Log.d("UploadFile", "Image saved at: " + photoFile.getAbsolutePath());
             }
-        }  else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
+        } else if (requestCode == SELECT_FILE && resultCode == RESULT_OK) {
             Bitmap bitmap = handleGalleryResult(data);
             File savedFile = Utils.saveBitmapToLocalStorage(getContext(), bitmap, file_name);
             if (savedFile != null) {
