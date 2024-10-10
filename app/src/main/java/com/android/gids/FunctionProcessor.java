@@ -1,5 +1,7 @@
 package com.android.gids;
 
+import android.util.Log;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -37,8 +39,14 @@ public class FunctionProcessor {
         }
 
         if (expression.contains("MISS_MULTIPLY")) {
-            computedValue = answerList.stream().reduce(1.0f, (a, b) -> a * b);
+
+            if (answerList.size() == 0) {
+                computedValue = 0;
+            } else {
+                computedValue = answerList.stream().reduce(1.0f, (a, b) -> a * b);
+            }
         }
+
 
         if (expression.contains("MISS_MINUS")) {
             computedValue = answerList.stream().reduce((a, b) -> a - b).orElse(0.0f);
@@ -63,14 +71,34 @@ public class FunctionProcessor {
     }
 
     // Utility method to extract the inner function name (e.g., MISS_SUM, MISS_MULTIPLY)
-    private static String extractInnerFunctionName(String expression) {
-        Pattern pattern = Pattern.compile("MISS_(\\w+)\\(");
-        Matcher matcher = pattern.matcher(expression);
-        if (matcher.find()) {
-            return matcher.group(1);
+//    private static String extractInnerFunctionName(String expression) {
+//        Pattern pattern = Pattern.compile("MISS_(\\w+)\\(");
+//        Matcher matcher = pattern.matcher(expression);
+//        if (matcher.find()) {
+//            return matcher.group(1);
+//        }
+//        throw new IllegalArgumentException("No inner function found in expression: " + expression);
+//    }
+
+    public static String extractInnerFunctionName(String expression) {
+        // Find the opening parenthesis for the first argument
+        int startIndex = expression.indexOf('(');
+
+        // Find the first comma or closing parenthesis, indicating the end of the inner function
+        int endIndex = expression.indexOf(',', startIndex);
+        if (endIndex == -1) {
+            // If there's no comma, the closing parenthesis marks the end of the function
+            endIndex = expression.indexOf(')', startIndex);
         }
-        throw new IllegalArgumentException("No inner function found in expression: " + expression);
+
+        // Extract the inner function name between the parentheses
+        if (startIndex != -1 && endIndex != -1) {
+            return expression.substring(0, startIndex).trim();
+        }
+
+        return "";
     }
+
 
     // Utility method to extract decimalPlaces and numberOfDigits from expression
     private static int[] extractArgumentsFromExpression(String expression) {

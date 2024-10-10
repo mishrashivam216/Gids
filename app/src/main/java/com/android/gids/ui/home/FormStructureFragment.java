@@ -249,9 +249,12 @@ public class FormStructureFragment extends Fragment {
             binding.finalSubmitButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
-                    showConfirmDialog();
-
+                    if (validateEmpty()) {
+                        showConfirmDialog();
+                    } else {
+                        Toast.makeText(getContext(), "Please fill the required fields", Toast.LENGTH_SHORT).show();
+                        binding.loadingAnim.setVisibility(View.GONE);
+                    }
                 }
             });
 
@@ -2111,7 +2114,7 @@ public class FormStructureFragment extends Fragment {
                     float data = calculateLogic(formStructureModal.getCalculation_logic());
 
 //                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
-                    editText.setText(data+"");
+                    editText.setText(data + "");
                 } catch (Exception e) {
 //                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
@@ -2578,10 +2581,7 @@ public class FormStructureFragment extends Fragment {
         return 0;
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private float calculateLogic(String calculationLogic) {
-
+    private  ArrayList<Float> getAnswerList(String calculationLogic){
         String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
 
         String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
@@ -2605,6 +2605,20 @@ public class FormStructureFragment extends Fragment {
 
         Log.v("Function Name: ", answerList.size() + "  Answerlist Size");
 
+        return answerList;
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private float calculateLogic(String calculationLogic) {
+
+        String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
+
+        ArrayList<Float> answerList = getAnswerList(calculationLogic);
+
+        String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
+
+        String[] parameters = parametersString.split(",");
 
         if (functionName.equalsIgnoreCase("MISS_SUM")) {
             float sum = answerList.stream()
@@ -2707,15 +2721,40 @@ public class FormStructureFragment extends Fragment {
 
             try {
                 FunctionProcessor functionProcessor = new FunctionProcessor();
-                String val = functionProcessor.processMISSFunction(calculationLogic, answerList);
+
+                String chaildCalculationLogic = extractInnerFunctions(calculationLogic);
+                ArrayList<Float> ansList =  getAnswerList(chaildCalculationLogic);
+                String val = functionProcessor.processMISSFunction(calculationLogic, ansList);
                 return Float.valueOf(val);
-            }catch (Exception e){
-                Log.v("Function Name: ", e.getMessage()+"  "+e.getCause());
+            } catch (Exception e) {
+                Log.v("Function Name: ", e.getMessage() + "  " + e.getCause());
             }
         }
 
         return 0;
     }
+
+    public  String extractInnerFunctions(String expression) {
+        // Find the first opening parenthesis '(' after the outer function
+        int firstOpeningParenIndex = expression.indexOf('(');
+        // Find the last closing parenthesis ')'
+        int lastClosingParenIndex = expression.lastIndexOf(')');
+
+        if (firstOpeningParenIndex != -1 && lastClosingParenIndex != -1) {
+            // Extract the substring inside the outer function parentheses
+            String innerContent = expression.substring(firstOpeningParenIndex + 1, lastClosingParenIndex);
+
+            // Find the start of the inner function (MISS_MULTIPLY in your case)
+            int innerFunctionStart = innerContent.indexOf("MISS_");
+            if (innerFunctionStart != -1) {
+                // Extract the inner function and its arguments
+                return innerContent.substring(innerFunctionStart).trim();
+            }
+        }
+
+        return "";
+    }
+
 
 
     private String getExpressionFromInput() {

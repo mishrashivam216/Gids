@@ -90,7 +90,7 @@ public class DatabaseInitializer {
                     try {
                         db.getOpenHelper().getWritableDatabase().execSQL(sql);
                     } catch (Exception e) {
-                        Log.e("DatabaseInitializer", "Error executing SQL: " + sql, e);
+                        Log.e("DatabaseInitializer", "Error executing SQL: "+ e.getMessage()+"  cause "+e.getCause());
                     }
                 }
             }

@@ -74,6 +74,7 @@ import com.android.gids.AddMoreList;
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormStructureModal;
+import com.android.gids.FunctionProcessor;
 import com.android.gids.GlobalDataSetValue;
 import com.android.gids.GlobalDataSetValueDao;
 import com.android.gids.InstanceStatus;
@@ -266,7 +267,21 @@ public class FormStructureFragmentReview extends Fragment {
                 @Override
                 public void onClick(View view) {
 
-                    showConfirmDialog();
+                    if (validateEmpty()) {
+
+                        showConfirmDialog();
+
+                    } else {
+                        try {
+                            Toast.makeText(getContext(), "Please Fill the Required Fields", Toast.LENGTH_SHORT).show();
+                            binding.loadingAnim.setVisibility(View.GONE);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+
 
                 }
             });
@@ -3002,10 +3017,7 @@ public class FormStructureFragmentReview extends Fragment {
         return 0;
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private float calculateLogic(String calculationLogic) {
-
+    private  ArrayList<Float> getAnswerList(String calculationLogic){
         String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
 
         String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
@@ -3028,6 +3040,23 @@ public class FormStructureFragmentReview extends Fragment {
         ArrayList<Float> answerList = findAllValueFromLayoutAndDb(allQestionId);
 
         Log.v("Function Name: ", answerList.size() + "  Answerlist Size");
+
+        return answerList;
+    }
+
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private float calculateLogic(String calculationLogic) {
+
+        String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
+
+        ArrayList<Float> answerList = getAnswerList(calculationLogic);
+
+        String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
+
+        String[] parameters = parametersString.split(",");
+
 
 
         if (functionName.equalsIgnoreCase("MISS_SUM")) {
@@ -3092,6 +3121,47 @@ public class FormStructureFragmentReview extends Fragment {
             } else {
                 // Return decimal value
                 return result;
+            }
+        }
+
+        if (functionName.equalsIgnoreCase("MISS_PER_INC")) {
+            if (answerList.size() >= 2) {
+                float variable1 = answerList.get(0);
+                float variable2 = answerList.get(1);
+
+                float perIncResult = (variable1 / variable2) * 100;
+                Log.v("Function Name: ", perIncResult + "  Total Percentage Increase");
+                return perIncResult;
+            } else {
+                Log.v("Function Name: ", "Insufficient data for MISS_PER_INC");
+                return 0.0f;
+            }
+        }
+
+        if (functionName.equalsIgnoreCase("MISS_GAP_PER")) {
+            if (answerList.size() >= 2) {
+                float variable1 = answerList.get(0);
+                float variable2 = answerList.get(1);
+
+                float gapPerResult = ((variable1 - variable2) / variable1) * 100;
+                Log.v("Function Name: ", gapPerResult + "  Total Gap Percentage");
+                return gapPerResult;
+            } else {
+                Log.v("Function Name: ", "Insufficient data for MISS_GAP_PER");
+                return 0.0f;
+            }
+        }
+
+
+        if (functionName.equalsIgnoreCase("MISS_INTDEC")) {
+
+
+            try {
+                FunctionProcessor functionProcessor = new FunctionProcessor();
+                String val = functionProcessor.processMISSFunction(calculationLogic, answerList);
+                return Float.valueOf(val);
+            }catch (Exception e){
+                Log.v("Function Name: ", e.getMessage()+"  "+e.getCause());
             }
         }
 
