@@ -304,7 +304,7 @@ public class FormStructureFragment extends Fragment {
         builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             public void onClick(DialogInterface dialog, int which) {
-                createLayoutFromJson();
+                new ProcessSurveyTask().execute();
                 InstanceStatus instanceStatus = new InstanceStatus();
                 instanceStatus.setInstance_id(instanceId);
                 instanceStatus.setIsSubmitted(1);
@@ -475,8 +475,13 @@ public class FormStructureFragment extends Fragment {
 
                         if (view instanceof CheckBox) {
                             if (((CheckBox) view).isChecked()) {
+                                
+                                Log.v("LineNos479", "Found Checked");
+                                
                                 preQid = String.valueOf(view.getTag());
                                 checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+
+                                Log.v("LineNos479", checkBoxData);
                             }
 
                             if (j != binding.layout.getChildCount() - 1) {
@@ -485,6 +490,8 @@ public class FormStructureFragment extends Fragment {
                         }
 
                         if (!checkBoxData.isEmpty()) {
+
+                            Log.v("LineNos479", "Added Data   "+checkBoxData);
                             surveyDataList.add(createSurveyData(preQid, checkBoxData));
                             checkBoxData = "";
                             preQid = "";
@@ -533,10 +540,17 @@ public class FormStructureFragment extends Fragment {
                     }
                 }
 
+                if (!checkBoxData.isEmpty()) {
+                    Log.v("LineNos479", "Added Data at end: " + checkBoxData);
+                    surveyDataList.add(createSurveyData(preQid, checkBoxData));
+                    checkBoxData = "";
+                    preQid = "";
+                }
                 // Perform the bulk insert/update operation in the background
                 addInDb(surveyDataList);
 
             } catch (Exception e) {
+                Log.v("LineNos547", e.getMessage());
                 return e.getMessage(); // Return the error message to onPostExecute
             }
             return null; // No error, return null
@@ -552,6 +566,12 @@ public class FormStructureFragment extends Fragment {
                 // If there's an error, show it as a Toast message
                 Toast.makeText(getContext(), result, Toast.LENGTH_SHORT).show();
             } else {
+
+                if (binding.nextButton.getText().toString().equalsIgnoreCase("SAVE AND SUBMIT")) {
+                    startActivity(new Intent(getContext(), MainActivity.class));
+                    getActivity().finish();
+                }
+
                 // Proceed to the next page or handle UI updates as needed
                 if (currentPageIndex < list.size() - 1) {
                     currentPageIndex++;
@@ -1633,8 +1653,8 @@ public class FormStructureFragment extends Fragment {
                     child.setVisibility(VISIBLE);
                 } else {
                     child.setVisibility(View.GONE);
-                    resetViews(child);
 
+                    resetViews(child);
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -1642,6 +1662,8 @@ public class FormStructureFragment extends Fragment {
                             surveyDao.deletebyFormQuestionId(childId, instanceId, formId);
                         }
                     }).start();
+
+
 
                     try {
                         // Handle branching logic

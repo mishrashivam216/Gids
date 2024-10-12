@@ -403,13 +403,19 @@ public class FormStructureFragmentReview extends Fragment {
                                 }
                             }
                         }
-
-
-                        // Perform the bulk insert/update operation
-                        addInDb(surveyDataList);
                     }
 
                 }
+
+                if (!checkBoxData.isEmpty()) {
+                    Log.v("LineNos479", "Added Data at end: " + checkBoxData);
+                    surveyDataList.add(createSurveyData(preQid, checkBoxData));
+                    checkBoxData = "";
+                    preQid = "";
+                }
+
+                // Perform the bulk insert/update operation
+                addInDb(surveyDataList);
 
             } catch (Exception e) {
                 Log.v("FormStructureFragment", e.getMessage());
@@ -455,7 +461,7 @@ public class FormStructureFragmentReview extends Fragment {
         builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             public void onClick(DialogInterface dialog, int which) {
-                createLayoutFromJson();
+                new ProcessSurveyTask().execute();
                 InstanceStatus instanceStatus = new InstanceStatus();
 
                 instanceStatus.setIsSubmitted(1);
