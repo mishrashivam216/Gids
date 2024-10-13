@@ -18,8 +18,8 @@ public interface SurveyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdateList(List<SurveyData> surveyData);
 
-    @Query("SELECT * FROM survey_data WHERE id IN (SELECT MIN(id) FROM survey_data WHERE form_id = :formId AND source = 1 GROUP BY instance_id) ORDER BY ID DESC")
-    List<SurveyData> getUniqueInstanceIdsByFormId(String formId);
+    @Query("SELECT * FROM survey_data WHERE id IN (SELECT MIN(id) FROM survey_data WHERE form_id = :formId AND source = 1 AND user_id = :user_id GROUP BY instance_id) ORDER BY ID DESC")
+    List<SurveyData> getUniqueInstanceIdsByFormId(String formId, String user_id);
 
     @Query("SELECT * FROM survey_data WHERE form_id = :formId and record_id = :uuid")
     SurveyData getInstanceID(String formId, String uuid);

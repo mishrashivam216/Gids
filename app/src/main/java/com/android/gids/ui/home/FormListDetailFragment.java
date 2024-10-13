@@ -188,7 +188,7 @@ public class FormListDetailFragment extends Fragment {
 
     public int getPendingNo() {
         SurveyDao surveyDao = myDatabase.surveyDao();
-        List<SurveyData> list = surveyDao.getUniqueInstanceIdsByFormId(id);
+        List<SurveyData> list = surveyDao.getUniqueInstanceIdsByFormId(id, uid);
         Log.v("getAllPendingRecord", list.size() + "   ");
         return list.size();
     }

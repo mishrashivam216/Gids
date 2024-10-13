@@ -216,6 +216,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             }
         }
         formRequest.setRecord_id(uuid);
+        formRequest.setApp_version(Utils.getVersionName(mContext));
         formRequest.setForm_id(list.get(0).getForm_id());
         formRequest.setUser_id(list.get(0).getUser_id());
         formRequest.setLatitude(list.get(0).getLat());

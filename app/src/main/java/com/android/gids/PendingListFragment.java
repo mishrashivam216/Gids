@@ -78,7 +78,7 @@ public class PendingListFragment extends Fragment implements OnClickFormListItem
         name.setText(form_name);
 
         SurveyDao surveyDao = myDatabase.surveyDao();
-        List<SurveyData> list = surveyDao.getUniqueInstanceIdsByFormId(formId);
+        List<SurveyData> list = surveyDao.getUniqueInstanceIdsByFormId(formId, userId);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         rvForm.setLayoutManager(linearLayoutManager);

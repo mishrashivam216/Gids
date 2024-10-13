@@ -8,6 +8,8 @@ public class FormRequest {
     private String form_id;
     private String user_id;
 
+    private String app_version;
+
     private String latitude;
     private String longtitute;
     private String created_at;
@@ -69,5 +71,13 @@ public class FormRequest {
 
     public void setForm_data(List<FormData> form_data) {
         this.form_data = form_data;
+    }
+
+    public String getApp_version() {
+        return app_version;
+    }
+
+    public void setApp_version(String app_version) {
+        this.app_version = app_version;
     }
 }
