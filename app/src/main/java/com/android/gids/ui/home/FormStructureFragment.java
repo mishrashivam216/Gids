@@ -1654,14 +1654,17 @@ public class FormStructureFragment extends Fragment {
                 } else {
                     child.setVisibility(View.GONE);
 
-                    resetViews(child);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            SurveyDao surveyDao = myDatabase.surveyDao();
-                            surveyDao.deletebyFormQuestionId(childId, instanceId, formId);
-                        }
-                    }).start();
+                    if(checkEdtableViews(child)) {
+
+                        resetViews(child);
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                SurveyDao surveyDao = myDatabase.surveyDao();
+                                surveyDao.deletebyFormQuestionId(childId, instanceId, formId);
+                            }
+                        }).start();
+                    }
 
 
 
@@ -1709,6 +1712,24 @@ public class FormStructureFragment extends Fragment {
         if (child instanceof CheckBox) {
             ((CheckBox) child).setChecked(false);
         }
+
+    }
+
+    private boolean checkEdtableViews(View child) {
+        if (child instanceof RadioGroup) {
+            return ((RadioGroup)child).isEnabled();
+        }
+        if (child instanceof Spinner) {
+           return  ((Spinner) child).isEnabled();
+        }
+        if (child instanceof EditText) {
+            return ((EditText) child).isEnabled();
+        }
+        if (child instanceof CheckBox) {
+            return ((CheckBox) child).isEnabled();
+        }
+
+        return true;
 
     }
 

@@ -130,6 +130,16 @@ public class Utils {
         elementImage.setLayoutParams(layoutParams);
     }
 
+    public static void setIMAGELayoutStructure(ImageView elementImage, Context context) {
+        elementImage.setScaleType(ImageView.ScaleType.FIT_XY);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, // Width: match_parent
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 350, context.getResources().getDisplayMetrics()) // Height: 200dp
+        );
+
+        elementImage.setLayoutParams(layoutParams);
+    }
+
     public static void setLoadedLayoutStructure(ImageView elementImage, Context context) {
         elementImage.setScaleType(ImageView.ScaleType.FIT_XY);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(

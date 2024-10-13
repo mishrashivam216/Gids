@@ -71,6 +71,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.android.gids.AddMoreList;
+import com.android.gids.Api;
 import com.android.gids.CustomSpinnerAdapter;
 import com.android.gids.ElementChoice;
 import com.android.gids.FormStructureModal;
@@ -95,6 +96,9 @@ import com.android.gids.Utils;
 import com.android.gids.databinding.FormStructureReviewBinding;
 import com.android.gids.ui.home.BranchinglogicModal;
 import com.android.gids.ui.home.FormStructureFragment;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.ObjectKey;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.gson.Gson;
 
@@ -280,7 +284,6 @@ public class FormStructureFragmentReview extends Fragment {
                         }
 
                     }
-
 
 
                 }
@@ -838,8 +841,17 @@ public class FormStructureFragmentReview extends Fragment {
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("image")) {
                         View v = createImageElement(FormStructureModalReview);
                         binding.layout.addView(v);
+
+                        View elElement = createLabelEditElement(FormStructureModalReview, v);
+                        if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                            binding.layout.addView(elElement);
+                        }
+
+
                         Button button = createButtonForImage(FormStructureModalReview);
                         binding.layout.addView(button);
+
+
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("label")) {
                         View v = createLabelTextView(FormStructureModalReview);
                         binding.layout.addView(v);
@@ -970,14 +982,28 @@ public class FormStructureFragmentReview extends Fragment {
         if (b != null) {
 
             Bitmap bit = Utils.convertFileToBitmap(b);
-            if (bit != null) {
+            if (bit != null && pData != null && !pData.equalsIgnoreCase("")) {
                 Utils.setLoadedLayoutStructure(elementImage, getContext());
                 elementImage.setImageBitmap(bit);
-            } else {
-                Utils.setDummyLayoutStructure(elementImage, getContext());
 
-                elementImage.setImageDrawable(getContext().getDrawable(R.mipmap.image));
-                Log.e("ImageHandler", "Failed to load image.");
+            } else if (formStructureModal.getAnswers() != null && !formStructureModal.getAnswers().equalsIgnoreCase("")) {
+                Utils.setIMAGELayoutStructure(elementImage, getContext());
+                String imgUri = "";
+
+                if (formStructureModal.getAnswers().contains("jpg") || formStructureModal.getAnswers().contains("png")) {
+                    imgUri = Api.PICTURE_BASE_URL + formStructureModal.getAnswers();
+                } else {
+                    imgUri = Api.PICTURE_BASE_URL + formStructureModal.getAnswers() + ".jpg";
+                }
+
+                Glide.with(getContext())
+                        .load(imgUri)
+                        .signature(new ObjectKey(System.currentTimeMillis()))  // Unique key to bust the cache
+                        .error(getContext().getDrawable(R.mipmap.image))
+                        .placeholder(getContext().getDrawable(R.mipmap.image))
+                        .into(elementImage);
+
+
             }
         } else {
             Utils.setDummyLayoutStructure(elementImage, getContext());
@@ -1028,12 +1054,11 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK ) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             if (photoFile != null) {
                 Bitmap bitmap = Utils.correctImageOrientation(photoFile);
                 elementImage.setImageBitmap(bitmap); // Display the high-resolution image
@@ -1095,7 +1120,6 @@ public class FormStructureFragmentReview extends Fragment {
             }
         }
     }
-
 
 
     public void showImagePickerDialog(final Fragment fragment) {
@@ -2138,13 +2162,16 @@ public class FormStructureFragmentReview extends Fragment {
                     child.setVisibility(View.GONE);
                     //resetViews(child);
 
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            SurveyDao surveyDao = myDatabase.surveyDao();
-                            surveyDao.deletebyFormQuestionIdReview(childId, recid, formId);
-                        }
-                    }).start();
+
+                    if (checkEdtableViews(child)) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                SurveyDao surveyDao = myDatabase.surveyDao();
+                                surveyDao.deletebyFormQuestionIdReview(childId, recid, formId);
+                            }
+                        }).start();
+                    }
 
                     try {
                         // Handle branching logic
@@ -2174,6 +2201,25 @@ public class FormStructureFragmentReview extends Fragment {
                 }
             }
         }
+    }
+
+
+    private boolean checkEdtableViews(View child) {
+        if (child instanceof RadioGroup) {
+            return ((RadioGroup) child).isEnabled();
+        }
+        if (child instanceof Spinner) {
+            return ((Spinner) child).isEnabled();
+        }
+        if (child instanceof EditText) {
+            return ((EditText) child).isEnabled();
+        }
+        if (child instanceof CheckBox) {
+            return ((CheckBox) child).isEnabled();
+        }
+
+        return true;
+
     }
 
 
@@ -3023,7 +3069,7 @@ public class FormStructureFragmentReview extends Fragment {
         return 0;
     }
 
-    private  ArrayList<Float> getAnswerList(String calculationLogic){
+    private ArrayList<Float> getAnswerList(String calculationLogic) {
         String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
 
         String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
@@ -3051,7 +3097,6 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private float calculateLogic(String calculationLogic) {
 
@@ -3062,7 +3107,6 @@ public class FormStructureFragmentReview extends Fragment {
         String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
 
         String[] parameters = parametersString.split(",");
-
 
 
         if (functionName.equalsIgnoreCase("MISS_SUM")) {
@@ -3166,8 +3210,8 @@ public class FormStructureFragmentReview extends Fragment {
                 FunctionProcessor functionProcessor = new FunctionProcessor();
                 String val = functionProcessor.processMISSFunction(calculationLogic, answerList);
                 return Float.valueOf(val);
-            }catch (Exception e){
-                Log.v("Function Name: ", e.getMessage()+"  "+e.getCause());
+            } catch (Exception e) {
+                Log.v("Function Name: ", e.getMessage() + "  " + e.getCause());
             }
         }
 

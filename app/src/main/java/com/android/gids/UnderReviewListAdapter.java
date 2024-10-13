@@ -2,22 +2,33 @@ package com.android.gids;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static com.android.gids.Utils.getRawJSONFromDB;
+import static com.android.gids.Utils.getRawJSONFromDBForReview;
+
+import static java.security.AccessController.getContext;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.gids.ReviewModal.DataListModalReview;
 import com.android.gids.ReviewModal.FormListModalReview;
+import com.android.gids.ReviewModal.FormStructureModalReview;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -28,7 +39,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -51,6 +68,11 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
 
     String uuid;
 
+    FormListModalReview data ;
+
+    String json_data ;
+
+
 
     public UnderReviewListAdapter(Context mContext, OnClickFormListItem onClickFormListItem, List<SurveyRecord> list, onSyncStarted onSyncStarted) {
         this.onClickFormListItem = onClickFormListItem;
@@ -58,6 +80,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         this.mContext = mContext;
         this.onSyncStarted = onSyncStarted;
         myDatabase = SurveyRoomDatabase.getInstance(mContext);
+
     }
 
 
@@ -74,11 +97,11 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
 
 
         try {
-            String json_data = Utils.getRawJSONFromDBForReview(mContext, list.get(position).getRecordId());
+             json_data = getRawJSONFromDBForReview(mContext, list.get(position).getRecordId());
             Log.v("FormStructureFragment:", "JSON String Recieved: " + json_data);
             Log.v("FormId:", "JFormId: " + list.get(position).getFormId());
             Gson gson = new Gson();
-            FormListModalReview data = gson.fromJson(json_data.toString(), FormListModalReview.class);
+             data = gson.fromJson(json_data.toString(), FormListModalReview.class);
             uuid = data.getGIDS_SURVEY_APP().getDataList().get(0).getUuid();
 
             instanceStatusDao = myDatabase.instanceStatusDao();
@@ -112,6 +135,14 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             @Override
             public void onClick(View view) {
                 try {
+
+                    Log.d("UploadFile", " sync Started");
+                    try {
+                        upLoadDataInBackground(list.get(position).getFormId(), list.get(position).getRecordId(), uuid);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+
                     SurveyDao s = myDatabase.surveyDao();
                     SurveyData surveyData = s.getInstanceID(list.get(position).getFormId(), list.get(position).getRecordId());
                     if (surveyData != null && surveyData.getRecord_id() != null && !surveyData.getRecord_id().isEmpty()) {
@@ -130,8 +161,6 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         holder.recId.setText("RecId: " + list.get(position).getRecordId());
         holder.created_at.setText("Created At " + list.get(position).getCreatedAt());
         holder.modified_at.setText("Modified At " + list.get(position).getUpdatedAt());
-
-
     }
 
     @Override
@@ -146,6 +175,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
 
         Button btnSync;
         TextView recId;
+
 
 
         public MyView(View view) {
@@ -284,6 +314,101 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
 
         }
     }
+
+
+    private void upLoadDataInBackground(String formId, String recId, String uuid) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void run() {
+                upLoadData(formId, recId, uuid); // Your existing upload logic
+            }
+        });
+
+        // Shutdown the executor after task completion
+        executor.shutdown();
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void upLoadData(String formId, String  recId, String uuid) {
+
+        SurveyDao surveyDao = myDatabase.surveyDao();
+        List<SurveyData> list = surveyDao.getToSyncByFormRecordId(formId, recId);
+
+        Log.d("UploadFile", list.size()+" data not Found");
+
+        for (int i = 0; i < list.size(); i++) {
+
+            String qid = list.get(i).getQuestion_id();
+
+
+            String type = getInstanceOfQuestionByQid(qid, formId);
+
+            Log.d("UploadFile", type+" Type Found");
+
+
+            if (type.equalsIgnoreCase("image")) {
+
+                Log.d("UploadFile", type+" Image Type Found");
+
+                File savedFile = Utils.getSavedImageFile(mContext, Utils.generateFileName(uuid));
+
+                if (savedFile != null && savedFile.exists()) {
+
+                    uploadFile(savedFile, uuid);
+
+                }else {
+
+                    Log.d("UploadFile",  Utils.generateFileName(uuid)+" Image Type Not Found");
+                }
+            }else{
+                Log.d("UploadFile", type+" Image Type Not Found");
+            }
+        }
+    }
+
+    public void uploadFile(File file, String uuid) {
+        ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName()+".jpg", requestFile);
+        RequestBody recordIdBody = RequestBody.create(MediaType.parse("text/plain"), uuid);
+        Call<Void> call = methods.uploadFile(body, recordIdBody);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Log.d("FileUploader", "Upload successful!");
+                } else {
+                    Log.e("FileUploader", "Upload failed with status code: " + response.code());
+                }
+            }
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("FileUploader", "Upload failed: " + t.getMessage());
+            }
+        });
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public  String getInstanceOfQuestionByQid(String qid, String formId) {
+
+        try {
+            List<DataListModalReview> formStructureModals = data.getGIDS_SURVEY_APP().getDataList().stream().filter(e -> e.getId().equalsIgnoreCase(formId)).collect(Collectors.toList());
+            List<FormStructureModalReview> formStructureModal = formStructureModals.get(0).getFormStructure().stream().filter(e -> e.getId().equalsIgnoreCase(qid)).collect(Collectors.toList());
+            return formStructureModal.get(0).getElement_type();
+        }
+        catch (Exception e){
+            return e.getMessage();
+        }
+
+
+    }
+
+
+
 
 
 }

@@ -12,7 +12,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class Api {
     private static Retrofit retrofit;
 //    public static final String BASE_URL = "https://misoftwaresolutions.com/gids_stg/api/";
+//    public static final String PICTURE_BASE_URL = "https://misoftwaresolutions.com/gids_stg/uploads/form-image/";
     public static final String BASE_URL = "https://misoftwaresolutions.com/gids/api/";
+    public static final String PICTURE_BASE_URL = "https://misoftwaresolutions.com/gids/uploads/form-image/";
+
 
 
     public static Retrofit getRetrofitInstance() {
