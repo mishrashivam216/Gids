@@ -8,6 +8,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -16,6 +17,8 @@ public class LocationService {
 
     private static double latitude;
     private static double longitude;
+
+    private static int isMockocation = 0;
     private static boolean isLocationAvailable = false;
 
     private static LocationManager locationManager;
@@ -29,6 +32,8 @@ public class LocationService {
                 @Override
                 public void onLocationChanged(Location location) {
                     if (location != null) {
+
+                        isLocationFromMockProvider(location);
                         latitude = location.getLatitude();
                         longitude = location.getLongitude();
                         if (latitude != 0.0 && longitude != 0.0) {
@@ -70,6 +75,28 @@ public class LocationService {
             return "0.0";
         }
     }
+
+    public static boolean isLocationFromMockProvider(Location location) {
+        if (location == null) return false;
+        boolean isMock = location.isFromMockProvider();
+        if (isMock) {
+            isMockocation = 1;
+            Log.d("MockCheck", "Location is from a mock provider.");
+        }else{
+            isMockocation = 0;
+        }
+        return isMock;
+    }
+
+
+    public static int getMockLocationStatus() {
+        try {
+            return isMockocation ;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
 
     public static String getLong() {
         try {

@@ -10,12 +10,15 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.location.Location;
 import android.location.LocationManager;
 import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.widget.ImageView;
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -234,6 +238,14 @@ public class Utils {
         return uuid;
     }
 
+    public static String getDeviceId(Context c){
+        String androidId = Settings.Secure.getString(
+                c.getContentResolver(), Settings.Secure.ANDROID_ID);
+        Log.d("DeviceID", "Android ID: " + androidId);
+        Log.d("DeviceID", "IMEI: " + androidId);
+        return androidId;
+    }
+
 
     public static boolean isLocationEnabled(Context context) {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -339,5 +351,47 @@ public class Utils {
         void onLogoutConfirmed();
     }
 
+
+    public static boolean  isMockLocationEnabled(Context c){
+        boolean isMockLocationEnabled = Settings.Secure.getString(
+                c.getContentResolver(), "mock_location") != null;
+
+        if (isMockLocationEnabled) {
+            Log.d("MockCheck", "Mock locations are enabled.");
+        }
+
+        return  isMockLocationEnabled;
+    }
+
+
+    public static List<String> getMockLocationApps(Context c) {
+        List<String> mockApps = new ArrayList<>();
+        PackageManager pm = c.getPackageManager();
+
+        List<PackageInfo> installedPackages = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
+        for (PackageInfo pkg : installedPackages) {
+            String[] requestedPermissions = pkg.requestedPermissions;
+            if (requestedPermissions != null) {
+                for (String permission : requestedPermissions) {
+                    if (permission.equals("android.permission.ACCESS_MOCK_LOCATION")) {
+                        mockApps.add(pkg.packageName);  // Potential spoofing app found
+                        break;
+                    }
+                }
+            }
+        }
+        return mockApps;
+    }
+
+
+
+    public static boolean hasMockPermission(String[] permissions) {
+        for (String permission : permissions) {
+            if (permission.equals("android.permission.ACCESS_MOCK_LOCATION")) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

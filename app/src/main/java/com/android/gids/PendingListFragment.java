@@ -1,5 +1,8 @@
 package com.android.gids;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -54,6 +57,9 @@ public class PendingListFragment extends Fragment implements OnClickFormListItem
 
     LoadingAnimation loadingAnim;
 
+    SharedPreferences sharedPreferences;
+
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -77,8 +83,13 @@ public class PendingListFragment extends Fragment implements OnClickFormListItem
         form_name = (String) getArguments().get("form_name");
         name.setText(form_name);
 
+        sharedPreferences = getContext().getSharedPreferences("MySharedPref", MODE_PRIVATE);
+        userId = sharedPreferences.getString("id", "");
+
         SurveyDao surveyDao = myDatabase.surveyDao();
         List<SurveyData> list = surveyDao.getUniqueInstanceIdsByFormId(formId, userId);
+
+        Log.v("fewewfrewew", list.size()+""+formId+"   "+userId);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         rvForm.setLayoutManager(linearLayoutManager);

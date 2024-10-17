@@ -2914,8 +2914,9 @@ public class FormStructureFragment extends Fragment {
             for (int j = 0; j < binding.layout.getChildCount(); j++) {
                 View view = binding.layout.getChildAt(j);
 
-                if (String.valueOf(view.getId()).equalsIgnoreCase(qid) || String.valueOf(view.getTag()).equalsIgnoreCase(qid)) {
+                if (String.valueOf(view.getId()).equalsIgnoreCase(qid)) {
                     Log.v("MyDebuggingData", qid + "=" + view.getId() + " found");
+                    Log.v("MyDebuggingData", qid + "=" + String.valueOf(view.getTag()) + " found");
 
                     if (view instanceof LinearLayout) {
                         LinearLayout linearLayout = (LinearLayout) view;

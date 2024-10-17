@@ -3,7 +3,9 @@ package com.android.gids;
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,12 +16,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.loadinganimation.LoadingAnimation;
 import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -109,7 +115,25 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void doLogin() {
+        String mock_app_package = "";
+
+        LocationService.requestLocation(LoginActivity.this);
+
+        List<String> mockApps = Utils.getMockLocationApps(LoginActivity.this);
+        if (!mockApps.isEmpty()) {
+            Log.d("MockCheck", "Mock Location Apps: " + mockApps.toString());
+            mock_app_package = mockApps.toString();
+        } else {
+            Log.d("MockCheck", "No mock location apps found.");
+            mock_app_package = "";
+        }
+
+        int isLocationFromMockApps = LocationService.getMockLocationStatus();
+
+        Log.v("MockCheck", isLocationFromMockApps+"");
+        Log.v("deviceId", Utils.getDeviceId(LoginActivity.this));
         Log.v("Lat&Long", LocationService.getLat()+"  -  "+LocationService.getLong());
         LoginParam loginParam = new LoginParam();
         loginParam.setUsername(etEmail.getText().toString());
@@ -117,6 +141,11 @@ public class LoginActivity extends AppCompatActivity {
         loginParam.setApp_version(Utils.getVersionName(this));
         loginParam.setLatitude(LocationService.getLat());
         loginParam.setLongtitude(LocationService.getLong());
+
+        loginParam.setDevice_id(Utils.getDeviceId(this));
+        loginParam.setIs_location_from_mock_apps(isLocationFromMockApps+"");
+        loginParam.setMock_app_package(mock_app_package);
+
         ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
         Call<LoginModal> call = methods.doLogin(loginParam);
         call.enqueue(new Callback<LoginModal>() {

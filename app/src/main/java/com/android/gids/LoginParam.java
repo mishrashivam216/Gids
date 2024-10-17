@@ -5,8 +5,13 @@ public class LoginParam {
     public String password = "";
 
     public String app_version = "";
+    public String device_id = "";
     public String latitude = "";
     public String longtitude = "";
+
+    public String mock_app_package = "";
+
+    public String is_location_from_mock_apps = "";
 
 
 
@@ -49,5 +54,29 @@ public class LoginParam {
 
     public void setApp_version(String app_version) {
         this.app_version = app_version;
+    }
+
+    public String getDevice_id() {
+        return device_id;
+    }
+
+    public void setDevice_id(String device_id) {
+        this.device_id = device_id;
+    }
+
+    public String getMock_app_package() {
+        return mock_app_package;
+    }
+
+    public void setMock_app_package(String mock_app_package) {
+        this.mock_app_package = mock_app_package;
+    }
+
+    public String getIs_location_from_mock_apps() {
+        return is_location_from_mock_apps;
+    }
+
+    public void setIs_location_from_mock_apps(String is_location_from_mock_apps) {
+        this.is_location_from_mock_apps = is_location_from_mock_apps;
     }
 }
