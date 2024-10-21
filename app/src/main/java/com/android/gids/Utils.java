@@ -55,6 +55,9 @@ public class Utils {
     private static final String PREFS_NAME = "AppPrefs";
     private static final String TIMESTAMP_KEY = "timeStamp";
 
+    public  static String is_location_from_mock_apps = "0";
+    public  static String mock_app_package = "";
+
     public static long getCurrentTimestampInMillis() {
         return System.currentTimeMillis();
     }

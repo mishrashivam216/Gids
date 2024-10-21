@@ -14,6 +14,9 @@ public class FormRequest {
     private String longtitute;
     private String created_at;
 
+    private String is_location_from_mock_apps;
+    private String mock_app_package;
+
     private List<FormData> form_data;
 
 
@@ -79,5 +82,21 @@ public class FormRequest {
 
     public void setApp_version(String app_version) {
         this.app_version = app_version;
+    }
+
+    public String getIs_location_from_mock_apps() {
+        return is_location_from_mock_apps;
+    }
+
+    public void setIs_location_from_mock_apps(String is_location_from_mock_apps) {
+        this.is_location_from_mock_apps = is_location_from_mock_apps;
+    }
+
+    public String getMock_app_package() {
+        return mock_app_package;
+    }
+
+    public void setMock_app_package(String mock_app_package) {
+        this.mock_app_package = mock_app_package;
     }
 }

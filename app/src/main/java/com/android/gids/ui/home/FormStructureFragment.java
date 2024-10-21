@@ -79,6 +79,7 @@ import com.android.gids.InstanceStatus;
 import com.android.gids.InstanceStatusDao;
 import com.android.gids.Item;
 import com.android.gids.LocationService;
+import com.android.gids.LoginActivity;
 import com.android.gids.MainActivity;
 import com.android.gids.MapDependencyField;
 import com.android.gids.MapDependencyFieldDao;
@@ -120,6 +121,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class FormStructureFragment extends Fragment {
+
+
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     boolean fromAdd = false;
     FragmentFormStructureBinding binding;
@@ -236,6 +240,11 @@ public class FormStructureFragment extends Fragment {
                 public void onClick(View view) {
                     // Check if fields are validated before executing AsyncTask
                     if (validateEmpty()) {
+                        try {
+                            updateMockLocationStatus();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                         // Execute the AsyncTask for processing the form
                         new ProcessSurveyTask().execute();
                     } else {
@@ -294,6 +303,25 @@ public class FormStructureFragment extends Fragment {
 
 
         return root;
+    }
+
+
+    private void updateMockLocationStatus() {
+
+        executor.execute(() -> {
+            // This code runs on a background thread
+            LocationService.requestLocation(getContext());
+            List<String> mockApps = Utils.getMockLocationApps(getContext());
+
+            if (!mockApps.isEmpty()) {
+                Log.d("MockCheck", "Mock Location Apps: " + mockApps.toString());
+                Utils.mock_app_package = mockApps.toString();
+            }
+
+            if (Utils.is_location_from_mock_apps.equalsIgnoreCase("0")) {
+                Utils.is_location_from_mock_apps = String.valueOf(LocationService.getMockLocationStatus());
+            }
+        });
     }
 
 
@@ -475,9 +503,9 @@ public class FormStructureFragment extends Fragment {
 
                         if (view instanceof CheckBox) {
                             if (((CheckBox) view).isChecked()) {
-                                
+
                                 Log.v("LineNos479", "Found Checked");
-                                
+
                                 preQid = String.valueOf(view.getTag());
                                 checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
 
@@ -491,7 +519,7 @@ public class FormStructureFragment extends Fragment {
 
                         if (!checkBoxData.isEmpty()) {
 
-                            Log.v("LineNos479", "Added Data   "+checkBoxData);
+                            Log.v("LineNos479", "Added Data   " + checkBoxData);
                             surveyDataList.add(createSurveyData(preQid, checkBoxData));
                             checkBoxData = "";
                             preQid = "";
@@ -1654,7 +1682,7 @@ public class FormStructureFragment extends Fragment {
                 } else {
                     child.setVisibility(View.GONE);
 
-                    if(checkEdtableViews(child)) {
+                    if (checkEdtableViews(child)) {
 
                         resetViews(child);
                         new Thread(new Runnable() {
@@ -1665,7 +1693,6 @@ public class FormStructureFragment extends Fragment {
                             }
                         }).start();
                     }
-
 
 
                     try {
@@ -1717,10 +1744,10 @@ public class FormStructureFragment extends Fragment {
 
     private boolean checkEdtableViews(View child) {
         if (child instanceof RadioGroup) {
-            return ((RadioGroup)child).isEnabled();
+            return ((RadioGroup) child).isEnabled();
         }
         if (child instanceof Spinner) {
-           return  ((Spinner) child).isEnabled();
+            return ((Spinner) child).isEnabled();
         }
         if (child instanceof EditText) {
             return ((EditText) child).isEnabled();
@@ -2624,7 +2651,7 @@ public class FormStructureFragment extends Fragment {
         return 0;
     }
 
-    private  ArrayList<Float> getAnswerList(String calculationLogic){
+    private ArrayList<Float> getAnswerList(String calculationLogic) {
         String functionName = calculationLogic.substring(1, calculationLogic.indexOf('('));
 
         String parametersString = calculationLogic.substring(calculationLogic.indexOf('(') + 1, calculationLogic.indexOf(')'));
@@ -2766,7 +2793,7 @@ public class FormStructureFragment extends Fragment {
                 FunctionProcessor functionProcessor = new FunctionProcessor();
 
                 String chaildCalculationLogic = extractInnerFunctions(calculationLogic);
-                ArrayList<Float> ansList =  getAnswerList(chaildCalculationLogic);
+                ArrayList<Float> ansList = getAnswerList(chaildCalculationLogic);
                 String val = functionProcessor.processMISSFunction(calculationLogic, ansList);
                 return Float.valueOf(val);
             } catch (Exception e) {
@@ -2777,7 +2804,7 @@ public class FormStructureFragment extends Fragment {
         return 0;
     }
 
-    public  String extractInnerFunctions(String expression) {
+    public String extractInnerFunctions(String expression) {
         // Find the first opening parenthesis '(' after the outer function
         int firstOpeningParenIndex = expression.indexOf('(');
         // Find the last closing parenthesis ')'
@@ -2797,7 +2824,6 @@ public class FormStructureFragment extends Fragment {
 
         return "";
     }
-
 
 
     private String getExpressionFromInput() {

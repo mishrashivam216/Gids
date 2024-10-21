@@ -223,6 +223,9 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         formRequest.setLongtitute(list.get(0).getLogitude());
         formRequest.setCreated_at(list.get(0).getCreate_date_time());
 
+        formRequest.setMock_app_package(Utils.mock_app_package);
+        formRequest.setIs_location_from_mock_apps(Utils.is_location_from_mock_apps);
+
         formRequest.setForm_data(formDataList);
         Log.v("FormRequestJSON Size", formDataList.size() + "");
         Log.v("dsdsfdsf", uuid);
