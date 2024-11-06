@@ -163,6 +163,13 @@ public class HomeFragment extends Fragment implements OnClickFormListItem {
         } catch (Exception e) {
             Toast.makeText(getContext(), e.getMessage() + " " + e.getCause(), Toast.LENGTH_SHORT).show();
         }
+
+
+        try {
+            LocationService.requestLocation(getContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return root;
     }
 

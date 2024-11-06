@@ -55,4 +55,14 @@ public class SplashActivity extends AppCompatActivity {
 
         return false;
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            LocationService.requestLocation(SplashActivity.this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
