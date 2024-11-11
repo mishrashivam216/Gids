@@ -219,6 +219,10 @@ public class FormStructureFragmentReview extends Fragment {
             Log.v("FormStructureFragment:", FormStructureModalReviewList.size() + " Size");
 
 
+            List<FormStructureModalReview> FormStructureModalReviewListt =  FormStructureModalReviewList.stream().filter(e -> !e.getAnswers().equalsIgnoreCase("")).collect(Collectors.toList());
+
+            Log.v("dfsgsdggg:", FormStructureModalReviewListt.size() + " Size");
+
             prepareData();
 
             binding.tvProjectName.setText(data.getGIDS_SURVEY_APP().getDataList().get(index).getName() + "\nRecord Id: " + recid);
@@ -587,32 +591,34 @@ public class FormStructureFragmentReview extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 
-//                binding.loadingAnim.setVisibility(VISIBLE);
-//                try {
-//                    createLayoutFromJson();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    binding.loadingAnim.setVisibility(View.GONE);
-//                }
-//
-//                if (position != 0) {
-//                    try {
-//                        currentPageIndex = position - 1;
-//                        parseData(currentPageIndex);
-//                        binding.finalSubmitButton.setVisibility(View.GONE);
-//                        binding.nextButton.setText("SAVE AND NEXT");
-//                        if (currentPageIndex == list.size() - 1) {
-//                            binding.finalSubmitButton.setVisibility(VISIBLE);
-//                            binding.nextButton.setText("SAVE AND SUBMIT");
-//                        }
-//                        binding.loadingAnim.setVisibility(View.GONE);
-//                    } catch (Exception e) {
-//                        Log.v("afsdfsd", e.getMessage());
-//                        e.printStackTrace();
-//                        binding.loadingAnim.setVisibility(View.GONE);
-//                    }
-//                }
-//                binding.loadingAnim.setVisibility(View.GONE);
+                binding.loadingAnim.setVisibility(VISIBLE);
+                try {
+                    if (position != 0) {
+                        createLayoutFromJson();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    binding.loadingAnim.setVisibility(View.GONE);
+                }
+
+                if (position != 0) {
+                    try {
+                        currentPageIndex = position - 1;
+                        parseData(currentPageIndex);
+                        binding.finalSubmitButton.setVisibility(View.GONE);
+                        binding.nextButton.setText("SAVE AND NEXT");
+                        if (currentPageIndex == list.size() - 1) {
+                            binding.finalSubmitButton.setVisibility(VISIBLE);
+                            binding.nextButton.setText("SAVE AND SUBMIT");
+                        }
+                        binding.loadingAnim.setVisibility(View.GONE);
+                    } catch (Exception e) {
+                        Log.v("afsdfsd", e.getMessage());
+                        e.printStackTrace();
+                        binding.loadingAnim.setVisibility(View.GONE);
+                    }
+                }
+                binding.loadingAnim.setVisibility(View.GONE);
             }
 
             @Override
@@ -623,30 +629,31 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
 
-//    @RequiresApi(api = Build.VERSION_CODES.O)
-//    private void inserAllQuestionIdToSync() {
-//        ExecutorService executorService = Executors.newSingleThreadExecutor();
-//        executorService.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                List<SurveyData> surveyDataList = new ArrayList<>();
-//                for (int i = 0; i < FormStructureModalReviewList.size(); i++) {
-//                    try {
-//                        if (!FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("section") &&
-//                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("label") &&
-//                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("repeat")) {
-//
-//                            SurveyData surveyData = createSurveyData(String.valueOf(FormStructureModalReviewList.get(i).getId()), FormStructureModalReviewList.get(i).getAnswers());
-//                            surveyDataList.add(surveyData);
-//                        }
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                addAnswerInDb(surveyDataList);
-//            }
-//        });
-//    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void inserAllQuestionIdToSync() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<SurveyData> surveyDataList = new ArrayList<>();
+                int c =0;
+                for (int i = 0; i < FormStructureModalReviewList.size(); i++) {
+                    try {
+                        if (!FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("section") &&
+                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("label") &&
+                                !FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("repeat")) {
+                            Log.v("FormRequestJSON Size", c++ + "");
+                            SurveyData surveyData = createSurveyData(String.valueOf(FormStructureModalReviewList.get(i).getId()), FormStructureModalReviewList.get(i).getAnswers());
+                            surveyDataList.add(surveyData);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                addAnswerInDb(surveyDataList);
+            }
+        });
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void addAnswerInDb(List<SurveyData> surveyDataList) {
@@ -757,6 +764,24 @@ public class FormStructureFragmentReview extends Fragment {
     }
 
     private SurveyData createSurveyData(String questionId, String fieldValue) {
+        SurveyData surveyData = new SurveyData();
+        surveyData.setForm_id(String.valueOf(formId));
+        surveyData.setSection_id(sectionId);
+        surveyData.setUser_id(userId);
+        surveyData.setRecord_id(recid);
+        surveyData.setSource(Utils.FEEDBACK_RECORD);
+        surveyData.setLat(LocationService.getLat());
+        surveyData.setLogitude(LocationService.getLong());
+        surveyData.setSync_status("0");
+        surveyData.setCreate_date_time(Utils.getCurrentDate());
+        surveyData.setField_name("");  // Set field name if necessary
+        surveyData.setQuestion_id(questionId);
+        surveyData.setField_value(fieldValue);
+        return surveyData;
+    }
+
+
+    private SurveyData createSurveyDataWithAnswer(String questionId, String fieldValue) {
         SurveyData surveyData = new SurveyData();
         surveyData.setForm_id(String.valueOf(formId));
         surveyData.setSection_id(sectionId);
@@ -3390,6 +3415,7 @@ public class FormStructureFragmentReview extends Fragment {
             SurveyDao surveyDao = myDatabase.surveyDao();
             SurveyData s = surveyDao.getLastEntryByRecId(formId, recid);
 
+
             if (s != null && s.getQuestion_id() != null) {
 
                 String lastQid = s.getQuestion_id();
@@ -3398,18 +3424,22 @@ public class FormStructureFragmentReview extends Fragment {
                         .filter(i -> list.get(i).stream().anyMatch(form -> form.getId().equals(lastQid)))
                         .findFirst();
                 if (sectionIndex.isPresent()) {
-//                    inserAllQuestionIdToSync();
                     System.out.println("QID found in section index: " + sectionIndex.getAsInt());
                     currentPageIndex = 0;
                     parseData(0);
                 } else {
                     System.out.println("QID found in section index: 0");
+                    currentPageIndex = 0;
                     parseData(0);
                 }
             } else {
+
+                inserAllQuestionIdToSync();
+
                 parseData(0);
             }
         } catch (Exception e) {
+            currentPageIndex = 0;
             parseData(0);
         }
     }

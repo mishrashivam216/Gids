@@ -188,6 +188,7 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void sendData(String formId, String recId, String uuid) {
         onSyncStarted.onSyncStarted();
         SurveyDao surveyDao = myDatabase.surveyDao();
@@ -238,6 +239,12 @@ public class UnderReviewListAdapter extends RecyclerView.Adapter<UnderReviewList
             Log.v("ExceptionData", e.getMessage());
         }
         ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
+
+        long nonBlankFieldValueCount = formDataList.stream()
+                .filter(formData -> formData.getField_value() != null && !formData.getField_value().isEmpty())
+                .count();
+        Log.v("FormRequestJSON Size", nonBlankFieldValueCount + "");
+
         Call<JsonObject> call = methods.sendFormData(formRequest);
         call.enqueue(new Callback<JsonObject>() {
             @Override
