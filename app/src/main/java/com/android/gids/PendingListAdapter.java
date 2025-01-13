@@ -239,7 +239,8 @@ public class PendingListAdapter extends RecyclerView.Adapter<PendingListAdapter.
                 formDataList.add(formData);
             }
         }
-        formRequest.setRecord_id(uuid);
+        formRequest.setUuid(uuid);
+        formRequest.setRecord_id("");
         formRequest.setApp_version(Utils.getVersionName(mContext));
         formRequest.setForm_id(list.get(0).getForm_id());
         formRequest.setUser_id(list.get(0).getUser_id());

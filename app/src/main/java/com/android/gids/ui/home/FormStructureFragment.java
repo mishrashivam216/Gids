@@ -2182,10 +2182,10 @@ public class FormStructureFragment extends Fragment {
             public void onClick(View view) {
                 try {
                     float data = calculateLogic(formStructureModal.getCalculation_logic());
-
-//                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
+                    data = Math.round(data * 100.0f) / 100.0f;  // Rounds to 2 decimal places
                     editText.setText(data + "");
                 } catch (Exception e) {
+                    Log.v("gdfgfd",e.getMessage());
 //                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -2778,6 +2778,8 @@ public class FormStructureFragment extends Fragment {
 
                 float gapPerResult = ((variable1 - variable2) / variable1) * 100;
                 Log.v("Function Name: ", gapPerResult + "  Total Gap Percentage");
+
+
                 return gapPerResult;
             } else {
                 Log.v("Function Name: ", "Insufficient data for MISS_GAP_PER");

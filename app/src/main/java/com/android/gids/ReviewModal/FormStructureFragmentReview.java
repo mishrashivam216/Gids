@@ -219,7 +219,7 @@ public class FormStructureFragmentReview extends Fragment {
             Log.v("FormStructureFragment:", FormStructureModalReviewList.size() + " Size");
 
 
-            List<FormStructureModalReview> FormStructureModalReviewListt =  FormStructureModalReviewList.stream().filter(e -> !e.getAnswers().equalsIgnoreCase("")).collect(Collectors.toList());
+            List<FormStructureModalReview> FormStructureModalReviewListt = FormStructureModalReviewList.stream().filter(e -> !e.getAnswers().equalsIgnoreCase("")).collect(Collectors.toList());
 
             Log.v("dfsgsdggg:", FormStructureModalReviewListt.size() + " Size");
 
@@ -351,7 +351,6 @@ public class FormStructureFragmentReview extends Fragment {
 
                     if (view.getVisibility() == VISIBLE) {
 
-
                         if (view instanceof CheckBox) {
                             if (((CheckBox) view).isChecked()) {
                                 preQid = String.valueOf(view.getTag());
@@ -362,7 +361,11 @@ public class FormStructureFragmentReview extends Fragment {
                             }
                         }
 
+
+
+
                         if (!checkBoxData.isEmpty()) {
+                            Log.v("cdsfdsfdsf", checkBoxData);
                             surveyDataList.add(createSurveyData(preQid, checkBoxData));
                             checkBoxData = "";
                             preQid = "";
@@ -636,7 +639,7 @@ public class FormStructureFragmentReview extends Fragment {
             @Override
             public void run() {
                 List<SurveyData> surveyDataList = new ArrayList<>();
-                int c =0;
+                int c = 0;
                 for (int i = 0; i < FormStructureModalReviewList.size(); i++) {
                     try {
                         if (!FormStructureModalReviewList.get(i).getElement_type().equalsIgnoreCase("section") &&
@@ -936,6 +939,12 @@ public class FormStructureFragmentReview extends Fragment {
                         TextView tv = createLabelCheckbox(FormStructureModalReview);
                         binding.layout.addView(tv);
                         createMultiCheckbox(FormStructureModalReview, -1);
+
+                        View elElement = createLabelEditElement(FormStructureModalReview, tv);
+                        if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                            binding.layout.addView(elElement);
+                        }
+
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("calculated_field")) {
 
                         View etLabel = createLabelEditTextView(FormStructureModalReview);
@@ -943,6 +952,11 @@ public class FormStructureFragmentReview extends Fragment {
 
                         LinearLayout layout = createCalculatedField(FormStructureModalReview);
                         binding.layout.addView(layout);
+
+                        View elElement = createLabelEditElement(FormStructureModalReview, layout);
+                        if (!FormStructureModalReview.getFeedback().isEmpty()) {
+                            binding.layout.addView(elElement);
+                        }
 
                     } else if (FormStructureModalReview.getElement_type().equalsIgnoreCase("repeat")) {
                         //It means before Enter in this  addMoreList  should be filled (it promiss that before Addmore element repeat element will be there)

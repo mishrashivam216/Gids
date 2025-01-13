@@ -5,6 +5,8 @@ import java.util.List;
 public class FormRequest {
 
     private String record_id;
+
+    private String uuid;
     private String form_id;
     private String user_id;
 
@@ -98,5 +100,13 @@ public class FormRequest {
 
     public void setMock_app_package(String mock_app_package) {
         this.mock_app_package = mock_app_package;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }
