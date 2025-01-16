@@ -91,4 +91,9 @@ public interface SurveyDao {
     @Query("delete FROM survey_data WHERE question_id = :qid AND record_id = :record_id AND form_id = :formId")
     void deletebyFormQuestionIdReview(String qid, String record_id, String formId);
 
+
+    @Query("DELETE FROM survey_data WHERE form_id = :formId AND record_id = :recId AND question_id = :questionId")
+    void deleteByQuestionId(String formId, String recId, String questionId);
+
+
 }

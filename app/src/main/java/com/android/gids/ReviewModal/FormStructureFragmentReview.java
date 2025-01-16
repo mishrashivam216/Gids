@@ -102,6 +102,8 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.gson.Gson;
 
+import org.json.JSONArray;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -352,8 +354,9 @@ public class FormStructureFragmentReview extends Fragment {
                     if (view.getVisibility() == VISIBLE) {
 
                         if (view instanceof CheckBox) {
+                            preQid = String.valueOf(view.getTag());
                             if (((CheckBox) view).isChecked()) {
-                                preQid = String.valueOf(view.getTag());
+
                                 checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
                             }
                             if (j != binding.layout.getChildCount() - 1) {
@@ -362,9 +365,7 @@ public class FormStructureFragmentReview extends Fragment {
                         }
 
 
-
-
-                        if (!checkBoxData.isEmpty()) {
+                        if (!preQid.isEmpty()) {
                             Log.v("cdsfdsfdsf", checkBoxData);
                             surveyDataList.add(createSurveyData(preQid, checkBoxData));
                             checkBoxData = "";
@@ -594,34 +595,34 @@ public class FormStructureFragmentReview extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 
-                binding.loadingAnim.setVisibility(VISIBLE);
-                try {
-                    if (position != 0) {
-                        createLayoutFromJson();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    binding.loadingAnim.setVisibility(View.GONE);
-                }
-
-                if (position != 0) {
-                    try {
-                        currentPageIndex = position - 1;
-                        parseData(currentPageIndex);
-                        binding.finalSubmitButton.setVisibility(View.GONE);
-                        binding.nextButton.setText("SAVE AND NEXT");
-                        if (currentPageIndex == list.size() - 1) {
-                            binding.finalSubmitButton.setVisibility(VISIBLE);
-                            binding.nextButton.setText("SAVE AND SUBMIT");
-                        }
-                        binding.loadingAnim.setVisibility(View.GONE);
-                    } catch (Exception e) {
-                        Log.v("afsdfsd", e.getMessage());
-                        e.printStackTrace();
-                        binding.loadingAnim.setVisibility(View.GONE);
-                    }
-                }
-                binding.loadingAnim.setVisibility(View.GONE);
+//                binding.loadingAnim.setVisibility(VISIBLE);
+//                try {
+//                    if (position != 0) {
+//                        createLayoutFromJson();
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    binding.loadingAnim.setVisibility(View.GONE);
+//                }
+//
+//                if (position != 0) {
+//                    try {
+//                        currentPageIndex = position - 1;
+//                        parseData(currentPageIndex);
+//                        binding.finalSubmitButton.setVisibility(View.GONE);
+//                        binding.nextButton.setText("SAVE AND NEXT");
+//                        if (currentPageIndex == list.size() - 1) {
+//                            binding.finalSubmitButton.setVisibility(VISIBLE);
+//                            binding.nextButton.setText("SAVE AND SUBMIT");
+//                        }
+//                        binding.loadingAnim.setVisibility(View.GONE);
+//                    } catch (Exception e) {
+//                        Log.v("afsdfsd", e.getMessage());
+//                        e.printStackTrace();
+//                        binding.loadingAnim.setVisibility(View.GONE);
+//                    }
+//                }
+//                binding.loadingAnim.setVisibility(View.GONE);
             }
 
             @Override
@@ -807,18 +808,35 @@ public class FormStructureFragmentReview extends Fragment {
             SurveyDao surveyDao = myDatabase.surveyDao();
 
             for (SurveyData s : surveyDataList) {
-                Log.v("InsertedDataInDB", s.getField_value());
-                SurveyData insertedData = surveyDao.getPredefinedAnswerReview(formId, recid, s.getQuestion_id());
-                if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
-                    surveyDao.updateByFieldsReview(s.getQuestion_id(), recid, formId, s.getField_value());
+                Log.v("InsertedDataInDB", "Question ID: " + s.getQuestion_id() + ", Value: " + s.getField_value());
+
+                SurveyData existingData = surveyDao.getPredefinedAnswerReview(formId, recid, s.getQuestion_id());
+
+                if (s.getField_value().isEmpty()) {
+                    // If field_value is empty, delete the corresponding entry
+                    if (existingData != null) {
+
+                        surveyDao.updateByFieldsReview(s.getQuestion_id(), recid, formId, s.getField_value());
+
+                        // surveyDao.deleteByQuestionId(formId, recid, s.getQuestion_id());
+                        Log.v("DBAction", "Deleted Question ID: " + s.getQuestion_id());
+                    }
                 } else {
-                    surveyDao.insert(s);
+                    // If data exists, update it; otherwise, insert new data
+                    if (existingData != null && !existingData.getQuestion_id().isEmpty()) {
+                        surveyDao.updateByFieldsReview(s.getQuestion_id(), recid, formId, s.getField_value());
+                        Log.v("DBAction", "Updated Question ID: " + s.getQuestion_id() + "  " + s.getField_value());
+                    } else {
+                        surveyDao.insert(s);
+                        Log.v("DBAction", "Inserted Question ID: " + s.getQuestion_id());
+                    }
                 }
             }
-            //surveyDao.insertOrUpdateList(surveyDataList);
-            Log.v("FormStructureFragment:", "SuccessFully Inserted");
+
+            Log.v("FormStructureFragment", "Successfully Inserted/Updated");
+
         } catch (Exception e) {
-            Log.v("FormStructureFragment:", e.getMessage());
+            Log.v("FormStructureFragment", "Error: " + e.getMessage());
         }
     }
 
@@ -2306,27 +2324,38 @@ public class FormStructureFragmentReview extends Fragment {
                 });
 
 
-                try {
-                    String pData = FormStructureModalReview.getAnswers();
-                    if (pData != null && !pData.isEmpty()) {
-                        // Convert pData to int
-                        if (pData.contains(String.valueOf(checkBox.getId()))) {
-                            checkBox.setChecked(true);
-                        }
-                        // Pre-select the radio button with the ID from pData
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             String pData = getPrefilledData(FormStructureModalReview.getId());
+                            Log.v("fdsfdsfdsf", pData);
                             if (pData != null && !pData.isEmpty()) {
                                 // Convert pData to int
-                                if (pData.contains(String.valueOf(checkBox.getId()))) {
+
+                                pData = pData.replace("[","");
+                                pData = pData.replace("]","");
+                                pData = pData.replace("\"", "");
+
+
+                                Log.v("fdsfdsfdsf", "hi"+pData);
+
+
+                                String[] newData = pData.split(",");
+
+                                Log.v("fdsfdsfdsf",  newData.length+"  size");
+                                Log.v("fdsfdsfdsf",  String.valueOf(checkBox.getId()));
+
+                                Boolean b =isElementPresent(newData, String.valueOf(checkBox.getId()));
+
+                                Log.v("fdsfdsfdsf",  b+"  Status");
+
+
+
+                                if (b) {
+
+                                    Log.v("fdsfdsfdsf", "hii"+pData);
+
                                     checkBox.setChecked(true);
 
                                     if (checkBox.getId() == 99) {
@@ -2337,11 +2366,9 @@ public class FormStructureFragmentReview extends Fragment {
                                 }
                                 // Pre-select the radio button with the ID from pData
                             } else {
-                                if (FormStructureModalReview.getAnswers().contains(String.valueOf(checkBox.getId()))) {
-                                    checkBox.setChecked(true);
-                                }
                             }
                         } catch (Exception e) {
+                            Log.v("sdsdgds", e.getMessage());
                             e.printStackTrace();
                         }
                     }
@@ -2360,6 +2387,23 @@ public class FormStructureFragmentReview extends Fragment {
 
         return index;
     }
+
+    public static boolean isElementPresent(String[] array, String target) {
+        if (array == null || target == null) {
+            return false; // Handle null inputs safely
+        }
+
+        for(int i = 0; i<array.length; i++){
+
+            if(Integer.parseInt(array[i]) == Integer.parseInt(target) ){
+                return  true;
+            }
+        }
+
+        // Use Arrays.asList to convert the array to a List for easier checking
+        return false;
+    }
+
 
 
     private void checkBoxOnCheckChanged(FormStructureModalReview FormStructureModalReview, CheckBox checkBox, Boolean isCheckeds) {
@@ -3091,6 +3135,15 @@ public class FormStructureFragmentReview extends Fragment {
         SurveyData row = surveyDao.getPredefinedAnswerReview(formId, recid, qid);
         if (row != null && !row.getField_value().isEmpty()) {
             return row.getField_value();
+        }
+        return "";
+    }
+
+    public String getPrefilledQData(String qid) {
+        SurveyDao surveyDao = myDatabase.surveyDao();
+        SurveyData row = surveyDao.getPredefinedAnswerReview(formId, recid, qid);
+        if (row != null && !row.getQuestion_id().isEmpty()) {
+            return row.getQuestion_id();
         }
         return "";
     }
