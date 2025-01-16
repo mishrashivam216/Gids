@@ -1373,6 +1373,13 @@ public class FormStructureFragmentReview extends Fragment {
                                 binding.layout.addView(etLabel, indexToAdd++);
                                 LinearLayout layout = createCalculatedField(FormStructureModalReviews.get(i));
                                 binding.layout.addView(layout, indexToAdd++);
+
+                                View elElement = createLabelEditElement(FormStructureModalReviews.get(i), layout);
+
+                                if (!FormStructureModalReviews.get(i).getFeedback().isEmpty()) {
+                                    Log.v("FeedbackComingFrom", FormStructureModalReviews.get(i).getFeedback());
+                                    binding.layout.addView(elElement, indexToAdd++);
+                                }
                             }
 
 
