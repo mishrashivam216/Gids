@@ -405,21 +405,17 @@ public class FormStructureFragment extends Fragment {
                 if (view.getVisibility() == VISIBLE) {
 
                     if (view instanceof CheckBox) {
+                        preQid = String.valueOf(view.getTag());
                         if (((CheckBox) view).isChecked()) {
-                            try {
-                                preQid = String.valueOf(view.getTag());
-                                checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
 
+                            checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
+                        }
                         if (j != binding.layout.getChildCount() - 1) {
                             continue;
                         }
                     }
 
-                    if (!checkBoxData.isEmpty()) {
+                    if (!preQid.isEmpty()) {
                         surveyDataList.add(createSurveyData(preQid, checkBoxData));
                         checkBoxData = "";
                         preQid = "";
@@ -502,28 +498,23 @@ public class FormStructureFragment extends Fragment {
                     if (view.getVisibility() == View.VISIBLE) {
 
                         if (view instanceof CheckBox) {
+                            preQid = String.valueOf(view.getTag());
                             if (((CheckBox) view).isChecked()) {
 
-                                Log.v("LineNos479", "Found Checked");
-
-                                preQid = String.valueOf(view.getTag());
                                 checkBoxData = checkBoxData.isEmpty() ? String.valueOf(view.getId()) : checkBoxData + "," + view.getId();
-
-                                Log.v("LineNos479", checkBoxData);
                             }
-
                             if (j != binding.layout.getChildCount() - 1) {
                                 continue;
                             }
                         }
 
-                        if (!checkBoxData.isEmpty()) {
-
-                            Log.v("LineNos479", "Added Data   " + checkBoxData);
+                        if (!preQid.isEmpty()) {
                             surveyDataList.add(createSurveyData(preQid, checkBoxData));
                             checkBoxData = "";
                             preQid = "";
                         }
+
+
 
                         SurveyData surveyData = createSurveyData(String.valueOf(view.getId()), "");
 
@@ -639,21 +630,60 @@ public class FormStructureFragment extends Fragment {
     private void addInDb(List<SurveyData> surveyDataList) {
         try {
             SurveyDao surveyDao = myDatabase.surveyDao();
+
             for (SurveyData s : surveyDataList) {
-                Log.v("InsertedDataInDB", s.getField_value());
-                SurveyData insertedData = surveyDao.getPredefinedAnswer(formId, instanceId, s.getQuestion_id());
-                if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
-                    surveyDao.updateByFields(s.getQuestion_id(), instanceId, formId, s.getField_value());
+                Log.v("InsertedDataInDB", "Question ID: " + s.getQuestion_id() + ", Value: " + s.getField_value());
+
+                SurveyData existingData = surveyDao.getPredefinedAnswer(formId, instanceId, s.getQuestion_id());
+
+                if (s.getField_value().isEmpty()) {
+                    // If field_value is empty, delete the corresponding entry
+                    if (existingData != null) {
+
+                        surveyDao.updateByFields(s.getQuestion_id(), instanceId, formId, s.getField_value());
+
+                        // surveyDao.deleteByQuestionId(formId, recid, s.getQuestion_id());
+                        Log.v("DBAction", "Deleted Question ID: " + s.getQuestion_id());
+                    }
                 } else {
-                    surveyDao.insert(s);
+                    // If data exists, update it; otherwise, insert new data
+                    if (existingData != null && !existingData.getQuestion_id().isEmpty()) {
+                        surveyDao.updateByFields(s.getQuestion_id(), instanceId, formId, s.getField_value());
+                        Log.v("DBAction", "Updated Question ID: " + s.getQuestion_id() + "  " + s.getField_value());
+                    } else {
+                        surveyDao.insert(s);
+                        Log.v("DBAction", "Inserted Question ID: " + s.getQuestion_id());
+                    }
                 }
             }
-            //surveyDao.insertOrUpdateList(surveyDataList);
-            Log.v("FormStructureFragment:", "SuccessFully Inserted");
+
+            Log.v("FormStructureFragment", "Successfully Inserted/Updated");
+
         } catch (Exception e) {
-            Log.v("FormStructureFragment:", e.getMessage());
+            Log.v("FormStructureFragment", "Error: " + e.getMessage());
         }
     }
+
+
+
+//    private void addInDb(List<SurveyData> surveyDataList) {
+//        try {
+//            SurveyDao surveyDao = myDatabase.surveyDao();
+//            for (SurveyData s : surveyDataList) {
+//                Log.v("InsertedDataInDB", s.getField_value());
+//                SurveyData insertedData = surveyDao.getPredefinedAnswer(formId, instanceId, s.getQuestion_id());
+//                if (insertedData != null && !insertedData.getQuestion_id().isEmpty()) {
+//                    surveyDao.updateByFields(s.getQuestion_id(), instanceId, formId, s.getField_value());
+//                } else {
+//                    surveyDao.insert(s);
+//                }
+//            }
+//            //surveyDao.insertOrUpdateList(surveyDataList);
+//            Log.v("FormStructureFragment:", "SuccessFully Inserted");
+//        } catch (Exception e) {
+//            Log.v("FormStructureFragment:", e.getMessage());
+//        }
+//    }
 
     public void parseData(int index) {
 
@@ -1761,52 +1791,142 @@ public class FormStructureFragment extends Fragment {
     }
 
 
+//    @SuppressLint("ResourceType")
+//    private int createMultiCheckbox(FormStructureModal formStructureModal, int index) {
+//        try {
+//
+//            for (int i = 0; i < formStructureModal.getElement_choices().size(); i++) {
+//                String label = formStructureModal.getElement_choices().get(i).getName();
+//                String id = formStructureModal.getElement_choices().get(i).getId();
+//                boolean isChecked = false;
+//                CheckBox checkBox = createCheckBox(label, isChecked);
+//                checkBox.setId(Integer.valueOf(id));
+//                checkBox.setTag(formStructureModal.getId());
+//
+//
+//                handleEffectBranchingLogic(formStructureModal, checkBox);
+//
+//
+//                checkBox.setOnCheckedChangeListener((buttonView, isCheckeds) -> {
+//
+//                    if (checkBox.getId() == 99) {
+//
+//                        checkBoxOnCheckChanged(formStructureModal, checkBox, isCheckeds);
+//                    }
+//                });
+//
+//                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            String pData = getPrefilledData(formStructureModal.getId());
+//
+//                            Log.v("fwfwsefw", pData + " -" + formStructureModal.getElement_label());
+//
+//
+//                            if (pData != null && !pData.isEmpty()) {
+//                                // Convert pData to int
+//                                if (pData.contains(String.valueOf(checkBox.getId()))) {
+//                                    checkBox.setChecked(true);
+//
+//                                    if (checkBox.getId() == 99) {
+//                                        checkBoxOnCheckChanged(formStructureModal, checkBox, true);
+//                                    }
+//
+//                                }
+//                                // Pre-select the radio button with the ID from pData
+//                            }
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }, 100);
+//
+//
+//                if (index != -1) {
+//                    binding.layout.addView(checkBox, index++);
+//                } else {
+//                    binding.layout.addView(checkBox);
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return index;
+//    }
+
+
     @SuppressLint("ResourceType")
-    private int createMultiCheckbox(FormStructureModal formStructureModal, int index) {
+    private int createMultiCheckbox(FormStructureModal FormStructureModalReview, int index) {
         try {
 
-            for (int i = 0; i < formStructureModal.getElement_choices().size(); i++) {
-                String label = formStructureModal.getElement_choices().get(i).getName();
-                String id = formStructureModal.getElement_choices().get(i).getId();
+            for (int i = 0; i < FormStructureModalReview.getElement_choices().size(); i++) {
+                String label = FormStructureModalReview.getElement_choices().get(i).getName();
+                String id = FormStructureModalReview.getElement_choices().get(i).getId();
                 boolean isChecked = false;
                 CheckBox checkBox = createCheckBox(label, isChecked);
                 checkBox.setId(Integer.valueOf(id));
-                checkBox.setTag(formStructureModal.getId());
+                checkBox.setTag(FormStructureModalReview.getId());
 
 
-                handleEffectBranchingLogic(formStructureModal, checkBox);
+                handleEffectBranchingLogic(FormStructureModalReview, checkBox);
 
 
                 checkBox.setOnCheckedChangeListener((buttonView, isCheckeds) -> {
 
                     if (checkBox.getId() == 99) {
 
-                        checkBoxOnCheckChanged(formStructureModal, checkBox, isCheckeds);
+                        checkBoxOnCheckChanged(FormStructureModalReview, checkBox, isCheckeds);
                     }
                 });
+
 
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            String pData = getPrefilledData(formStructureModal.getId());
-
-                            Log.v("fwfwsefw", pData + " -" + formStructureModal.getElement_label());
-
-
+                            String pData = getPrefilledData(FormStructureModalReview.getId());
+                            Log.v("fdsfdsfdsf", pData);
                             if (pData != null && !pData.isEmpty()) {
                                 // Convert pData to int
-                                if (pData.contains(String.valueOf(checkBox.getId()))) {
+
+                                pData = pData.replace("[","");
+                                pData = pData.replace("]","");
+                                pData = pData.replace("\"", "");
+
+
+                                Log.v("fdsfdsfdsf", "hi"+pData);
+
+
+                                String[] newData = pData.split(",");
+
+                                Log.v("fdsfdsfdsf",  newData.length+"  size");
+                                Log.v("fdsfdsfdsf",  String.valueOf(checkBox.getId()));
+
+                                Boolean b =isElementPresent(newData, String.valueOf(checkBox.getId()));
+
+                                Log.v("fdsfdsfdsf",  b+"  Status");
+
+
+
+                                if (b) {
+
+                                    Log.v("fdsfdsfdsf", "hii"+pData);
+
                                     checkBox.setChecked(true);
 
                                     if (checkBox.getId() == 99) {
-                                        checkBoxOnCheckChanged(formStructureModal, checkBox, true);
+                                        checkBoxOnCheckChanged(FormStructureModalReview, checkBox, true);
                                     }
+
 
                                 }
                                 // Pre-select the radio button with the ID from pData
+                            } else {
                             }
                         } catch (Exception e) {
+                            Log.v("sdsdgds", e.getMessage());
                             e.printStackTrace();
                         }
                     }
@@ -1826,6 +1946,22 @@ public class FormStructureFragment extends Fragment {
         return index;
     }
 
+
+    public static boolean isElementPresent(String[] array, String target) {
+        if (array == null || target == null) {
+            return false; // Handle null inputs safely
+        }
+
+        for(int i = 0; i<array.length; i++){
+
+            if(Integer.parseInt(array[i]) == Integer.parseInt(target) ){
+                return  true;
+            }
+        }
+
+        // Use Arrays.asList to convert the array to a List for easier checking
+        return false;
+    }
     private void checkBoxOnCheckChanged(FormStructureModal formStructureModal, CheckBox checkBox, Boolean isCheckeds) {
         try {
             if (formStructureModal.getCause_branching_logic().size() > 0) {
