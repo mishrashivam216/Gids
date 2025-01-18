@@ -239,7 +239,7 @@ public class FormStructureFragment extends Fragment {
                 @Override
                 public void onClick(View view) {
                     // Check if fields are validated before executing AsyncTask
-                    if (validateEmpty()) {
+                    if (validateEmpty() && validateEmptyCheckBox()) {
                         try {
                             updateMockLocationStatus();
                         } catch (Exception e) {
@@ -2398,6 +2398,62 @@ public class FormStructureFragment extends Fragment {
 
         return editText;
     }
+
+    private boolean validateEmptyCheckBox() {
+
+        boolean res = true;
+
+        boolean isGroupValid = false; // Flag to validate the current CheckBox group
+        boolean isProcessingCheckBoxGroup = false; // Flag to track if we're inside a CheckBox group
+
+        for (int i = 0; i < binding.layout.getChildCount(); i++) {
+            if (binding.layout.getChildAt(i).getVisibility() == VISIBLE) {
+
+                // Check if the current child is a CheckBox
+                if (binding.layout.getChildAt(i) instanceof CheckBox) {
+
+
+                    String  preQid = String.valueOf(binding.layout.getChildAt(i).getTag());
+
+                    List<FormStructureModal> formStructure = formStructureModalList.stream()
+                            .filter(e -> e.getId().equalsIgnoreCase(String.valueOf(preQid)))
+                            .collect(Collectors.toList());
+
+                    if(formStructure.get(0).getElement_required().equalsIgnoreCase("1")) {
+                        isProcessingCheckBoxGroup = true; // We're now inside a CheckBox group
+                        CheckBox checkBox = (CheckBox) binding.layout.getChildAt(i);
+
+                        if (checkBox.isChecked()) {
+                            isGroupValid = true; // At least one CheckBox in this group is checked
+                        }
+                    }
+                } else {
+                    // If we encounter a non-CheckBox element, it marks the end of the current CheckBox group
+                    if (isProcessingCheckBoxGroup) {
+                        // Validate the CheckBox group
+                        if (!isGroupValid) {
+                            Toast.makeText(getContext(), "Please select at least one option in the CheckBox group", Toast.LENGTH_SHORT).show();
+                            res = false; // Validation failed
+                        }
+                        // Reset flags for the next CheckBox group
+                        isGroupValid = false;
+                        isProcessingCheckBoxGroup = false;
+                    }
+                }
+
+                // (Include your existing EditText, Spinner, and RadioGroup validation logic here...)
+            }
+        }
+
+        // Final validation for the last CheckBox group (if the loop ends inside a group)
+        if (isProcessingCheckBoxGroup && !isGroupValid) {
+            Toast.makeText(getContext(), "Please select at least one option in the CheckBox group", Toast.LENGTH_SHORT).show();
+            res = false;
+        }
+
+        return res;
+    }
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
