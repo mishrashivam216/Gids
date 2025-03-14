@@ -206,6 +206,7 @@ public class FormListDetailFragment extends Fragment {
                 surveyRecordDao.deleteAllSurveyRecords();
                 getFormStatus();
                 getFormStatusFeedback();
+                getFormStatusCompleted();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -217,6 +218,9 @@ public class FormListDetailFragment extends Fragment {
 
             List<SurveyRecord> listt = surveyRecordDao.getSurveyRecordByStatus("3", id, uid);
             binding.tvUnderReview.setText(listt.size() + "");
+
+            List<SurveyRecord> listtt = surveyRecordDao.getSurveyRecordByStatus("4", id, uid);
+            binding.tvComplete.setText(listtt.size() + "");
 
         }
     }
@@ -391,6 +395,90 @@ public class FormListDetailFragment extends Fragment {
 
         } catch (Exception e) {
             binding.loadingAnim.setVisibility(View.GONE);
+            Log.v("HomeFragment:insertDB", e.getMessage());
+
+        }
+    }
+
+
+    public void getFormStatusCompleted() {
+
+        FormListStatusRequest formListStatusRequest = new FormListStatusRequest();
+        formListStatusRequest.setUser_id(uid);
+        formListStatusRequest.setForm_id(id);
+        formListStatusRequest.setForm_status(String.valueOf(Utils.FEEDBACK_COMPLETED)); // completed
+        ApiInterface methods = Api.getRetrofitInstance().create(ApiInterface.class);
+        Call<JsonObject> call = methods.formListStatus(formListStatusRequest);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                try {
+
+                    Log.v("FormStatusRequest", response.body().toString());
+
+                    insertInCompletedDb(response.body().toString());
+
+                } catch (Exception e) {
+                    Log.v("FormStatusRequest", e.getMessage());
+
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Toast.makeText(getContext(), "An error has occured", Toast.LENGTH_LONG).show();
+
+            }
+        });
+    }
+
+    public void insertInCompletedDb(String data) {
+        try {
+
+            JSONObject jsonObject = new JSONObject(data);
+            JSONObject GIDS_SURVEY_APP = jsonObject.getJSONObject("GIDS_SURVEY_APP");
+            JSONArray jsonArray = GIDS_SURVEY_APP.getJSONArray("DataList");
+
+            List<SurveyRecord> surveyRecords = new ArrayList<>();
+
+            binding.tvComplete.setText(jsonArray.length() + "");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+
+                SurveyRecord surveyRecord = new SurveyRecord();
+
+                JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+
+                String record_id = jsonObject1.getString("record_id");
+                String form_id = jsonObject1.getString("form_id");
+                String surveyor_id = jsonObject1.getString("surveyor_id");
+                String surveyor_name = jsonObject1.getString("surveyor_name");
+                String section_display_order = jsonObject1.getString("section_display_order");
+                String form_step = jsonObject1.getString("form_step");
+                String status = jsonObject1.getString("status");
+                String created_at = jsonObject1.getString("created_at");
+                String updated_at = jsonObject1.getString("updated_at");
+
+
+                surveyRecord.setRecordId(record_id);
+                surveyRecord.setFormId(form_id);
+                surveyRecord.setSurveyorId(surveyor_id);
+                surveyRecord.setSurveyorName(surveyor_name);
+                surveyRecord.setSectionDisplayOrder(section_display_order);
+                surveyRecord.setFormStep(form_step);
+                surveyRecord.setStatus(status);
+                surveyRecord.setCreatedAt(created_at);
+                surveyRecord.setUpdatedAt(updated_at);
+
+                surveyRecords.add(surveyRecord);
+            }
+
+            SurveyRecordDao surveyRecordDao = myDatabase.surveyRecordDao();
+            surveyRecordDao.insert(surveyRecords);
+
+        } catch (Exception e) {
             Log.v("HomeFragment:insertDB", e.getMessage());
 
         }

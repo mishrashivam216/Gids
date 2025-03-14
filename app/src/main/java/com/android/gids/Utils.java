@@ -49,6 +49,7 @@ public class Utils {
     public static final int PENDING_RECORD = 1;
     public static final int REVIEW_RECORD = 2;
     public static final int FEEDBACK_RECORD = 3;
+    public static final int FEEDBACK_COMPLETED = 4;
 
     public static long timeStamp;
 
