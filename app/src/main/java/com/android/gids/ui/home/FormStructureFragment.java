@@ -2201,6 +2201,7 @@ public class FormStructureFragment extends Fragment {
         if (!formStructureModal.getElement_note().isEmpty() && editText.getVisibility() == VISIBLE) {
             elementNote.setVisibility(VISIBLE);
         } else {
+
             elementNote.setVisibility(View.GONE);
         }
 
@@ -2327,7 +2328,7 @@ public class FormStructureFragment extends Fragment {
             }
         });
 
-        button1.performClick();
+        //button1.performClick();
 
         // Add EditText and buttons to the layout
         layout.addView(editText);
@@ -2890,10 +2891,13 @@ public class FormStructureFragment extends Fragment {
         }
 
         if (functionName.equalsIgnoreCase("MISS_MULTIPLY")) {
-            float mul = answerList.stream()
-                    .filter(Objects::nonNull) // Filters out null values
-                    .filter(a -> a != 0) // Optional: Filters out zero values if needed
-                    .reduce(1.0f, (a, b) -> a * b);
+
+            Optional<Float> mulOpt = answerList.stream()
+                    .filter(Objects::nonNull)
+                    .reduce((a, b) -> a * b);
+
+            float mul = mulOpt.orElse(0f);
+            System.out.println("Result: " + mul); // Output: 0.0
 
             Log.v("Function Name: ", mul + "  Total Multiply");
             return answerList.isEmpty() ? 0 : mul; // Return 0 if the list is empty
@@ -3100,14 +3104,16 @@ public class FormStructureFragment extends Fragment {
 
             Log.v("MyDebuggingData", qid + "  Question Id");
 
-            String data = getValueFromLayoutByQuestionId(qid);
+
+            String data = getPrefilledData(qid);
+
 
             Log.v("MyDebuggingData", data + "  PrefilledData");
 
 
             if (data.equalsIgnoreCase("")) {
 
-                String value = getPrefilledData(qid);
+                String value = getValueFromLayoutByQuestionId(qid);
 
                 Log.v("MyDebuggingData", value + "  getValueFromPage");
 
@@ -3559,9 +3565,7 @@ public class FormStructureFragment extends Fragment {
 
                 Log.v("Branching:data", formStructureModal.getCause_branching_logic().size() + "");
                 for (int i = 0; i < formStructureModal.getCause_branching_logic().size(); i++) {
-                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();
-
-
+                    //String cause_id = formStructureModal.getCause_branching_logic().get(i).getBranching().split("=")[1].trim();\
                     String[] cause_ids = extractCauseIds(formStructureModal.getCause_branching_logic().get(i).getBranching());
                     String branch = formStructureModal.getCause_branching_logic().get(i).getBranching();
 

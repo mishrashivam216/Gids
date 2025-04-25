@@ -3410,14 +3410,13 @@ public class FormStructureFragmentReview extends Fragment {
 
             Log.v("MyDebuggingData", qid + "  Question Id");
 
-            String data = getValueFromLayoutByQuestionId(qid);
+            String data = getPrefilledData(qid);
 
             Log.v("MyDebuggingData", data + "  PrefilledData");
 
-
             if (data.equalsIgnoreCase("")) {
 
-                String value = getPrefilledData(qid);
+                String value = getValueFromLayoutByQuestionId(qid);
 
                 Log.v("MyDebuggingData", value + "  getValueFromPage");
 
